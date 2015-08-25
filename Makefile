@@ -28,6 +28,13 @@ MUSL_CONFIG = CC=$(OUTPUT)/bin/$(TARGET)-gcc --prefix=
 
 all: steps/install_binutils steps/install_musl steps/install_gcc
 
+clean:
+	rm -rf gcc-$(GCC_VER) binutils-$(BINUTILS_VER) musl
+	rm -rf steps/extract_* steps/clone_*
+	rm -rf steps/configure_* steps/build_* steps/install_*
+
+distclean: clean
+	rm -rf sources/config.sub sources/*.tar.bz2
 
 steps/configure_gcc0: steps/install_binutils
 steps/configure_gcc: steps/install_musl
