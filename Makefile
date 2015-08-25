@@ -15,13 +15,13 @@ GCC_CONFIG = $(COMMON_CONFIG) \
 	--disable-libquadmath --disable-decimal-float
 
 GCC0_CONFIG = $(GCC_CONFIG) \
-	--without-headers --disable-libssp --disable-threads \
+	--with-newlib --disable-libssp --disable-threads \
 	--disable-shared --disable-libgomp --disable-libatomic \
 	--disable-libquadmath --disable-decimal-float --disable-nls \
 	--enable-languages=c \
 	CFLAGS="-O0 -g0" CXXFLAGS="-O0 -g0"
 
-MUSL_CONFIG = CC=$(OUTPUT)/bin/$(TARGET)-gcc --prefix=/usr
+MUSL_CONFIG = CC=$(OUTPUT)/bin/$(TARGET)-gcc --prefix=
 
 -include config.mak
 
@@ -118,4 +118,5 @@ steps/build_musl: steps/configure_musl
 
 steps/install_musl: steps/build_musl
 	cd musl && $(MAKE) install DESTDIR=$(OUTPUT)/$(TARGET)
+	ln -sfn . $(OUTPUT)/$(TARGET)/usr
 	touch $@
