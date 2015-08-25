@@ -4,6 +4,7 @@ TARGET = sh2eb-linux-musl
 
 BINUTILS_VER = 2.25.1
 GCC_VER = 5.2.0
+MUSL_TAG = master
 
 COMMON_CONFIG = --disable-werror \
 	--target=$(TARGET) --prefix=$(OUTPUT) \
@@ -111,7 +112,7 @@ steps/install_gcc: steps/build_gcc
 
 
 steps/clone_musl:
-	test -d musl || git clone git://git.musl-libc.org/musl musl
+	test -d musl || git clone -b $(MUSL_TAG) git://git.musl-libc.org/musl musl
 	touch $@
 
 steps/configure_musl: steps/clone_musl steps/install_gcc0
