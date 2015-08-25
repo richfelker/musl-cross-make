@@ -1,0 +1,45 @@
+--- binutils-2.25.1.orig/gas/config/tc-sh.c
++++ binutils-2.25.1/gas/config/tc-sh.c
+@@ -1730,6 +1730,11 @@
+ 		goto fail;
+ 	      break;
+ 
++	    case A_IND_0:
++	      if (user->type != A_IND_N || user->reg != 0)
++		goto fail;
++	      break;
++
+ 	    case A_REG_N:
+ 	    case A_INC_N:
+ 	    case A_DEC_N:
+--- binutils-2.25.1.orig/opcodes/sh-dis.c
++++ binutils-2.25.1/opcodes/sh-dis.c
+@@ -703,6 +703,9 @@
+ 	    case AS_DEC_N:
+ 	      fprintf_fn (stream, "@-r%d", rn);
+ 	      break;
++	    case A_IND_0:
++	      fprintf_fn (stream, "@r0");
++	      break;
+ 	    case A_IND_N:
+ 	    case AS_IND_N:
+ 	      fprintf_fn (stream, "@r%d", rn);
+--- binutils-2.25.1.orig/opcodes/sh-opc.h
++++ binutils-2.25.1/opcodes/sh-opc.h
+@@ -112,6 +112,7 @@
+     A_IMM,
+     A_INC_M,
+     A_INC_N,
++    A_IND_0,
+     A_IND_M,
+     A_IND_N,
+     A_IND_R0_REG_M,
+@@ -410,6 +411,8 @@
+ /* 10001111i8p1.... bf.s <bdisp8>       */{"bf.s",{A_BDISP8},{HEX_8,HEX_F,BRANCH_8}, arch_sh2_up},
+ 
+ /* 10001111i8p1.... bf/s <bdisp8>       */{"bf/s",{A_BDISP8},{HEX_8,HEX_F,BRANCH_8}, arch_sh2_up},
++
++/* 0011nnnnmmmm0001 cas.l <REG_M>,<REG_N>,@R0*/{"cas.l",{A_REG_M,A_REG_N,A_IND_0},{HEX_3,REG_N,REG_M,HEX_1}, arch_sh2_up},
+ 
+ /* 0000000010001000 clrdmxy             */{"clrdmxy",{0},{HEX_0,HEX_0,HEX_8,HEX_8}, arch_sh4al_dsp_up},
+ 

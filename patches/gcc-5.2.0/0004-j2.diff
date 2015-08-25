@@ -1,0 +1,91 @@
+--- gcc-5.2.0.orig/gcc/config.gcc
++++ gcc-5.2.0/gcc/config.gcc
+@@ -2668,7 +2671,7 @@
+ 	  sh2a-single-only | sh2a-single | sh2a-nofpu | sh2a | \
+ 	  sh4a-single-only | sh4a-single | sh4a-nofpu | sh4a | sh4al | \
+ 	  sh4-single-only | sh4-single | sh4-nofpu | sh4 | sh4-300 | \
+-	  sh3e | sh3 | sh2e | sh2 | sh1) ;;
++	  sh3e | sh3 | sh2e | sh2 | sh1 | shj2 ) ;;
+ 	"")	sh_cpu_default=${sh_cpu_target} ;;
+ 	*)	echo "with_cpu=$with_cpu not supported"; exit 1 ;;
+ 	esac
+@@ -2687,9 +2690,9 @@
+ 			sh_multilibs="`echo $sh_multilibs|sed -e s/m4/sh4-nofpu/ -e s/,m4-[^,]*//g -e s/,m[23]e// -e s/m2a,m2a-single/m2a-nofpu/ -e s/m5-..m....,//g`"
+ 		fi
+ 	fi
+-	target_cpu_default=SELECT_`echo ${sh_cpu_default}|tr abcdefghijklmnopqrstuvwxyz- ABCDEFGHIJKLMNOPQRSTUVWXYZ_`
++	target_cpu_default=SELECT_`echo ${sh_cpu_default}|sed 's/^shj/j/'|tr abcdefghijklmnopqrstuvwxyz- ABCDEFGHIJKLMNOPQRSTUVWXYZ_`
+ 	tm_defines=${tm_defines}' SH_MULTILIB_CPU_DEFAULT=\"'`echo $sh_cpu_default|sed s/sh/m/`'\"'
+-	tm_defines="$tm_defines SUPPORT_`echo $sh_cpu_default | sed 's/^m/sh/' | tr abcdefghijklmnopqrstuvwxyz- ABCDEFGHIJKLMNOPQRSTUVWXYZ_`=1"
++	tm_defines="$tm_defines SUPPORT_`echo $sh_cpu_default | sed -e 's/^m/sh/' -e 's/^shj/j/' | tr abcdefghijklmnopqrstuvwxyz- ABCDEFGHIJKLMNOPQRSTUVWXYZ_`=1"
+ 	sh_multilibs=`echo $sh_multilibs | sed -e 's/,/ /g' -e 's/^[Ss][Hh]/m/' -e 's/ [Ss][Hh]/ m/g' | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ_ abcdefghijklmnopqrstuvwxyz-`
+ 	for sh_multilib in ${sh_multilibs}; do
+ 		case ${sh_multilib} in
+@@ -4106,6 +4109,8 @@
+ 			;;
+ 		m4a | m4a-single | m4a-single-only | m4a-nofpu | m4al)
+ 		        ;;
++		mj2)
++			;;
+ 		*)
+ 			echo "Unknown CPU used in --with-cpu=$with_cpu, known values:"  1>&2
+ 			echo "m1 m2 m2e m3 m3e m4 m4-single m4-single-only m4-nofpu" 1>&2
+--- gcc-5.2.0.orig/gcc/config/sh/sh.h
++++ gcc-5.2.0/gcc/config/sh/sh.h
+@@ -139,6 +139,7 @@
+ #define SELECT_SH2A_SINGLE	 (MASK_SH_E | MASK_HARD_SH2A \
+ 				  | MASK_FPU_SINGLE | MASK_HARD_SH2A_DOUBLE \
+ 				  | MASK_SH2 | MASK_SH1)
++#define SELECT_J2		 (MASK_SH2 | MASK_J2 | SELECT_SH1)
+ #define SELECT_SH3		 (MASK_SH3 | SELECT_SH2)
+ #define SELECT_SH3E		 (MASK_SH_E | MASK_FPU_SINGLE | SELECT_SH3)
+ #define SELECT_SH4_NOFPU	 (MASK_HARD_SH4 | SELECT_SH3)
+@@ -162,6 +163,9 @@
+ #define SUPPORT_SH2 1
+ #endif
+ #if SUPPORT_SH2
++#define SUPPORT_J2 1
++#endif
++#ifdef SUPPORT_J2
+ #define SUPPORT_SH3 1
+ #define SUPPORT_SH2A_NOFPU 1
+ #endif
+@@ -211,7 +215,7 @@
+ #define MASK_ARCH (MASK_SH1 | MASK_SH2 | MASK_SH3 | MASK_SH_E | MASK_SH4 \
+ 		   | MASK_HARD_SH2A | MASK_HARD_SH2A_DOUBLE | MASK_SH4A \
+ 		   | MASK_HARD_SH4 | MASK_FPU_SINGLE | MASK_SH5 \
+-		   | MASK_FPU_SINGLE_ONLY)
++		   | MASK_FPU_SINGLE_ONLY | MASK_J2)
+ 
+ /* This defaults us to big-endian.  */
+ #ifndef TARGET_ENDIAN_DEFAULT
+@@ -271,6 +275,7 @@
+ %(subtarget_asm_isa_spec) %(subtarget_asm_spec) \
+ %{m1:--isa=sh} \
+ %{m2:--isa=sh2} \
++%{mj2:--isa=any} \
+ %{m2e:--isa=sh2e} \
+ %{m3:--isa=sh3} \
+ %{m3e:--isa=sh3e} \
+@@ -1834,7 +1839,7 @@
+ 
+ /* Nonzero if the target supports dynamic shift instructions
+    like shad and shld.  */
+-#define TARGET_DYNSHIFT (TARGET_SH3 || TARGET_SH2A)
++#define TARGET_DYNSHIFT (TARGET_SH3 || TARGET_SH2A || TARGET_J2)
+ 
+ /* The cost of using the dynamic shift insns (shad, shld) are the same
+    if they are available.  If they are not available a library function will
+--- gcc-5.2.0.orig/gcc/config/sh/sh.opt
++++ gcc-5.2.0/gcc/config/sh/sh.opt
+@@ -71,6 +71,10 @@
+ Target RejectNegative Condition(SUPPORT_SH2E)
+ Generate SH2e code
+ 
++mj2
++Target RejectNegative Mask(J2) Condition(SUPPORT_J2)
++Generate J2 code
++
+ m3
+ Target RejectNegative Mask(SH3) Condition(SUPPORT_SH3)
+ Generate SH3 code

@@ -1,0 +1,138 @@
+--- a/gcc/config/sh/sh-protos.h	
++++ a/gcc/config/sh/sh-protos.h	
+@@ -159,6 +159,7 @@ extern int sh_eval_treg_value (rtx op);
+ extern HOST_WIDE_INT sh_disp_addr_displacement (rtx mem_op);
+ extern int sh_max_mov_insn_displacement (machine_mode mode, bool consider_sh2a);
+ extern bool sh_movsf_ie_ra_split_p (rtx, rtx, rtx);
++extern void sh_expand_sym_label2reg (rtx, rtx, rtx, bool);
+ 
+ /* Result value of sh_find_set_of_reg.  */
+ struct set_of_reg
+--- a/gcc/config/sh/sh.c	
++++ a/gcc/config/sh/sh.c	
+@@ -1604,6 +1604,10 @@ sh_asm_output_addr_const_extra (FILE *file, rtx x)
+ 	  output_addr_const (file, XVECEXP (x, 0, 0));
+ 	  fputs ("@GOTPLT", file);
+ 	  break;
++	case UNSPEC_PCREL:
++	  output_addr_const (file, XVECEXP (x, 0, 0));
++	  fputs ("@PCREL", file);
++	  break;
+ 	case UNSPEC_DTPOFF:
+ 	  output_addr_const (file, XVECEXP (x, 0, 0));
+ 	  fputs ("@DTPOFF", file);
+@@ -10441,6 +10445,7 @@ nonpic_symbol_mentioned_p (rtx x)
+ 	  || XINT (x, 1) == UNSPEC_DTPOFF
+ 	  || XINT (x, 1) == UNSPEC_TPOFF
+ 	  || XINT (x, 1) == UNSPEC_PLT
++	  || XINT (x, 1) == UNSPEC_PCREL
+ 	  || XINT (x, 1) == UNSPEC_SYMOFF
+ 	  || XINT (x, 1) == UNSPEC_PCREL_SYMOFF))
+     return false;
+@@ -10714,7 +10719,8 @@ sh_delegitimize_address (rtx orig_x)
+ 		  rtx symplt = XEXP (XVECEXP (y, 0, 0), 0);
+ 
+ 		  if (GET_CODE (symplt) == UNSPEC
+-		      && XINT (symplt, 1) == UNSPEC_PLT)
++		      && (XINT (symplt, 1) == UNSPEC_PLT
++			  || XINT (symplt, 1) == UNSPEC_PCREL))
+ 		    return XVECEXP (symplt, 0, 0);
+ 		}
+ 	    }
+@@ -11702,9 +11708,24 @@ sh_function_ok_for_sibcall (tree decl, tree exp ATTRIBUTE_UNUSED)
+ 	      || crtl->args.info.stack_regs == 0)
+ 	  && ! sh_cfun_interrupt_handler_p ()
+ 	  && (! flag_pic
+-	      || (decl && ! TREE_PUBLIC (decl))
++	      || (decl && ! (TREE_PUBLIC (decl) || DECL_WEAK (decl)))
+ 	      || (decl && DECL_VISIBILITY (decl) != VISIBILITY_DEFAULT)));
+ }
++
++/* Expand to appropriate sym*_label2reg for SYM and SIBCALL_P.  */
++void
++sh_expand_sym_label2reg (rtx reg, rtx sym, rtx lab, bool sibcall_p)
++{
++  const_tree decl = SYMBOL_REF_DECL (sym);
++  bool is_weak = (decl && DECL_P (decl) && DECL_WEAK (decl));
++
++  if (!is_weak && SYMBOL_REF_LOCAL_P (sym))
++    emit_insn (gen_sym_label2reg (reg, sym, lab));
++  else if (sibcall_p)
++    emit_insn (gen_symPCREL_label2reg (reg, sym, lab));
++  else
++    emit_insn (gen_symPLT_label2reg (reg, sym, lab));
++}
+ 
+ /* Machine specific built-in functions.  */
+ 
+--- a/gcc/config/sh/sh.md	
++++ a/gcc/config/sh/sh.md	
+@@ -135,6 +135,7 @@ 
+   UNSPEC_PLT
+   UNSPEC_CALLER
+   UNSPEC_GOTPLT
++  UNSPEC_PCREL
+   UNSPEC_ICACHE
+   UNSPEC_INIT_TRAMP
+   UNSPEC_FCOSA
+@@ -9470,11 +9471,8 @@ label:
+   [(const_int 0)]
+ {
+   rtx lab = PATTERN (gen_call_site ());
+-
+-  if (SYMBOL_REF_LOCAL_P (operands[0]))
+-    emit_insn (gen_sym_label2reg (operands[2], operands[0], lab));
+-  else
+-    emit_insn (gen_symPLT_label2reg (operands[2], operands[0], lab));
++  
++  sh_expand_sym_label2reg (operands[2], operands[0], lab, false);
+   emit_call_insn (gen_calli_pcrel (operands[2], operands[1], copy_rtx (lab)));
+   DONE;
+ }
+@@ -9605,10 +9603,7 @@ label:
+ {
+   rtx lab = PATTERN (gen_call_site ());
+ 
+-  if (SYMBOL_REF_LOCAL_P (operands[1]))
+-    emit_insn (gen_sym_label2reg (operands[3], operands[1], lab));
+-  else
+-    emit_insn (gen_symPLT_label2reg (operands[3], operands[1], lab));
++  sh_expand_sym_label2reg (operands[3], operands[1], lab, false);
+   emit_call_insn (gen_call_valuei_pcrel (operands[0], operands[3],
+ 					 operands[2], copy_rtx (lab)));
+   DONE;
+@@ -10008,7 +10003,7 @@ label:
+   rtx lab = PATTERN (gen_call_site ());
+   rtx call_insn;
+ 
+-  emit_insn (gen_sym_label2reg (operands[2], operands[0], lab));
++  sh_expand_sym_label2reg (operands[2], operands[0], lab, true);
+   call_insn = emit_call_insn (gen_sibcalli_pcrel (operands[2], operands[1],
+ 						  copy_rtx (lab)));
+   SIBLING_CALL_P (call_insn) = 1;
+@@ -10200,7 +10195,7 @@ label:
+   rtx lab = PATTERN (gen_call_site ());
+   rtx call_insn;
+ 
+-  emit_insn (gen_sym_label2reg (operands[3], operands[1], lab));
++  sh_expand_sym_label2reg (operands[3], operands[1], lab, true);
+   call_insn = emit_call_insn (gen_sibcall_valuei_pcrel (operands[0],
+ 							operands[3],
+ 							operands[2],
+@@ -10748,6 +10743,16 @@ label:
+ 			     UNSPEC_SYMOFF)))]
+   "TARGET_SH1" "")
+ 
++(define_expand "symPCREL_label2reg"
++  [(set (match_operand:SI 0 "" "")
++	(const:SI
++	 (unspec:SI
++	  [(const:SI (unspec:SI [(match_operand:SI 1 "" "")] UNSPEC_PCREL))
++	   (const:SI (plus:SI (match_operand:SI 2 "" "")
++			      (const_int 2)))] UNSPEC_PCREL_SYMOFF)))]
++  "TARGET_SH1"
++  "")
++
+ (define_expand "symGOT_load"
+   [(set (match_dup 2) (match_operand 1 "" ""))
+    (set (match_dup 3) (plus (match_dup 2) (reg PIC_REG)))

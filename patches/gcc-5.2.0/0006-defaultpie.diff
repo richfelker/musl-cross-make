@@ -1,0 +1,19 @@
+--- gcc-5.2.0.orig/gcc/gcc.c	2015-03-10 09:37:41.000000000 +0000
++++ gcc-5.2.0/gcc/gcc.c	2015-08-25 07:47:12.895060530 +0000
+@@ -1012,10 +1012,15 @@
+ #define CILK_SELF_SPECS "%{fcilkplus: -pthread}"
+ #endif
+ 
++/* Default to PIE */
++#ifndef PIE_SELF_SPECS
++#define PIE_SELF_SPECS "%{shared|pie|r|nostdlib|nopie:;:-pie} %{fpic|fPIC|fpie|fPIE|fno-pic|fno-PIC|fno-pie|fno-PIE|D__KERNEL__:;:-fPIE}"
++#endif
++
+ static const char *const driver_self_specs[] = {
+   "%{fdump-final-insns:-fdump-final-insns=.} %<fdump-final-insns",
+   DRIVER_SELF_SPECS, CONFIGURE_SPECS, GOMP_SELF_SPECS, GTM_SELF_SPECS,
+-  CILK_SELF_SPECS
++  CILK_SELF_SPECS, PIE_SELF_SPECS
+ };
+ 
+ #ifndef OPTION_DEFAULT_SPECS

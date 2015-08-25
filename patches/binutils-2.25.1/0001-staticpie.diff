@@ -1,0 +1,78 @@
+--- binutils-2.25.1.orig/bfd/elf32-sh.c
++++ binutils-2.25.1/bfd/elf32-sh.c
+@@ -3344,7 +3344,7 @@
+   if (htab->root.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+--- binutils-2.25.1.orig/bfd/elflink.c
++++ binutils-2.25.1/bfd/elflink.c
+@@ -206,7 +206,7 @@
+ 
+   /* A dynamically linked executable has a .interp section, but a
+      shared library does not.  */
+-  if (info->executable)
++  if (info->executable && !info->nointerp)
+     {
+       s = bfd_make_section_anyway_with_flags (abfd, ".interp",
+ 					      flags | SEC_READONLY);
+@@ -5620,7 +5620,7 @@
+       bfd_boolean all_defined;
+ 
+       *sinterpptr = bfd_get_linker_section (dynobj, ".interp");
+-      BFD_ASSERT (*sinterpptr != NULL || !info->executable);
++      BFD_ASSERT (*sinterpptr != NULL || !info->executable || info->nointerp);
+ 
+       if (soname != NULL)
+ 	{
+--- binutils-2.25.1.orig/include/bfdlink.h
++++ binutils-2.25.1/include/bfdlink.h
+@@ -426,6 +426,9 @@
+   /* TRUE if BND prefix in PLT entries is always generated.  */
+   unsigned int bndplt: 1;
+ 
++  /* TRUE if generation of .interp/PT_INTERP should be suppressed.  */
++  unsigned int nointerp: 1;
++
+   /* Char that may appear as the first char of a symbol, but should be
+      skipped (like symbol_leading_char) when looking up symbols in
+      wrap_hash.  Used by PowerPC Linux for 'dot' symbols.  */
+--- binutils-2.25.1.orig/ld/ldlex.h
++++ binutils-2.25.1/ld/ldlex.h
+@@ -33,6 +33,7 @@
+   OPTION_DEFSYM,
+   OPTION_DEMANGLE,
+   OPTION_DYNAMIC_LINKER,
++  OPTION_NO_DYNAMIC_LINKER,
+   OPTION_SYSROOT,
+   OPTION_EB,
+   OPTION_EL,
+--- binutils-2.25.1.orig/ld/lexsup.c
++++ binutils-2.25.1/ld/lexsup.c
+@@ -138,6 +138,9 @@
+   { {"dynamic-linker", required_argument, NULL, OPTION_DYNAMIC_LINKER},
+     'I', N_("PROGRAM"), N_("Set PROGRAM as the dynamic linker to use"),
+     TWO_DASHES },
++  { {"no-dynamic-linker", no_argument, NULL, OPTION_NO_DYNAMIC_LINKER},
++    '\0', NULL, N_("Produce an executable with no program interpreter header"),
++    TWO_DASHES },
+   { {"library", required_argument, NULL, 'l'},
+     'l', N_("LIBNAME"), N_("Search for library LIBNAME"), TWO_DASHES },
+   { {"library-path", required_argument, NULL, 'L'},
+@@ -747,6 +750,11 @@
+ 	case 'I':		/* Used on Solaris.  */
+ 	case OPTION_DYNAMIC_LINKER:
+ 	  command_line.interpreter = optarg;
++	  link_info.nointerp = 0;
++	  break;
++	case OPTION_NO_DYNAMIC_LINKER:
++	  command_line.interpreter = NULL;
++	  link_info.nointerp = 1;
+ 	  break;
+ 	case OPTION_SYSROOT:
+ 	  /* Already handled in ldmain.c.  */
+

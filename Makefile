@@ -1,0 +1,121 @@
+
+OUTPUT = $(PWD)/output
+TARGET = sh2eb-linux-musl
+
+BINUTILS_VER = 2.25.1
+GCC_VER = 5.2.0
+
+COMMON_CONFIG = --disable-werror \
+	--target=$(TARGET) --prefix=$(OUTPUT) \
+	--with-sysroot=$(OUTPUT)/$(TARGET)
+
+BINUTILS_CONFIG = $(COMMON_CONFIG)
+GCC_CONFIG = $(COMMON_CONFIG) \
+	--disable-libmudflap --disable-libsanitizer \
+	--disable-libquadmath --disable-decimal-float
+
+GCC0_CONFIG = $(GCC_CONFIG) \
+	--without-headers --disable-libssp --disable-threads \
+	--disable-shared --disable-libgomp --disable-libatomic \
+	--disable-libquadmath --disable-decimal-float --disable-nls \
+	--enable-languages=c \
+	CFLAGS="-O0 -g0" CXXFLAGS="-O0 -g0"
+
+MUSL_CONFIG = CC=$(OUTPUT)/bin/$(TARGET)-gcc --prefix=/usr
+
+-include config.mak
+
+
+all: steps/install_binutils steps/install_musl steps/install_gcc
+
+
+steps/configure_gcc0: steps/install_binutils
+steps/configure_gcc: steps/install_musl
+
+
+sources/config.sub:
+	wget -O $@ 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+
+sources/binutils-%:
+	wget -c -O $@.part http://ftp.gnu.org/pub/gnu/binutils/$(notdir $@)
+	mv $@.part $@
+
+sources/gcc-%:
+	wget -c -O $@.part http://ftp.gnu.org/pub/gnu/gcc/$(basename $(basename $(notdir $@)))/$(notdir $@)
+	mv $@.part $@
+
+
+
+steps/extract_binutils: sources/binutils-$(BINUTILS_VER).tar.bz2 sources/config.sub
+	tar jxvf $<
+	cat patches/binutils-$(BINUTILS_VER)/* | ( cd binutils-$(BINUTILS_VER) && patch -p1 )
+	cp sources/config.sub binutils-$(BINUTILS_VER)
+	touch $@
+
+steps/configure_binutils: steps/extract_binutils
+	test -e binutils-$(BINUTILS_VER)/config.status || ( cd binutils-$(BINUTILS_VER) && ./configure $(BINUTILS_CONFIG) )
+	touch $@
+
+steps/build_binutils: steps/configure_binutils
+	cd binutils-$(BINUTILS_VER) && $(MAKE)
+	touch $@
+
+steps/install_binutils: steps/build_binutils
+	cd binutils-$(BINUTILS_VER) && $(MAKE) install
+	touch $@
+
+
+
+
+steps/extract_gcc: sources/gcc-$(GCC_VER).tar.bz2 sources/config.sub
+	tar jxvf $<
+	cat patches/gcc-$(GCC_VER)/* | ( cd gcc-$(GCC_VER) && patch -p1 )
+	cp sources/config.sub gcc-$(GCC_VER)
+	touch $@
+
+steps/configure_gcc0: steps/extract_gcc
+	mkdir -p gcc-$(GCC_VER)/build0
+	test -e gcc-$(GCC_VER)/build0/config.status || ( cd gcc-$(GCC_VER)/build0 && ../configure $(GCC0_CONFIG) )
+	touch $@
+
+steps/build_gcc0: steps/configure_gcc0
+	cd gcc-$(GCC_VER)/build0 && $(MAKE)
+	touch $@
+
+steps/install_gcc0: steps/build_gcc0
+	cd gcc-$(GCC_VER)/build0 && $(MAKE) install
+	touch $@
+
+steps/configure_gcc: steps/extract_gcc
+	mkdir -p gcc-$(GCC_VER)/build
+	test -e gcc-$(GCC_VER)/build/config.status || ( cd gcc-$(GCC_VER)/build && ../configure $(GCC_CONFIG) )
+	touch $@
+
+steps/build_gcc: steps/configure_gcc
+	cd gcc-$(GCC_VER)/build && $(MAKE)
+	touch $@
+
+steps/install_gcc: steps/build_gcc
+	cd gcc-$(GCC_VER)/build && $(MAKE) install
+	touch $@
+
+
+
+
+
+steps/clone_musl:
+	test -d musl || git clone git://git.musl-libc.org/musl musl
+	touch $@
+
+steps/configure_musl: steps/clone_musl steps/install_gcc0
+	cd musl && ./configure $(MUSL_CONFIG)
+	cat patches/musl-complex-hack >> musl/config.mak
+	touch $@
+
+steps/build_musl: steps/configure_musl
+	cd musl && $(MAKE)
+	touch $@
+
+steps/install_musl: steps/build_musl
+	cd musl && $(MAKE) install DESTDIR=$(OUTPUT)/$(TARGET)
+	touch $@

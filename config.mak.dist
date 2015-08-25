@@ -1,0 +1,10 @@
+OUTPUT = $(PWD)/output
+TARGET = sh2eb-linux-musl
+
+BINUTILS_VER = 2.25.1
+GCC_VER = 5.2.0
+
+# COMMON_CONFIG += --disable-nls
+# GCC_CONFIG += --enable-languages=c,c++,lto
+# GCC_CONFIG += --disable-multilib
+# GCC_CONFIG += --with-cpu=mj2
