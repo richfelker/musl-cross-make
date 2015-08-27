@@ -22,7 +22,10 @@ GCC0_CONFIG = $(GCC_CONFIG) \
 	--enable-languages=c \
 	CFLAGS="-O0 -g0" CXXFLAGS="-O0 -g0"
 
-MUSL_CONFIG = CC=$(OUTPUT)/bin/$(TARGET)-gcc --prefix=
+GCC0_BDIR = $(PWD)/gcc-$(GCC_VER)/build0/gcc
+GCC0_CC = $(GCC0_BDIR)/xgcc -B $(GCC0_BDIR)
+
+MUSL_CONFIG = CC="$(GCC0_CC)" --prefix=
 
 -include config.mak
 
@@ -90,10 +93,6 @@ steps/build_gcc0: steps/configure_gcc0
 	cd gcc-$(GCC_VER)/build0 && $(MAKE)
 	touch $@
 
-steps/install_gcc0: steps/build_gcc0
-	cd gcc-$(GCC_VER)/build0 && $(MAKE) install
-	touch $@
-
 steps/configure_gcc: steps/extract_gcc
 	mkdir -p gcc-$(GCC_VER)/build
 	test -e gcc-$(GCC_VER)/build/config.status || ( cd gcc-$(GCC_VER)/build && ../configure $(GCC_CONFIG) )
@@ -115,7 +114,7 @@ steps/clone_musl:
 	test -d musl || git clone -b $(MUSL_TAG) git://git.musl-libc.org/musl musl
 	touch $@
 
-steps/configure_musl: steps/clone_musl steps/install_gcc0
+steps/configure_musl: steps/clone_musl steps/build_gcc0
 	cd musl && ./configure $(MUSL_CONFIG)
 	cat patches/musl-complex-hack >> musl/config.mak
 	touch $@
