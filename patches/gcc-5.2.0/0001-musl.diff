@@ -598,7 +598,7 @@ diff --git a/gcc/config/sh/linux.h b/gcc/config/sh/linux.h
 index 0f5d614..4c167c6 100644
 --- a/gcc/config/sh/linux.h
 +++ b/gcc/config/sh/linux.h
-@@ -43,6 +43,28 @@ along with GCC; see the file COPYING3.  If not see
+@@ -43,6 +43,29 @@ along with GCC; see the file COPYING3.  If not see
  
  #define TARGET_ASM_FILE_END file_end_indicate_exec_stack
  
@@ -622,7 +622,8 @@ index 0f5d614..4c167c6 100644
 +
 +#undef MUSL_DYNAMIC_LINKER
 +#define MUSL_DYNAMIC_LINKER \
-+  "/lib/ld-musl-sh" MUSL_DYNAMIC_LINKER_E MUSL_DYNAMIC_LINKER_FP ".so.1"
++  "/lib/ld-musl-sh" MUSL_DYNAMIC_LINKER_E MUSL_DYNAMIC_LINKER_FP \
++  "%{mfdpic:-fdpic}.so.1"
 +
  #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
  

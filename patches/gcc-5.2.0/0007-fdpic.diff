@@ -1,0 +1,1933 @@
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/constraints.md gcc-5.2.0/gcc/config/sh/constraints.md
+--- ../baseline/gcc-5.2.0/gcc/config/sh/constraints.md	2015-03-23 18:57:58.000000000 +0000
++++ gcc-5.2.0/gcc/config/sh/constraints.md	2015-09-03 17:12:56.462760038 +0000
+@@ -25,6 +25,7 @@
+ ;;  Bsc: SCRATCH - for the scratch register in movsi_ie in the
+ ;;       fldi0 / fldi0 cases
+ ;; Cxx: Constants other than only CONST_INT
++;;  Ccl: call site label
+ ;;  Css: signed 16-bit constant, literal or symbolic
+ ;;  Csu: unsigned 16-bit constant, literal or symbolic
+ ;;  Csy: label or symbol
+@@ -233,6 +234,11 @@
+    hence mova is being used, hence do not select this pattern."
+   (match_code "scratch"))
+ 
++(define_constraint "Ccl"
++  "A call site label, for bsrf."
++  (and (match_code "unspec")
++       (match_test "XINT (op, 1) == UNSPEC_CALLER")))
++
+ (define_constraint "Css"
+   "A signed 16-bit constant, literal or symbolic."
+   (and (match_code "const")
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/linux.h gcc-5.2.0/gcc/config/sh/linux.h
+--- ../baseline/gcc-5.2.0/gcc/config/sh/linux.h	2015-09-04 20:23:46.714785579 +0000
++++ gcc-5.2.0/gcc/config/sh/linux.h	2015-09-11 01:48:36.830264737 +0000
+@@ -63,7 +63,8 @@ along with GCC; see the file COPYING3.
+ #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
+ 
+ #undef SUBTARGET_LINK_EMUL_SUFFIX
+-#define SUBTARGET_LINK_EMUL_SUFFIX "_linux"
++#define SUBTARGET_LINK_EMUL_SUFFIX "%{mfdpic:_fd;:_linux}"
++
+ #undef SUBTARGET_LINK_SPEC
+ #define SUBTARGET_LINK_SPEC \
+   "%{shared:-shared} \
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-c.c gcc-5.2.0/gcc/config/sh/sh-c.c
+--- ../baseline/gcc-5.2.0/gcc/config/sh/sh-c.c	2015-01-09 20:18:42.000000000 +0000
++++ gcc-5.2.0/gcc/config/sh/sh-c.c	2015-09-03 18:22:04.182507130 +0000
+@@ -149,6 +149,11 @@ sh_cpu_cpp_builtins (cpp_reader* pfile)
+     builtin_define ("__HITACHI__");
+   if (TARGET_FMOVD)
+     builtin_define ("__FMOVD_ENABLED__");
++  if (TARGET_FDPIC)
++    {
++      builtin_define ("__SH_FDPIC__");
++      builtin_define ("__FDPIC__");
++    }
+   builtin_define (TARGET_LITTLE_ENDIAN
+ 		  ? "__LITTLE_ENDIAN__" : "__BIG_ENDIAN__");
+ 
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc gcc-5.2.0/gcc/config/sh/sh-mem.cc
+--- ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc	2015-01-15 13:28:42.000000000 +0000
++++ gcc-5.2.0/gcc/config/sh/sh-mem.cc	2015-09-03 17:37:09.436004777 +0000
+@@ -136,11 +136,13 @@ expand_block_move (rtx *operands)
+ 	  rtx func_addr_rtx = gen_reg_rtx (Pmode);
+ 	  rtx r4 = gen_rtx_REG (SImode, 4);
+ 	  rtx r5 = gen_rtx_REG (SImode, 5);
++	  rtx lab;
+ 
+-	  function_symbol (func_addr_rtx, "__movmemSI12_i4", SFUNC_STATIC);
++	  function_symbol (func_addr_rtx, "__movmemSI12_i4", SFUNC_STATIC,
++			   &lab);
+ 	  force_into (XEXP (operands[0], 0), r4);
+ 	  force_into (XEXP (operands[1], 0), r5);
+-	  emit_insn (gen_block_move_real_i4 (func_addr_rtx));
++	  emit_insn (gen_block_move_real_i4 (func_addr_rtx, lab));
+ 	  return true;
+ 	}
+       else if (! optimize_size)
+@@ -151,15 +153,16 @@ expand_block_move (rtx *operands)
+ 	  rtx r4 = gen_rtx_REG (SImode, 4);
+ 	  rtx r5 = gen_rtx_REG (SImode, 5);
+ 	  rtx r6 = gen_rtx_REG (SImode, 6);
++	  rtx lab;
+ 
+ 	  entry_name = (bytes & 4 ? "__movmem_i4_odd" : "__movmem_i4_even");
+-	  function_symbol (func_addr_rtx, entry_name, SFUNC_STATIC);
++	  function_symbol (func_addr_rtx, entry_name, SFUNC_STATIC, &lab);
+ 	  force_into (XEXP (operands[0], 0), r4);
+ 	  force_into (XEXP (operands[1], 0), r5);
+ 
+ 	  dwords = bytes >> 3;
+ 	  emit_insn (gen_move_insn (r6, GEN_INT (dwords - 1)));
+-	  emit_insn (gen_block_lump_real_i4 (func_addr_rtx));
++	  emit_insn (gen_block_lump_real_i4 (func_addr_rtx, lab));
+ 	  return true;
+ 	}
+       else
+@@ -171,12 +174,13 @@ expand_block_move (rtx *operands)
+       rtx func_addr_rtx = gen_reg_rtx (Pmode);
+       rtx r4 = gen_rtx_REG (SImode, 4);
+       rtx r5 = gen_rtx_REG (SImode, 5);
++      rtx lab;
+ 
+       sprintf (entry, "__movmemSI%d", bytes);
+-      function_symbol (func_addr_rtx, entry, SFUNC_STATIC);
++      function_symbol (func_addr_rtx, entry, SFUNC_STATIC, &lab);
+       force_into (XEXP (operands[0], 0), r4);
+       force_into (XEXP (operands[1], 0), r5);
+-      emit_insn (gen_block_move_real (func_addr_rtx));
++      emit_insn (gen_block_move_real (func_addr_rtx, lab));
+       return true;
+     }
+ 
+@@ -189,8 +193,9 @@ expand_block_move (rtx *operands)
+       rtx r4 = gen_rtx_REG (SImode, 4);
+       rtx r5 = gen_rtx_REG (SImode, 5);
+       rtx r6 = gen_rtx_REG (SImode, 6);
++      rtx lab;
+ 
+-      function_symbol (func_addr_rtx, "__movmem", SFUNC_STATIC);
++      function_symbol (func_addr_rtx, "__movmem", SFUNC_STATIC, &lab);
+       force_into (XEXP (operands[0], 0), r4);
+       force_into (XEXP (operands[1], 0), r5);
+ 
+@@ -203,7 +208,7 @@ expand_block_move (rtx *operands)
+       final_switch = 16 - ((bytes / 4) % 16);
+       while_loop = ((bytes / 4) / 16 - 1) * 16;
+       emit_insn (gen_move_insn (r6, GEN_INT (while_loop + final_switch)));
+-      emit_insn (gen_block_lump_real (func_addr_rtx));
++      emit_insn (gen_block_lump_real (func_addr_rtx, lab));
+       return true;
+     }
+ 
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-protos.h gcc-5.2.0/gcc/config/sh/sh-protos.h
+--- ../baseline/gcc-5.2.0/gcc/config/sh/sh-protos.h	2015-09-04 20:23:46.684785581 +0000
++++ gcc-5.2.0/gcc/config/sh/sh-protos.h	2015-09-03 17:24:17.489385180 +0000
+@@ -379,7 +379,7 @@ extern void fpscr_set_from_mem (int, HAR
+ extern void sh_pr_interrupt (struct cpp_reader *);
+ extern void sh_pr_trapa (struct cpp_reader *);
+ extern void sh_pr_nosave_low_regs (struct cpp_reader *);
+-extern rtx function_symbol (rtx, const char *, enum sh_function_kind);
++extern rtx function_symbol (rtx, const char *, enum sh_function_kind, rtx *);
+ extern rtx sh_get_pr_initial_val (void);
+ 
+ extern void sh_init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, tree,
+@@ -398,4 +398,7 @@ extern bool sh_hard_regno_mode_ok (unsig
+ extern machine_mode sh_hard_regno_caller_save_mode (unsigned int, unsigned int,
+ 						    machine_mode);
+ extern bool sh_can_use_simple_return_p (void);
++extern bool sh_legitimate_constant_p (rtx);
++extern rtx sh_load_function_descriptor (rtx);
++extern rtx sh_our_fdpic_reg (void);
+ #endif /* ! GCC_SH_PROTOS_H */
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
+--- ../baseline/gcc-5.2.0/gcc/config/sh/sh.c	2015-09-04 20:23:46.694785580 +0000
++++ gcc-5.2.0/gcc/config/sh/sh.c	2015-09-11 03:56:36.709796457 +0000
+@@ -288,6 +288,7 @@ static rtx sh_expand_builtin (tree, rtx,
+ static void sh_output_mi_thunk (FILE *, tree, HOST_WIDE_INT,
+ 				HOST_WIDE_INT, tree);
+ static void sh_file_start (void);
++static bool sh_assemble_integer (rtx, unsigned, int);
+ static bool flow_dependent_p (rtx, rtx);
+ static void flow_dependent_p_1 (rtx, const_rtx, void *);
+ static int shiftcosts (rtx);
+@@ -296,6 +297,7 @@ static int addsubcosts (rtx);
+ static int multcosts (rtx);
+ static bool unspec_caller_rtx_p (rtx);
+ static bool sh_cannot_copy_insn_p (rtx_insn *);
++static bool sh_cannot_force_const_mem_p (machine_mode, rtx);
+ static bool sh_rtx_costs (rtx, int, int, int, int *, bool);
+ static int sh_address_cost (rtx, machine_mode, addr_space_t, bool);
+ static int sh_pr_n_sets (void);
+@@ -353,6 +355,7 @@ static void sh_encode_section_info (tree
+ static bool sh2a_function_vector_p (tree);
+ static void sh_trampoline_init (rtx, tree, rtx);
+ static rtx sh_trampoline_adjust_address (rtx);
++static int sh_reloc_rw_mask (void);
+ static void sh_conditional_register_usage (void);
+ static bool sh_legitimate_constant_p (machine_mode, rtx);
+ static int mov_insn_size (machine_mode, bool);
+@@ -437,6 +440,9 @@ static const struct attribute_spec sh_at
+ #undef TARGET_ASM_FILE_START_FILE_DIRECTIVE
+ #define TARGET_ASM_FILE_START_FILE_DIRECTIVE true
+ 
++#undef TARGET_ASM_INTEGER
++#define TARGET_ASM_INTEGER sh_assemble_integer
++
+ #undef TARGET_REGISTER_MOVE_COST
+ #define TARGET_REGISTER_MOVE_COST sh_register_move_cost
+ 
+@@ -695,6 +701,12 @@ static const struct attribute_spec sh_at
+ #undef TARGET_ATOMIC_TEST_AND_SET_TRUEVAL
+ #define TARGET_ATOMIC_TEST_AND_SET_TRUEVAL 0x80
+ 
++#undef TARGET_CANNOT_FORCE_CONST_MEM
++#define TARGET_CANNOT_FORCE_CONST_MEM sh_cannot_force_const_mem_p
++
++#undef TARGET_ASM_RELOC_RW_MASK
++#define TARGET_ASM_RELOC_RW_MASK sh_reloc_rw_mask
++
+ struct gcc_target targetm = TARGET_INITIALIZER;
+ 
+ 
+@@ -1012,6 +1024,11 @@ sh_option_override (void)
+   if (! global_options_set.x_TARGET_ZDCBRANCH && TARGET_HARD_SH4)
+     TARGET_ZDCBRANCH = 1;
+ 
++// FIXME: is this right?
++  if (TARGET_FDPIC
++      && (TARGET_SHMEDIA || TARGET_SHCOMPACT || !TARGET_SH2))
++    sorry ("non-SH2 FDPIC");
++
+   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
+     if (! VALID_REGISTER_P (regno))
+       sh_register_names[regno][0] = '\0';
+@@ -1020,7 +1037,7 @@ sh_option_override (void)
+     if (! VALID_REGISTER_P (ADDREGNAMES_REGNO (regno)))
+       sh_additional_register_names[regno][0] = '\0';
+ 
+-  if ((flag_pic && ! TARGET_PREFERGOT)
++  if (((flag_pic || TARGET_FDPIC) && ! TARGET_PREFERGOT)
+       || (TARGET_SHMEDIA && !TARGET_PT_FIXED))
+     flag_no_function_cse = 1;
+ 
+@@ -1695,6 +1712,14 @@ sh_asm_output_addr_const_extra (FILE *fi
+ 	  output_addr_const (file, XVECEXP (x, 0, 1));
+ 	  fputs ("-.)", file);
+ 	  break;
++	case UNSPEC_GOTFUNCDESC:
++	  output_addr_const (file, XVECEXP (x, 0, 0));
++	  fputs ("@GOTFUNCDESC", file);
++	  break;
++	case UNSPEC_GOTOFFFUNCDESC:
++	  output_addr_const (file, XVECEXP (x, 0, 0));
++	  fputs ("@GOTOFFFUNCDESC", file);
++	  break;
+ 	default:
+ 	  return false;
+ 	}
+@@ -1721,8 +1746,10 @@ sh_encode_section_info (tree decl, rtx r
+ void
+ prepare_move_operands (rtx operands[], machine_mode mode)
+ {
++  rtx tmp, base, offset;
++
+   if ((mode == SImode || mode == DImode)
+-      && flag_pic
++      && (flag_pic || TARGET_FDPIC)
+       && ! ((mode == Pmode || mode == ptr_mode)
+ 	    && tls_symbolic_operand (operands[1], Pmode) != TLS_MODEL_NONE))
+     {
+@@ -1842,7 +1869,7 @@ prepare_move_operands (rtx operands[], m
+ 	{
+ 	  rtx tga_op1, tga_ret, tmp, tmp2;
+ 
+-	  if (! flag_pic
++	  if (! flag_pic && ! TARGET_FDPIC
+ 	      && (tls_kind == TLS_MODEL_GLOBAL_DYNAMIC
+ 		  || tls_kind == TLS_MODEL_LOCAL_DYNAMIC
+ 		  || tls_kind == TLS_MODEL_INITIAL_EXEC))
+@@ -1863,6 +1890,11 @@ prepare_move_operands (rtx operands[], m
+ 	    {
+ 	    case TLS_MODEL_GLOBAL_DYNAMIC:
+ 	      tga_ret = gen_rtx_REG (Pmode, R0_REG);
++	      if (TARGET_FDPIC)
++		{
++		  rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++		  emit_move_insn (pic_reg, OUR_FDPIC_REG);
++		}
+ 	      emit_call_insn (gen_tls_global_dynamic (tga_ret, op1));
+ 	      tmp = gen_reg_rtx (Pmode);
+ 	      emit_move_insn (tmp, tga_ret);
+@@ -1871,6 +1903,11 @@ prepare_move_operands (rtx operands[], m
+ 
+ 	    case TLS_MODEL_LOCAL_DYNAMIC:
+ 	      tga_ret = gen_rtx_REG (Pmode, R0_REG);
++	      if (TARGET_FDPIC)
++		{
++		  rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++		  emit_move_insn (pic_reg, OUR_FDPIC_REG);
++		}
+ 	      emit_call_insn (gen_tls_local_dynamic (tga_ret, op1));
+ 
+ 	      tmp = gen_reg_rtx (Pmode);
+@@ -1888,6 +1925,11 @@ prepare_move_operands (rtx operands[], m
+ 	    case TLS_MODEL_INITIAL_EXEC:
+ 	      tga_op1 = !can_create_pseudo_p () ? op0 : gen_reg_rtx (Pmode);
+ 	      tmp = gen_sym2GOTTPOFF (op1);
++	      if (TARGET_FDPIC)
++		{
++		  rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++		  emit_move_insn (pic_reg, OUR_FDPIC_REG);
++		}
+ 	      emit_insn (gen_tls_initial_exec (tga_op1, tmp));
+ 	      op1 = tga_op1;
+ 	      break;
+@@ -1914,6 +1956,20 @@ prepare_move_operands (rtx operands[], m
+ 	  operands[1] = op1;
+ 	}
+     }
++
++  if (SH_OFFSETS_MUST_BE_WITHIN_SECTIONS_P)
++    {
++      split_const (operands[1], &base, &offset);
++      if (GET_CODE (base) == SYMBOL_REF
++	  && !offset_within_block_p (base, INTVAL (offset)))
++	{
++	  tmp = can_create_pseudo_p () ? gen_reg_rtx (mode) : operands[0];
++	  emit_move_insn (tmp, base);
++	  if (!arith_operand (offset, mode))
++	    offset = force_reg (mode, offset);
++	  emit_insn (gen_add3_insn (operands[0], tmp, offset));
++	}
++    }
+ }
+ 
+ /* Implement the canonicalize_comparison target hook for the combine
+@@ -3018,6 +3074,26 @@ sh_file_start (void)
+     }
+ }
+ 
++/* Implementation of TARGET_ASM_INTEGER for SH.  Pointers to functions
++   need to be output as pointers to function descriptors for
++   FDPIC.  */
++
++static bool
++sh_assemble_integer (rtx value, unsigned int size, int aligned_p)
++{
++  if (TARGET_FDPIC
++      && size == UNITS_PER_WORD
++      && GET_CODE (value) == SYMBOL_REF
++      && SYMBOL_REF_FUNCTION_P (value))
++    {
++      fputs ("\t.long\t", asm_out_file);
++      output_addr_const (asm_out_file, value);
++      fputs ("@FUNCDESC\n", asm_out_file);
++      return true;
++    }
++  return default_assemble_integer (value, size, aligned_p);
++}
++
+ /* Check if PAT includes UNSPEC_CALLER unspec pattern.  */
+ static bool
+ unspec_caller_rtx_p (rtx pat)
+@@ -3044,7 +3120,7 @@ sh_cannot_copy_insn_p (rtx_insn *insn)
+ {
+   rtx pat;
+ 
+-  if (!reload_completed || !flag_pic)
++  if (!reload_completed || (!flag_pic && !TARGET_FDPIC))
+     return false;
+ 
+   if (!NONJUMP_INSN_P (insn))
+@@ -3053,6 +3129,19 @@ sh_cannot_copy_insn_p (rtx_insn *insn)
+     return false;
+ 
+   pat = PATTERN (insn);
++
++  if (GET_CODE (pat) == CLOBBER || GET_CODE (pat) == USE)
++    return false;
++
++  if (TARGET_FDPIC
++      && GET_CODE (pat) == PARALLEL)
++    {
++      rtx t = XVECEXP (pat, 0, XVECLEN (pat, 0) - 1);
++      if (GET_CODE (t) == USE
++	  && unspec_caller_rtx_p (XEXP (t, 0)))
++	return true;
++    }
++
+   if (GET_CODE (pat) != SET)
+     return false;
+   pat = SET_SRC (pat);
+@@ -4027,6 +4116,7 @@ expand_ashiftrt (rtx *operands)
+   rtx wrk;
+   char func[18];
+   int value;
++  rtx lab;
+ 
+   if (TARGET_DYNSHIFT)
+     {
+@@ -4092,8 +4182,8 @@ expand_ashiftrt (rtx *operands)
+   /* Load the value into an arg reg and call a helper.  */
+   emit_move_insn (gen_rtx_REG (SImode, 4), operands[1]);
+   sprintf (func, "__ashiftrt_r4_%d", value);
+-  function_symbol (wrk, func, SFUNC_STATIC);
+-  emit_insn (gen_ashrsi3_n (GEN_INT (value), wrk));
++  function_symbol (wrk, func, SFUNC_STATIC, &lab);
++  emit_insn (gen_ashrsi3_n (GEN_INT (value), wrk, lab));
+   emit_move_insn (operands[0], gen_rtx_REG (SImode, 4));
+   return true;
+ }
+@@ -7941,7 +8031,9 @@ sh_expand_prologue (void)
+       stack_usage += d;
+     }
+ 
+-  if (flag_pic && df_regs_ever_live_p (PIC_OFFSET_TABLE_REGNUM))
++  if (flag_pic
++      && !TARGET_FDPIC
++      && df_regs_ever_live_p (PIC_OFFSET_TABLE_REGNUM))
+     emit_insn (gen_GOTaddr2picreg (const0_rtx));
+ 
+   if (SHMEDIA_REGS_STACK_ADJUST ())
+@@ -7951,7 +8043,7 @@ sh_expand_prologue (void)
+       function_symbol (gen_rtx_REG (Pmode, R0_REG),
+ 		       (TARGET_FPU_ANY
+ 			? "__GCC_push_shmedia_regs"
+-			: "__GCC_push_shmedia_regs_nofpu"), SFUNC_GOT);
++			: "__GCC_push_shmedia_regs_nofpu"), SFUNC_GOT, NULL);
+       emit_insn (gen_shmedia_save_restore_regs_compact
+ 		 (GEN_INT (-SHMEDIA_REGS_STACK_ADJUST ())));
+     }
+@@ -7974,7 +8066,7 @@ sh_expand_prologue (void)
+       /* This must NOT go through the PLT, otherwise mach and macl
+ 	 may be clobbered.  */
+       function_symbol (gen_rtx_REG (Pmode, R0_REG),
+-		      "__GCC_shcompact_incoming_args", SFUNC_GOT);
++		      "__GCC_shcompact_incoming_args", SFUNC_GOT, NULL);
+       emit_insn (gen_shcompact_incoming_args ());
+     }
+ 
+@@ -8064,7 +8156,7 @@ sh_expand_epilogue (bool sibcall_p)
+       function_symbol (gen_rtx_REG (Pmode, R0_REG),
+ 		       (TARGET_FPU_ANY
+ 			? "__GCC_pop_shmedia_regs"
+-			: "__GCC_pop_shmedia_regs_nofpu"), SFUNC_GOT);
++			: "__GCC_pop_shmedia_regs_nofpu"), SFUNC_GOT, NULL);
+       /* This must NOT go through the PLT, otherwise mach and macl
+ 	 may be clobbered.  */
+       emit_insn (gen_shmedia_save_restore_regs_compact
+@@ -10445,7 +10537,9 @@ nonpic_symbol_mentioned_p (rtx x)
+ 	  || XINT (x, 1) == UNSPEC_PLT
+ 	  || XINT (x, 1) == UNSPEC_PCREL
+ 	  || XINT (x, 1) == UNSPEC_SYMOFF
+-	  || XINT (x, 1) == UNSPEC_PCREL_SYMOFF))
++	  || XINT (x, 1) == UNSPEC_PCREL_SYMOFF
++	  || XINT (x, 1) == UNSPEC_GOTFUNCDESC
++	  || XINT (x, 1) == UNSPEC_GOTOFFFUNCDESC))
+     return false;
+ 
+   fmt = GET_RTX_FORMAT (GET_CODE (x));
+@@ -10480,7 +10574,28 @@ legitimize_pic_address (rtx orig, machin
+       if (reg == NULL_RTX)
+ 	reg = gen_reg_rtx (Pmode);
+ 
+-      emit_insn (gen_symGOTOFF2reg (reg, orig));
++      if (TARGET_FDPIC
++	  && GET_CODE (orig) == SYMBOL_REF
++	  && SYMBOL_REF_FUNCTION_P (orig))
++	{
++	  /* Weak functions may be NULL which doesn't work with
++	     GOTOFFFUNCDESC because the runtime offset is not known.  */
++	  if (SYMBOL_REF_WEAK (orig))
++	    emit_insn (gen_symGOTFUNCDESC2reg (reg, orig));
++	  else
++	    emit_insn (gen_symGOTOFFFUNCDESC2reg (reg, orig));
++	}
++      else if (TARGET_FDPIC
++	       && (GET_CODE (orig) == LABEL_REF
++		   || (GET_CODE (orig) == SYMBOL_REF
++		       && SYMBOL_REF_DECL (orig)
++		       && (TREE_READONLY (SYMBOL_REF_DECL (orig))
++		           || SYMBOL_REF_EXTERNAL_P (orig)
++		           || DECL_SECTION_NAME(SYMBOL_REF_DECL(orig))) )))
++	/* In FDPIC, GOTOFF can only be used for writable data.  */
++	emit_insn (gen_symGOT2reg (reg, orig));
++      else
++	emit_insn (gen_symGOTOFF2reg (reg, orig));
+       return reg;
+     }
+   else if (GET_CODE (orig) == SYMBOL_REF)
+@@ -10488,7 +10603,10 @@ legitimize_pic_address (rtx orig, machin
+       if (reg == NULL_RTX)
+ 	reg = gen_reg_rtx (Pmode);
+ 
+-      emit_insn (gen_symGOT2reg (reg, orig));
++      if (TARGET_FDPIC && SYMBOL_REF_FUNCTION_P (orig))
++	emit_insn (gen_symGOTFUNCDESC2reg (reg, orig));
++      else
++	emit_insn (gen_symGOT2reg (reg, orig));
+       return reg;
+     }
+   return orig;
+@@ -11662,20 +11780,40 @@ sh_trampoline_init (rtx tramp_mem, tree
+       emit_insn (gen_initialize_trampoline (tramp, cxt, fnaddr));
+       return;
+     }
+-  emit_move_insn (change_address (tramp_mem, SImode, NULL_RTX),
+-		  gen_int_mode (TARGET_LITTLE_ENDIAN ? 0xd301d202 : 0xd202d301,
+-				SImode));
+-  emit_move_insn (adjust_address (tramp_mem, SImode, 4),
+-		  gen_int_mode (TARGET_LITTLE_ENDIAN ? 0x0009422b : 0x422b0009,
+-				SImode));
+-  emit_move_insn (adjust_address (tramp_mem, SImode, 8), cxt);
+-  emit_move_insn (adjust_address (tramp_mem, SImode, 12), fnaddr);
++  if (TARGET_FDPIC)
++    {
++      rtx a = force_reg (Pmode, plus_constant (Pmode, XEXP (tramp_mem, 0), 8));
++      emit_move_insn (adjust_address (tramp_mem, SImode, 0), a);
++      emit_move_insn (adjust_address (tramp_mem, SImode, 4), OUR_FDPIC_REG);
++      emit_move_insn (adjust_address (tramp_mem, SImode, 8),
++		      gen_int_mode (TARGET_LITTLE_ENDIAN ? 0xd203d302 : 0xd302d203,
++				    SImode));
++      emit_move_insn (adjust_address (tramp_mem, SImode, 12),
++		      gen_int_mode (TARGET_LITTLE_ENDIAN ? 0x5c216122 : 0x61225c21,
++				    SImode));
++      emit_move_insn (adjust_address (tramp_mem, SImode, 16),
++		      gen_int_mode (TARGET_LITTLE_ENDIAN ? 0x0009412b : 0x412b0009,
++				    SImode));
++      emit_move_insn (adjust_address (tramp_mem, SImode, 20), cxt);
++      emit_move_insn (adjust_address (tramp_mem, SImode, 24), fnaddr);
++    }
++  else
++    {
++      emit_move_insn (change_address (tramp_mem, SImode, NULL_RTX),
++		      gen_int_mode (TARGET_LITTLE_ENDIAN ? 0xd301d202 : 0xd202d301,
++				    SImode));
++      emit_move_insn (adjust_address (tramp_mem, SImode, 4),
++		      gen_int_mode (TARGET_LITTLE_ENDIAN ? 0x0009422b : 0x422b0009,
++				    SImode));
++      emit_move_insn (adjust_address (tramp_mem, SImode, 8), cxt);
++      emit_move_insn (adjust_address (tramp_mem, SImode, 12), fnaddr);
++    }
+   if (TARGET_HARD_SH4 || TARGET_SH5)
+     {
+       if (!TARGET_INLINE_IC_INVALIDATE
+ 	  || (!(TARGET_SH4A || TARGET_SH4_300) && TARGET_USERMODE))
+ 	emit_library_call (function_symbol (NULL, "__ic_invalidate",
+-					    FUNCTION_ORDINARY),
++					    FUNCTION_ORDINARY, NULL),
+ 			   LCT_NORMAL, VOIDmode, 1, tramp, SImode);
+       else
+ 	emit_insn (gen_ic_invalidate_line (tramp));
+@@ -12718,10 +12856,18 @@ sh_output_mi_thunk (FILE *file, tree thu
+     sibcall = gen_sibcalli_thunk (funexp, const0_rtx);
+   else
+ #endif
+-  if (TARGET_SH2 && flag_pic)
++  if (TARGET_SH2 && (flag_pic || TARGET_FDPIC))
+     {
+-      sibcall = gen_sibcall_pcrel (funexp, const0_rtx);
+-      XEXP (XVECEXP (sibcall, 0, 2), 0) = scratch2;
++      if (TARGET_FDPIC)
++        {
++	  sibcall = gen_sibcall_pcrel_fdpic (funexp, const0_rtx);
++          XEXP (XVECEXP (sibcall, 0, 3), 0) = scratch2;
++        }
++      else
++        {
++	  sibcall = gen_sibcall_pcrel (funexp, const0_rtx);
++          XEXP (XVECEXP (sibcall, 0, 2), 0) = scratch2;
++        }
+     }
+   else
+     {
+@@ -12762,11 +12908,24 @@ sh_output_mi_thunk (FILE *file, tree thu
+   epilogue_completed = 0;
+ }
+ 
++/* Return an RTX for the address of a function NAME of kind KIND,
++   placing the result in TARGET if not NULL.  LAB should be non-NULL
++   for SFUNC_STATIC, if FDPIC; it will be set to (const_int 0) if jsr
++   should be used, or a label_ref if bsrf should be used.  For FDPIC,
++   both SFUNC_GOT and SFUNC_STATIC will return the address of the
++   function itself, not a function descriptor, so they can only be
++   used with functions not using the FDPIC register that are known to
++   be called directory without a PLT entry.  */
++
+ rtx
+-function_symbol (rtx target, const char *name, enum sh_function_kind kind)
++function_symbol (rtx target, const char *name, enum sh_function_kind kind,
++		 rtx *lab)
+ {
+   rtx sym;
+ 
++  if (lab)
++    *lab = const0_rtx;
++
+   /* If this is not an ordinary function, the name usually comes from a
+      string literal or an sprintf buffer.  Make sure we use the same
+      string consistently, so that cse will be able to unify address loads.  */
+@@ -12774,7 +12933,7 @@ function_symbol (rtx target, const char
+     name = IDENTIFIER_POINTER (get_identifier (name));
+   sym = gen_rtx_SYMBOL_REF (Pmode, name);
+   SYMBOL_REF_FLAGS (sym) = SYMBOL_FLAG_FUNCTION;
+-  if (flag_pic)
++  if (flag_pic || TARGET_FDPIC)
+     switch (kind)
+       {
+       case FUNCTION_ORDINARY:
+@@ -12789,14 +12948,27 @@ function_symbol (rtx target, const char
+ 	}
+       case SFUNC_STATIC:
+ 	{
+-	  /* ??? To allow cse to work, we use GOTOFF relocations.
+-	     We could add combiner patterns to transform this into
+-	     straight pc-relative calls with sym2PIC / bsrf when
+-	     label load and function call are still 1:1 and in the
+-	     same basic block during combine.  */
+ 	  rtx reg = target ? target : gen_reg_rtx (Pmode);
+ 
+-	  emit_insn (gen_symGOTOFF2reg (reg, sym));
++	  if (TARGET_FDPIC)
++	    {
++	      /* We use PC-relative calls, since GOTOFF can only refer
++		 to writable data.  This works along with
++		 sh_sfunc_call.  */
++	      gcc_assert (lab != NULL);
++	      *lab = PATTERN (gen_call_site ());
++	      emit_insn (gen_sym_label2reg (reg, sym, *lab));
++	    }
++	  else
++	    {
++	      /* ??? To allow cse to work, we use GOTOFF relocations.
++		 we could add combiner patterns to transform this into
++		 straight pc-relative calls with sym2PIC / bsrf when
++		 label load and function call are still 1:1 and in the
++		 same basic block during combine.  */
++	      emit_insn (gen_symGOTOFF2reg (reg, sym));
++	    }
++
+ 	  sym = reg;
+ 	  break;
+ 	}
+@@ -13419,6 +13591,12 @@ sh_conditional_register_usage (void)
+       fixed_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
+       call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
+     }
++  if (TARGET_FDPIC)
++    {
++      fixed_regs[PIC_REG] = 1;
++      call_used_regs[PIC_REG] = 1;
++      call_really_used_regs[PIC_REG] = 1;
++    }
+   /* Renesas saves and restores mac registers on call.  */
+   if (TARGET_HITACHI && ! TARGET_NOMACSAVE)
+     {
+@@ -14496,4 +14674,84 @@ sh_use_by_pieces_infrastructure_p (unsig
+     }
+ }
+ 
++bool
++sh_legitimate_constant_p (rtx x)
++{
++  if (SH_OFFSETS_MUST_BE_WITHIN_SECTIONS_P)
++    {
++      rtx base, offset;
++
++      split_const (x, &base, &offset);
++      if (GET_CODE (base) == SYMBOL_REF
++	  && !offset_within_block_p (base, INTVAL (offset)))
++	return false;
++    }
++
++  if (TARGET_FDPIC
++      && (SYMBOLIC_CONST_P (x)
++	  || (GET_CODE (x) == CONST && GET_CODE (XEXP (x, 0)) == PLUS
++	      && SYMBOLIC_CONST_P (XEXP (XEXP (x, 0), 0)))))
++    return false;
++
++  if (TARGET_SHMEDIA)
++    return ((GET_MODE (x) != DFmode
++	     && GET_MODE_CLASS (GET_MODE (x)) != MODE_VECTOR_FLOAT)
++	    || (x) == CONST0_RTX (GET_MODE (x))
++	    || ! TARGET_SHMEDIA_FPU
++	    || TARGET_SHMEDIA64);
++
++  return (GET_CODE (x) != CONST_DOUBLE
++	  || GET_MODE (x) == DFmode || GET_MODE (x) == SFmode
++	  || GET_MODE (x) == DImode || GET_MODE (x) == VOIDmode);
++}
++
++bool
++sh_cannot_force_const_mem_p (machine_mode mode ATTRIBUTE_UNUSED,
++			     rtx x ATTRIBUTE_UNUSED)
++{
++  if (TARGET_FDPIC)
++    return true;
++
++  return false;
++}
++
++/* Emit insns to load the function address from FUNCDESC (an FDPIC
++   function descriptor) into r1 and the GOT address into r12,
++   returning an rtx for r1.  */
++
++rtx
++sh_load_function_descriptor (rtx funcdesc)
++{
++  rtx r1 = gen_rtx_REG (Pmode, R1_REG);
++  rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++  rtx fnaddr = gen_rtx_MEM (Pmode, funcdesc);
++  rtx gotaddr = gen_rtx_MEM (Pmode, plus_constant (Pmode, funcdesc, 4));
++
++  emit_move_insn (r1, fnaddr);
++  /* The ABI requires the entry point address to be loaded first, so
++     prevent the load from being moved after that of the GOT
++     address.  */
++  emit_insn (gen_blockage ());
++  emit_move_insn (pic_reg, gotaddr);
++  return r1;
++}
++
++/* Return an rtx holding the initial value of the FDPIC register (the
++   FDPIC pointer passed in from the caller).  */
++
++rtx
++sh_our_fdpic_reg (void)
++{
++  return get_hard_reg_initial_val (Pmode, PIC_REG);
++}
++
++/* Relocatable data for FDPIC binaries is not permitted in read-only
++   segments.  */
++
++static int
++sh_reloc_rw_mask (void)
++{
++  return (flag_pic || TARGET_FDPIC) ? 3 : 0;
++}
++
+ #include "gt-sh.h"
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.h gcc-5.2.0/gcc/config/sh/sh.h
+--- ../baseline/gcc-5.2.0/gcc/config/sh/sh.h	2015-09-04 20:23:46.711452245 +0000
++++ gcc-5.2.0/gcc/config/sh/sh.h	2015-09-11 02:17:54.210157580 +0000
+@@ -321,7 +321,7 @@ extern int code_for_indirect_jump_scratc
+ #endif
+ 
+ #ifndef SUBTARGET_ASM_SPEC
+-#define SUBTARGET_ASM_SPEC ""
++#define SUBTARGET_ASM_SPEC "%{!mno-fdpic:--fdpic}"
+ #endif
+ 
+ #if TARGET_ENDIAN_DEFAULT == MASK_LITTLE_ENDIAN
+@@ -349,7 +349,7 @@ extern int code_for_indirect_jump_scratc
+ #define ASM_ISA_DEFAULT_SPEC ""
+ #endif /* MASK_SH5 */
+ 
+-#define SUBTARGET_LINK_EMUL_SUFFIX ""
++#define SUBTARGET_LINK_EMUL_SUFFIX "%{mfdpic:_fd}"
+ #define SUBTARGET_LINK_SPEC ""
+ 
+ /* Go via SH_LINK_SPEC to avoid code replication.  */
+@@ -383,8 +383,18 @@ extern int code_for_indirect_jump_scratc
+ "%{m2a*:%eSH2a does not support little-endian}}"
+ #endif
+ 
++#ifdef FDPIC_DEFAULT
++#define FDPIC_SELF_SPECS "%{!mno-fdpic:-mfdpic}"
++#else
++#define FDPIC_SELF_SPECS
++#endif
++
+ #undef DRIVER_SELF_SPECS
+-#define DRIVER_SELF_SPECS UNSUPPORTED_SH2A
++#define DRIVER_SELF_SPECS UNSUPPORTED_SH2A SUBTARGET_DRIVER_SELF_SPECS \
++  FDPIC_SELF_SPECS
++
++#undef SUBTARGET_DRIVER_SELF_SPECS
++#define SUBTARGET_DRIVER_SELF_SPECS
+ 
+ #define ASSEMBLER_DIALECT assembler_dialect
+ 
+@@ -942,6 +952,14 @@ extern char sh_additional_register_names
+    code access to data items.  */
+ #define PIC_OFFSET_TABLE_REGNUM	(flag_pic ? PIC_REG : INVALID_REGNUM)
+ 
++/* For FDPIC, the FDPIC register is call-clobbered (otherwise PLT
++   entries would need to handle saving and restoring it).  */
++#define PIC_OFFSET_TABLE_REG_CALL_CLOBBERED TARGET_FDPIC
++
++/* An rtx holding the initial value of the FDPIC register (the FDPIC
++   pointer passed in from the caller).  */
++#define OUR_FDPIC_REG		sh_our_fdpic_reg ()
++
+ #define GOT_SYMBOL_NAME "*_GLOBAL_OFFSET_TABLE_"
+ 
+ /* Definitions for register eliminations.
+@@ -1566,7 +1584,9 @@ struct sh_args {
+    6 000c 00000000 	l2:	.long   function  */
+ 
+ /* Length in units of the trampoline for entering a nested function.  */
+-#define TRAMPOLINE_SIZE  (TARGET_SHMEDIA64 ? 40 : TARGET_SH5 ? 24 : 16)
++// FIXME: what happens if someone tries fdpic on SH5?
++#define TRAMPOLINE_SIZE \
++  (TARGET_SHMEDIA64 ? 40 : TARGET_SH5 ? 24 : TARGET_FDPIC ? 32 : 16)
+ 
+ /* Alignment required for a trampoline in bits.  */
+ #define TRAMPOLINE_ALIGNMENT \
+@@ -1622,6 +1642,11 @@ struct sh_args {
+       || GENERAL_REGISTER_P ((unsigned) reg_renumber[(REGNO)])) \
+    : (REGNO) == R0_REG || (unsigned) reg_renumber[(REGNO)] == R0_REG)
+ 
++/* True if SYMBOL + OFFSET constants must refer to something within
++   SYMBOL's section.  */
++// FIXME: is this correct?
++#define SH_OFFSETS_MUST_BE_WITHIN_SECTIONS_P TARGET_FDPIC
++
+ /* Maximum number of registers that can appear in a valid memory
+    address.  */
+ #define MAX_REGS_PER_ADDRESS 2
+@@ -2262,9 +2287,12 @@ extern int current_function_interrupt;
+ /* We have to distinguish between code and data, so that we apply
+    datalabel where and only where appropriate.  Use sdataN for data.  */
+ #define ASM_PREFERRED_EH_DATA_FORMAT(CODE, GLOBAL) \
+- ((flag_pic && (GLOBAL) ? DW_EH_PE_indirect : 0) \
+-  | (flag_pic ? DW_EH_PE_pcrel : DW_EH_PE_absptr) \
+-  | ((CODE) ? 0 : (TARGET_SHMEDIA64 ? DW_EH_PE_sdata8 : DW_EH_PE_sdata4)))
++  ((TARGET_FDPIC \
++    ? ((GLOBAL) ? DW_EH_PE_indirect | DW_EH_PE_datarel \
++       : DW_EH_PE_pcrel) \
++    : ((flag_pic && (GLOBAL) ? DW_EH_PE_indirect : 0) \
++       | (flag_pic ? DW_EH_PE_pcrel : DW_EH_PE_absptr))) \
++   | ((CODE) ? 0 : (TARGET_SHMEDIA64 ? DW_EH_PE_sdata8 : DW_EH_PE_sdata4)))
+ 
+ /* Handle special EH pointer encodings.  Absolute, pc-relative, and
+    indirect are handled automatically.  */
+@@ -2277,6 +2305,17 @@ extern int current_function_interrupt;
+ 	SYMBOL_REF_FLAGS (ADDR) |= SYMBOL_FLAG_FUNCTION; \
+ 	if (0) goto DONE; \
+       } \
++    if (TARGET_FDPIC \
++        && ((ENCODING) & 0xf0) == (DW_EH_PE_indirect | DW_EH_PE_datarel)) \
++      { \
++        fputs ("\t.ualong ", FILE); \
++        output_addr_const (FILE, ADDR); \
++        if (GET_CODE (ADDR) == SYMBOL_REF && SYMBOL_REF_FUNCTION_P (ADDR)) \
++          fputs ("@GOTFUNCDESC", FILE); \
++        else \
++          fputs ("@GOT", FILE); \
++        goto DONE; \
++      } \
+   } while (0)
+ 
+ #if (defined CRT_BEGIN || defined CRT_END) && ! __SHMEDIA__
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.md
+--- ../baseline/gcc-5.2.0/gcc/config/sh/sh.md	2015-09-04 20:23:46.704785579 +0000
++++ gcc-5.2.0/gcc/config/sh/sh.md	2015-09-03 22:30:13.462560589 +0000
+@@ -100,6 +100,7 @@
+   (R8_REG	8)
+   (R9_REG	9)
+   (R10_REG	10)
++  (R12_REG	12)
+   (R20_REG	20)
+   (R21_REG	21)
+   (R22_REG	22)
+@@ -170,6 +171,9 @@
+   UNSPEC_SYMOFF
+   ;; (unspec [OFFSET ANCHOR] UNSPEC_PCREL_SYMOFF) == OFFSET - (ANCHOR - .).
+   UNSPEC_PCREL_SYMOFF
++  ;; For FDPIC
++  UNSPEC_GOTFUNCDESC
++  UNSPEC_GOTOFFFUNCDESC
+   ;; Misc builtins
+   UNSPEC_BUILTIN_STRLEN
+ ])
+@@ -2495,15 +2499,18 @@
+ ;; This reload would clobber the value in r0 we are trying to store.
+ ;; If we let reload allocate r0, then this problem can never happen.
+ (define_insn "udivsi3_i1"
+-  [(set (match_operand:SI 0 "register_operand" "=z")
++  [(set (match_operand:SI 0 "register_operand" "=z,z")
+ 	(udiv:SI (reg:SI R4_REG) (reg:SI R5_REG)))
+    (clobber (reg:SI T_REG))
+    (clobber (reg:SI PR_REG))
+    (clobber (reg:SI R1_REG))
+    (clobber (reg:SI R4_REG))
+-   (use (match_operand:SI 1 "arith_reg_operand" "r"))]
++   (use (match_operand:SI 1 "arith_reg_operand" "r,r"))
++   (use (match_operand 2 "" "Z,Ccl"))]
+   "TARGET_SH1 && TARGET_DIVIDE_CALL_DIV1"
+-  "jsr	@%1%#"
++  "@
++   jsr	@%1%#
++   bsrf	%1\\n%O2:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+@@ -2552,7 +2559,7 @@
+ })
+ 
+ (define_insn "udivsi3_i4"
+-  [(set (match_operand:SI 0 "register_operand" "=y")
++  [(set (match_operand:SI 0 "register_operand" "=y,y")
+ 	(udiv:SI (reg:SI R4_REG) (reg:SI R5_REG)))
+    (clobber (reg:SI T_REG))
+    (clobber (reg:SI PR_REG))
+@@ -2564,16 +2571,19 @@
+    (clobber (reg:SI R4_REG))
+    (clobber (reg:SI R5_REG))
+    (clobber (reg:SI FPSCR_STAT_REG))
+-   (use (match_operand:SI 1 "arith_reg_operand" "r"))
++   (use (match_operand:SI 1 "arith_reg_operand" "r,r"))
++   (use (match_operand 2 "" "Z,Ccl"))
+    (use (reg:SI FPSCR_MODES_REG))]
+   "TARGET_FPU_DOUBLE && ! TARGET_FPU_SINGLE"
+-  "jsr	@%1%#"
++  "@
++   jsr	@%1%#
++   bsrf	%1\\n%O2:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "fp_mode" "double")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+ (define_insn "udivsi3_i4_single"
+-  [(set (match_operand:SI 0 "register_operand" "=y")
++  [(set (match_operand:SI 0 "register_operand" "=y,y")
+ 	(udiv:SI (reg:SI R4_REG) (reg:SI R5_REG)))
+    (clobber (reg:SI T_REG))
+    (clobber (reg:SI PR_REG))
+@@ -2584,10 +2594,13 @@
+    (clobber (reg:SI R1_REG))
+    (clobber (reg:SI R4_REG))
+    (clobber (reg:SI R5_REG))
+-   (use (match_operand:SI 1 "arith_reg_operand" "r"))]
++   (use (match_operand:SI 1 "arith_reg_operand" "r,r"))
++   (use (match_operand 2 "" "Z,Ccl"))]
+   "(TARGET_FPU_SINGLE_ONLY || TARGET_FPU_DOUBLE || TARGET_SHCOMPACT)
+    && TARGET_FPU_SINGLE"
+-  "jsr	@%1%#"
++  "@
++   jsr	@%1%#
++   bsrf	%1\\n%O2:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+@@ -2641,16 +2654,17 @@
+ 	  emit_move_insn (operands[0], operands[2]);
+ 	  DONE;
+ 	}
+-      function_symbol (operands[3], "__udivsi3_i4i", SFUNC_GOT);
++      function_symbol (operands[3], "__udivsi3_i4i", SFUNC_GOT, NULL);
+       last = gen_udivsi3_i4_int (operands[0], operands[3]);
+     }
+   else if (TARGET_DIVIDE_CALL_FP)
+     {
+-      function_symbol (operands[3], "__udivsi3_i4", SFUNC_STATIC);
++      rtx lab;
++      function_symbol (operands[3], "__udivsi3_i4", SFUNC_STATIC, &lab);
+       if (TARGET_FPU_SINGLE)
+-	last = gen_udivsi3_i4_single (operands[0], operands[3]);
++	last = gen_udivsi3_i4_single (operands[0], operands[3], lab);
+       else
+-	last = gen_udivsi3_i4 (operands[0], operands[3]);
++	last = gen_udivsi3_i4 (operands[0], operands[3], lab);
+     }
+   else if (TARGET_SHMEDIA_FPU)
+     {
+@@ -2670,19 +2684,20 @@
+     {
+       function_symbol (operands[3],
+ 		       TARGET_FPU_ANY ? "__udivsi3_i4" : "__udivsi3",
+-		       SFUNC_STATIC);
++		       SFUNC_STATIC, NULL);
+ 
+       if (TARGET_SHMEDIA)
+ 	last = gen_udivsi3_i1_media (operands[0], operands[3]);
+       else if (TARGET_FPU_ANY)
+-	last = gen_udivsi3_i4_single (operands[0], operands[3]);
++	last = gen_udivsi3_i4_single (operands[0], operands[3], const0_rtx);
+       else
+-	last = gen_udivsi3_i1 (operands[0], operands[3]);
++	last = gen_udivsi3_i1 (operands[0], operands[3], const0_rtx);
+     }
+   else
+     {
+-      function_symbol (operands[3], "__udivsi3", SFUNC_STATIC);
+-      last = gen_udivsi3_i1 (operands[0], operands[3]);
++      rtx lab;
++      function_symbol (operands[3], \"__udivsi3\", SFUNC_STATIC, &lab);
++      last = gen_udivsi3_i1 (operands[0], operands[3], lab);
+     }
+   emit_move_insn (gen_rtx_REG (SImode, 4), operands[1]);
+   emit_move_insn (gen_rtx_REG (SImode, 5), operands[2]);
+@@ -2810,7 +2825,7 @@
+       emit_move_insn (gen_rtx_REG (DImode, R20_REG), x);
+       break;
+     }
+-  sym = function_symbol (NULL, name, kind);
++  sym = function_symbol (NULL, name, kind, NULL);
+   emit_insn (gen_divsi3_media_2 (operands[0], sym));
+   DONE;
+ }
+@@ -2830,31 +2845,37 @@
+ })
+ 
+ (define_insn "divsi3_i4"
+-  [(set (match_operand:SI 0 "register_operand" "=y")
++  [(set (match_operand:SI 0 "register_operand" "=y,y")
+ 	(div:SI (reg:SI R4_REG) (reg:SI R5_REG)))
+    (clobber (reg:SI PR_REG))
+    (clobber (reg:DF DR0_REG))
+    (clobber (reg:DF DR2_REG))
+    (clobber (reg:SI FPSCR_STAT_REG))
+-   (use (match_operand:SI 1 "arith_reg_operand" "r"))
++   (use (match_operand:SI 1 "arith_reg_operand" "r,r"))
++   (use (match_operand 2 "" "Z,Ccl"))
+    (use (reg:SI FPSCR_MODES_REG))]
+   "TARGET_FPU_DOUBLE && ! TARGET_FPU_SINGLE"
+-  "jsr	@%1%#"
++  "@
++   jsr	@%1%#
++   bsrf	%1\\n%O2:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "fp_mode" "double")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+ (define_insn "divsi3_i4_single"
+-  [(set (match_operand:SI 0 "register_operand" "=y")
++  [(set (match_operand:SI 0 "register_operand" "=y,y")
+ 	(div:SI (reg:SI R4_REG) (reg:SI R5_REG)))
+    (clobber (reg:SI PR_REG))
+    (clobber (reg:DF DR0_REG))
+    (clobber (reg:DF DR2_REG))
+    (clobber (reg:SI R2_REG))
+-   (use (match_operand:SI 1 "arith_reg_operand" "r"))]
++   (use (match_operand:SI 1 "arith_reg_operand" "r,r"))
++   (use (match_operand 2 "" "Z,Ccl"))]
+   "(TARGET_FPU_SINGLE_ONLY || TARGET_FPU_DOUBLE || TARGET_SHCOMPACT)
+    && TARGET_FPU_SINGLE"
+-  "jsr	@%1%#"
++  "@
++   jsr	@%1%#
++   bsrf	%1\\n%O2:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+@@ -2893,16 +2914,17 @@
+   /* Emit the move of the address to a pseudo outside of the libcall.  */
+   if (TARGET_DIVIDE_CALL_TABLE)
+     {
+-      function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_GOT);
++      function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_GOT, NULL);
+       last = gen_divsi3_i4_int (operands[0], operands[3]);
+     }
+   else if (TARGET_DIVIDE_CALL_FP)
+     {
+-      function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_STATIC);
++      rtx lab;
++      function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_STATIC, &lab);
+       if (TARGET_FPU_SINGLE)
+-	last = gen_divsi3_i4_single (operands[0], operands[3]);
++	last = gen_divsi3_i4_single (operands[0], operands[3], lab);
+       else
+-	last = gen_divsi3_i4 (operands[0], operands[3]);
++	last = gen_divsi3_i4 (operands[0], operands[3], lab);
+     }
+   else if (TARGET_SH2A)
+     {
+@@ -3007,23 +3029,23 @@
+ 	  emit_move_insn (gen_rtx_REG (Pmode, R20_REG), tab_base);
+ 	}
+       if (TARGET_FPU_ANY && TARGET_SH1)
+-	function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_STATIC);
++	function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_STATIC, NULL);
+       else if (TARGET_DIVIDE_CALL2)
+-	function_symbol (operands[3], "__sdivsi3_2", SFUNC_STATIC);
++	function_symbol (operands[3], "__sdivsi3_2", SFUNC_STATIC, NULL);
+       else
+-	function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_GOT);
++	function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_GOT, NULL);
+ 
+       if (TARGET_SHMEDIA)
+ 	last = ((TARGET_DIVIDE_CALL2 ? gen_divsi3_media_2 : gen_divsi3_i1_media)
+ 		(operands[0], operands[3]));
+       else if (TARGET_FPU_ANY)
+-	last = gen_divsi3_i4_single (operands[0], operands[3]);
++	last = gen_divsi3_i4_single (operands[0], operands[3], const0_rtx);
+       else
+ 	last = gen_divsi3_i1 (operands[0], operands[3]);
+     }
+   else
+     {
+-      function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_GOT);
++      function_symbol (operands[3], sh_divsi3_libfunc, SFUNC_GOT, NULL);
+       last = gen_divsi3_i1 (operands[0], operands[3]);
+     }
+   emit_move_insn (gen_rtx_REG (SImode, 4), operands[1]);
+@@ -3617,7 +3639,7 @@ label:
+     {
+       /* The address must be set outside the libcall,
+ 	 since it goes into a pseudo.  */
+-      rtx sym = function_symbol (NULL, "__mulsi3", SFUNC_STATIC);
++      rtx sym = function_symbol (NULL, "__mulsi3", SFUNC_STATIC, NULL);
+       rtx addr = force_reg (SImode, sym);
+       rtx insns = gen_mulsi3_call (operands[0], operands[1],
+ 				   operands[2], addr);
+@@ -4873,7 +4895,7 @@ label:
+     {
+       emit_move_insn (gen_rtx_REG (SImode, R4_REG), operands[1]);
+       rtx funcaddr = gen_reg_rtx (Pmode);
+-      function_symbol (funcaddr, "__ashlsi3_r0", SFUNC_STATIC);
++      function_symbol (funcaddr, "__ashlsi3_r0", SFUNC_STATIC, NULL);
+       emit_insn (gen_ashlsi3_d_call (operands[0], operands[2], funcaddr));
+ 
+       DONE;
+@@ -5277,12 +5299,15 @@ label:
+ (define_insn "ashrsi3_n"
+   [(set (reg:SI R4_REG)
+ 	(ashiftrt:SI (reg:SI R4_REG)
+-		     (match_operand:SI 0 "const_int_operand" "i")))
++		     (match_operand:SI 0 "const_int_operand" "i,i")))
+    (clobber (reg:SI T_REG))
+    (clobber (reg:SI PR_REG))
+-   (use (match_operand:SI 1 "arith_reg_operand" "r"))]
++   (use (match_operand:SI 1 "arith_reg_operand" "r,r"))
++   (use (match_operand 2 "" "Z,Ccl"))]
+   "TARGET_SH1"
+-  "jsr	@%1%#"
++  "@
++   jsr	@%1%#
++   bsrf	%1\\n%O2:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+@@ -5435,7 +5460,7 @@ label:
+     {
+       emit_move_insn (gen_rtx_REG (SImode, R4_REG), operands[1]);
+       rtx funcaddr = gen_reg_rtx (Pmode);
+-      function_symbol (funcaddr, "__lshrsi3_r0", SFUNC_STATIC);
++      function_symbol (funcaddr, "__lshrsi3_r0", SFUNC_STATIC, NULL);
+       emit_insn (gen_lshrsi3_d_call (operands[0], operands[2], funcaddr));
+       DONE;
+     }
+@@ -7218,7 +7243,8 @@ label:
+     }
+   else if (TARGET_SHCOMPACT)
+     {
+-      operands[1] = function_symbol (NULL, "__ic_invalidate", SFUNC_STATIC);
++      operands[1] = function_symbol (NULL, "__ic_invalidate", SFUNC_STATIC,
++				     NULL);
+       operands[1] = force_reg (Pmode, operands[1]);
+       emit_insn (gen_ic_invalidate_line_compact (operands[0], operands[1]));
+       DONE;
+@@ -7300,7 +7326,7 @@ label:
+ 
+   tramp = force_reg (Pmode, operands[0]);
+   sfun = force_reg (Pmode, function_symbol (NULL, "__init_trampoline",
+-					    SFUNC_STATIC));
++					    SFUNC_STATIC, NULL));
+   emit_move_insn (gen_rtx_REG (SImode, R2_REG), operands[1]);
+   emit_move_insn (gen_rtx_REG (SImode, R3_REG), operands[2]);
+ 
+@@ -9342,7 +9368,27 @@ label:
+ 	 (match_operand 1 "" ""))
+    (use (reg:SI FPSCR_MODES_REG))
+    (clobber (reg:SI PR_REG))]
+-  "TARGET_SH1"
++  "TARGET_SH1 && !TARGET_FDPIC"
++{
++  if (TARGET_SH2A && (dbr_sequence_length () == 0))
++    return "jsr/n	@%0";
++  else
++    return "jsr	@%0%#";
++}
++  [(set_attr "type" "call")
++   (set (attr "fp_mode")
++	(if_then_else (eq_attr "fpu_single" "yes")
++		      (const_string "single") (const_string "double")))
++   (set_attr "needs_delay_slot" "yes")
++   (set_attr "fp_set" "unknown")])
++
++(define_insn "calli_fdpic"
++  [(call (mem:SI (match_operand:SI 0 "arith_reg_operand" "r"))
++	 (match_operand 1 "" ""))
++   (use (reg:SI FPSCR_MODES_REG))
++   (use (reg:SI PIC_REG))
++   (clobber (reg:SI PR_REG))]
++  "TARGET_SH1 && TARGET_FDPIC"
+ {
+   if (TARGET_SH2A && (dbr_sequence_length () == 0))
+     return "jsr/n	@%0";
+@@ -9471,7 +9517,28 @@ label:
+ 	      (match_operand 2 "" "")))
+    (use (reg:SI FPSCR_MODES_REG))
+    (clobber (reg:SI PR_REG))]
+-  "TARGET_SH1"
++  "TARGET_SH1 && !TARGET_FDPIC"
++{
++  if (TARGET_SH2A && (dbr_sequence_length () == 0))
++    return "jsr/n	@%1";
++  else
++    return "jsr	@%1%#";
++}
++  [(set_attr "type" "call")
++   (set (attr "fp_mode")
++	(if_then_else (eq_attr "fpu_single" "yes")
++		      (const_string "single") (const_string "double")))
++   (set_attr "needs_delay_slot" "yes")
++   (set_attr "fp_set" "unknown")])
++
++(define_insn "call_valuei_fdpic"
++  [(set (match_operand 0 "" "=rf")
++	(call (mem:SI (match_operand:SI 1 "arith_reg_operand" "r"))
++	      (match_operand 2 "" "")))
++   (use (reg:SI FPSCR_REG))
++   (use (reg:SI PIC_REG))
++   (clobber (reg:SI PR_REG))]
++  "TARGET_SH1 && TARGET_FDPIC"
+ {
+   if (TARGET_SH2A && (dbr_sequence_length () == 0))
+     return "jsr/n	@%1";
+@@ -9608,6 +9675,12 @@ label:
+ 	      (clobber (reg:SI PR_REG))])]
+   ""
+ {
++  if (TARGET_FDPIC)
++    {
++      rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++      emit_move_insn (pic_reg, OUR_FDPIC_REG);
++    }
++
+   if (TARGET_SHMEDIA)
+     {
+       operands[0] = shmedia_prepare_call_address (operands[0], 0);
+@@ -9643,7 +9716,8 @@ label:
+       emit_insn (gen_force_mode_for_call ());
+ 
+       operands[0]
+-	= function_symbol (NULL, "__GCC_shcompact_call_trampoline", SFUNC_GOT);
++	= function_symbol (NULL, "__GCC_shcompact_call_trampoline",
++			   SFUNC_GOT, NULL);
+       operands[0] = force_reg (SImode, operands[0]);
+ 
+       emit_move_insn (r0, func);
+@@ -9667,7 +9741,7 @@ label:
+       emit_insn (gen_symGOTPLT2reg (reg, XEXP (operands[0], 0)));
+       XEXP (operands[0], 0) = reg;
+     }
+-  if (!flag_pic && TARGET_SH2A
++  if (!flag_pic && !TARGET_FDPIC && TARGET_SH2A
+       && MEM_P (operands[0])
+       && GET_CODE (XEXP (operands[0], 0)) == SYMBOL_REF)
+     {
+@@ -9678,7 +9752,7 @@ label:
+ 	  DONE;
+ 	}
+     }
+-  if (flag_pic && TARGET_SH2
++  if ((flag_pic || TARGET_FDPIC) && TARGET_SH2
+       && MEM_P (operands[0])
+       && GET_CODE (XEXP (operands[0], 0)) == SYMBOL_REF)
+     {
+@@ -9691,7 +9765,13 @@ label:
+     operands[1] = operands[2];
+   }
+ 
+-  emit_call_insn (gen_calli (operands[0], operands[1]));
++  if (TARGET_FDPIC)
++    {
++      operands[0] = sh_load_function_descriptor (operands[0]);
++      emit_call_insn (gen_calli_fdpic (operands[0], operands[1]));
++    }
++  else
++    emit_call_insn (gen_calli (operands[0], operands[1]));
+   DONE;
+ })
+ 
+@@ -9771,7 +9851,7 @@ label:
+   emit_insn (gen_force_mode_for_call ());
+ 
+   operands[0] = function_symbol (NULL, "__GCC_shcompact_call_trampoline",
+-				 SFUNC_GOT);
++				 SFUNC_GOT, NULL);
+   operands[0] = force_reg (SImode, operands[0]);
+ 
+   emit_move_insn (r0, func);
+@@ -9796,6 +9876,12 @@ label:
+ 	      (clobber (reg:SI PR_REG))])]
+   ""
+ {
++  if (TARGET_FDPIC)
++    {
++      rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++      emit_move_insn (pic_reg, OUR_FDPIC_REG);
++    }
++
+   if (TARGET_SHMEDIA)
+     {
+       operands[1] = shmedia_prepare_call_address (operands[1], 0);
+@@ -9832,7 +9918,8 @@ label:
+       emit_insn (gen_force_mode_for_call ());
+ 
+       operands[1]
+-	= function_symbol (NULL, "__GCC_shcompact_call_trampoline", SFUNC_GOT);
++	= function_symbol (NULL, "__GCC_shcompact_call_trampoline",
++			   SFUNC_GOT, NULL);
+       operands[1] = force_reg (SImode, operands[1]);
+ 
+       emit_move_insn (r0, func);
+@@ -9858,7 +9945,7 @@ label:
+       emit_insn (gen_symGOTPLT2reg (reg, XEXP (operands[1], 0)));
+       XEXP (operands[1], 0) = reg;
+     }
+-  if (!flag_pic && TARGET_SH2A
++  if (!flag_pic && !TARGET_FDPIC && TARGET_SH2A
+       && MEM_P (operands[1])
+       && GET_CODE (XEXP (operands[1], 0)) == SYMBOL_REF)
+     {
+@@ -9869,7 +9956,7 @@ label:
+ 	  DONE;
+ 	}
+     }
+-  if (flag_pic && TARGET_SH2
++  if ((flag_pic || TARGET_FDPIC) && TARGET_SH2
+       && MEM_P (operands[1])
+       && GET_CODE (XEXP (operands[1], 0)) == SYMBOL_REF)
+     {
+@@ -9880,7 +9967,14 @@ label:
+   else
+     operands[1] = force_reg (SImode, XEXP (operands[1], 0));
+ 
+-  emit_call_insn (gen_call_valuei (operands[0], operands[1], operands[2]));
++  if (TARGET_FDPIC)
++    {
++      operands[1] = sh_load_function_descriptor (operands[1]);
++      emit_call_insn (gen_call_valuei_fdpic (operands[0], operands[1],
++					     operands[2]));
++    }
++  else
++    emit_call_insn (gen_call_valuei (operands[0], operands[1], operands[2]));
+   DONE;
+ })
+ 
+@@ -9889,7 +9983,21 @@ label:
+ 	 (match_operand 1 "" ""))
+    (use (reg:SI FPSCR_MODES_REG))
+    (return)]
+-  "TARGET_SH1"
++  "TARGET_SH1 && !TARGET_FDPIC"
++  "jmp	@%0%#"
++  [(set_attr "needs_delay_slot" "yes")
++   (set (attr "fp_mode")
++	(if_then_else (eq_attr "fpu_single" "yes")
++		      (const_string "single") (const_string "double")))
++   (set_attr "type" "jump_ind")])
++
++(define_insn "sibcalli_fdpic"
++  [(call (mem:SI (match_operand:SI 0 "register_operand" "k"))
++	 (match_operand 1 "" ""))
++   (use (reg:SI FPSCR_MODES_REG))
++   (use (reg:SI PIC_REG))
++   (return)]
++  "TARGET_SH1 && TARGET_FDPIC"
+   "jmp	@%0%#"
+   [(set_attr "needs_delay_slot" "yes")
+    (set (attr "fp_mode")
+@@ -9903,7 +10011,25 @@ label:
+    (use (match_operand 2 "" ""))
+    (use (reg:SI FPSCR_MODES_REG))
+    (return)]
+-  "TARGET_SH2"
++  "TARGET_SH2 && !TARGET_FDPIC"
++{
++  return       "braf	%0"	"\n"
++	 "%O2:%#";
++}
++  [(set_attr "needs_delay_slot" "yes")
++   (set (attr "fp_mode")
++	(if_then_else (eq_attr "fpu_single" "yes")
++		      (const_string "single") (const_string "double")))
++   (set_attr "type" "jump_ind")])
++
++(define_insn "sibcalli_pcrel_fdpic"
++  [(call (mem:SI (match_operand:SI 0 "arith_reg_operand" "k"))
++	 (match_operand 1 "" ""))
++   (use (match_operand 2 "" ""))
++   (use (reg:SI FPSCR_MODES_REG))
++   (use (reg:SI PIC_REG))
++   (return)]
++  "TARGET_SH2 && TARGET_FDPIC"
+ {
+   return       "braf	%0"	"\n"
+ 	 "%O2:%#";
+@@ -9936,7 +10062,7 @@ label:
+    (use (reg:SI FPSCR_MODES_REG))
+    (clobber (match_scratch:SI 2 "=k"))
+    (return)]
+-  "TARGET_SH2"
++  "TARGET_SH2 && !TARGET_FDPIC"
+   "#"
+   "reload_completed"
+   [(const_int 0)]
+@@ -9956,6 +10082,33 @@ label:
+ 		      (const_string "single") (const_string "double")))
+    (set_attr "type" "jump_ind")])
+ 
++(define_insn_and_split "sibcall_pcrel_fdpic"
++  [(call (mem:SI (match_operand:SI 0 "symbol_ref_operand" ""))
++	 (match_operand 1 "" ""))
++   (use (reg:SI FPSCR_MODES_REG))
++   (use (reg:SI PIC_REG))
++   (clobber (match_scratch:SI 2 "=k"))
++   (return)]
++  "TARGET_SH2 && TARGET_FDPIC"
++  "#"
++  "reload_completed"
++  [(const_int 0)]
++{
++  rtx lab = PATTERN (gen_call_site ());
++  rtx call_insn;
++
++  emit_insn (gen_sym_label2reg (operands[2], operands[0], lab));
++  call_insn = emit_call_insn (gen_sibcalli_pcrel_fdpic (operands[2], operands[1],
++						  copy_rtx (lab)));
++  SIBLING_CALL_P (call_insn) = 1;
++  DONE;
++}
++  [(set_attr "needs_delay_slot" "yes")
++   (set (attr "fp_mode")
++	(if_then_else (eq_attr "fpu_single" "yes")
++		      (const_string "single") (const_string "double")))
++   (set_attr "type" "jump_ind")])
++
+ (define_insn "sibcall_compact"
+   [(call (mem:SI (match_operand:SI 0 "register_operand" "k,k"))
+ 	 (match_operand 1 "" ""))
+@@ -10000,6 +10153,12 @@ label:
+      (return)])]
+   ""
+ {
++  if (TARGET_FDPIC)
++    {
++      rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++      emit_move_insn (pic_reg, OUR_FDPIC_REG);
++    }
++
+   if (TARGET_SHMEDIA)
+     {
+       operands[0] = shmedia_prepare_call_address (operands[0], 1);
+@@ -10045,7 +10204,8 @@ label:
+       emit_insn (gen_force_mode_for_call ());
+ 
+       operands[0]
+-	= function_symbol (NULL, "__GCC_shcompact_call_trampoline", SFUNC_GOT);
++	= function_symbol (NULL, "__GCC_shcompact_call_trampoline",
++			   SFUNC_GOT, NULL);
+       operands[0] = force_reg (SImode, operands[0]);
+ 
+       /* We don't need a return trampoline, since the callee will
+@@ -10071,7 +10231,7 @@ label:
+       emit_insn (gen_symGOT2reg (reg, XEXP (operands[0], 0)));
+       XEXP (operands[0], 0) = reg;
+     }
+-  if (flag_pic && TARGET_SH2
++  if ((flag_pic || TARGET_FDPIC) && TARGET_SH2
+       && MEM_P (operands[0])
+       && GET_CODE (XEXP (operands[0], 0)) == SYMBOL_REF
+       /* The PLT needs the PIC register, but the epilogue would have
+@@ -10079,13 +10239,24 @@ label:
+ 	 static functions.  */
+       && SYMBOL_REF_LOCAL_P (XEXP (operands[0], 0)))
+     {
+-      emit_call_insn (gen_sibcall_pcrel (XEXP (operands[0], 0), operands[1]));
++      if (TARGET_FDPIC)
++        emit_call_insn (gen_sibcall_pcrel_fdpic (XEXP (operands[0], 0),
++       	                                         operands[1]));
++      else
++        emit_call_insn (gen_sibcall_pcrel (XEXP (operands[0], 0),
++                                           operands[1]));
+       DONE;
+     }
+   else
+     operands[0] = force_reg (SImode, XEXP (operands[0], 0));
+ 
+-  emit_call_insn (gen_sibcalli (operands[0], operands[1]));
++  if (TARGET_FDPIC)
++    {
++      operands[0] = sh_load_function_descriptor (operands[0]);
++      emit_call_insn (gen_sibcalli_fdpic (operands[0], operands[1]));
++    }
++  else
++    emit_call_insn (gen_sibcalli (operands[0], operands[1]));
+   DONE;
+ })
+ 
+@@ -10095,7 +10266,22 @@ label:
+ 	      (match_operand 2 "" "")))
+    (use (reg:SI FPSCR_MODES_REG))
+    (return)]
+-  "TARGET_SH1"
++  "TARGET_SH1 && !TARGET_FDPIC"
++  "jmp	@%1%#"
++  [(set_attr "needs_delay_slot" "yes")
++   (set (attr "fp_mode")
++	(if_then_else (eq_attr "fpu_single" "yes")
++		      (const_string "single") (const_string "double")))
++   (set_attr "type" "jump_ind")])
++
++(define_insn "sibcall_valuei_fdpic"
++  [(set (match_operand 0 "" "=rf")
++	(call (mem:SI (match_operand:SI 1 "register_operand" "k"))
++	      (match_operand 2 "" "")))
++   (use (reg:SI FPSCR_MODES_REG))
++   (use (reg:SI PIC_REG))
++   (return)]
++  "TARGET_SH1 && TARGET_FDPIC"
+   "jmp	@%1%#"
+   [(set_attr "needs_delay_slot" "yes")
+    (set (attr "fp_mode")
+@@ -10110,7 +10296,26 @@ label:
+    (use (match_operand 3 "" ""))
+    (use (reg:SI FPSCR_MODES_REG))
+    (return)]
+-  "TARGET_SH2"
++  "TARGET_SH2 && !TARGET_FDPIC"
++{
++  return       "braf	%1"	"\n"
++	 "%O3:%#";
++}
++  [(set_attr "needs_delay_slot" "yes")
++   (set (attr "fp_mode")
++	(if_then_else (eq_attr "fpu_single" "yes")
++		      (const_string "single") (const_string "double")))
++   (set_attr "type" "jump_ind")])
++
++(define_insn "sibcall_valuei_pcrel_fdpic"
++  [(set (match_operand 0 "" "=rf")
++	(call (mem:SI (match_operand:SI 1 "arith_reg_operand" "k"))
++	      (match_operand 2 "" "")))
++   (use (match_operand 3 "" ""))
++   (use (reg:SI FPSCR_MODES_REG))
++   (use (reg:SI PIC_REG))
++   (return)]
++  "TARGET_SH2 && TARGET_FDPIC"
+ {
+   return       "braf	%1"	"\n"
+ 	 "%O3:%#";
+@@ -10128,7 +10333,7 @@ label:
+    (use (reg:SI FPSCR_MODES_REG))
+    (clobber (match_scratch:SI 3 "=k"))
+    (return)]
+-  "TARGET_SH2"
++  "TARGET_SH2 && !TARGET_FDPIC"
+   "#"
+   "reload_completed"
+   [(const_int 0)]
+@@ -10141,6 +10346,38 @@ label:
+ 							operands[3],
+ 							operands[2],
+ 							copy_rtx (lab)));
++							  
++  SIBLING_CALL_P (call_insn) = 1;
++  DONE;
++}
++  [(set_attr "needs_delay_slot" "yes")
++   (set (attr "fp_mode")
++	(if_then_else (eq_attr "fpu_single" "yes")
++		      (const_string "single") (const_string "double")))
++   (set_attr "type" "jump_ind")])
++
++(define_insn_and_split "sibcall_value_pcrel_fdpic"
++  [(set (match_operand 0 "" "=rf")
++	(call (mem:SI (match_operand:SI 1 "symbol_ref_operand" ""))
++	      (match_operand 2 "" "")))
++   (use (reg:SI FPSCR_MODES_REG))
++   (use (reg:SI PIC_REG))
++   (clobber (match_scratch:SI 3 "=k"))
++   (return)]
++  "TARGET_SH2 && TARGET_FDPIC"
++  "#"
++  "reload_completed"
++  [(const_int 0)]
++{
++  rtx lab = PATTERN (gen_call_site ());
++  rtx call_insn;
++
++  emit_insn (gen_sym_label2reg (operands[3], operands[1], lab));
++  call_insn = emit_call_insn (gen_sibcall_valuei_pcrel_fdpic (operands[0],
++							      operands[3],
++							      operands[2],
++							      copy_rtx (lab)));
++							  
+   SIBLING_CALL_P (call_insn) = 1;
+   DONE;
+ }
+@@ -10197,6 +10434,12 @@ label:
+      (return)])]
+   ""
+ {
++  if (TARGET_FDPIC)
++    {
++      rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++      emit_move_insn (pic_reg, OUR_FDPIC_REG);
++    }
++
+   if (TARGET_SHMEDIA)
+     {
+       operands[1] = shmedia_prepare_call_address (operands[1], 1);
+@@ -10243,7 +10486,8 @@ label:
+       emit_insn (gen_force_mode_for_call ());
+ 
+       operands[1]
+-	= function_symbol (NULL, "__GCC_shcompact_call_trampoline", SFUNC_GOT);
++	= function_symbol (NULL, "__GCC_shcompact_call_trampoline",
++			   SFUNC_GOT, NULL);
+       operands[1] = force_reg (SImode, operands[1]);
+ 
+       /* We don't need a return trampoline, since the callee will
+@@ -10270,7 +10514,7 @@ label:
+       emit_insn (gen_symGOT2reg (reg, XEXP (operands[1], 0)));
+       XEXP (operands[1], 0) = reg;
+     }
+-  if (flag_pic && TARGET_SH2
++  if ((flag_pic || TARGET_FDPIC) && TARGET_SH2
+       && MEM_P (operands[1])
+       && GET_CODE (XEXP (operands[1], 0)) == SYMBOL_REF
+       /* The PLT needs the PIC register, but the epilogue would have
+@@ -10278,15 +10522,28 @@ label:
+ 	 static functions.  */
+       && SYMBOL_REF_LOCAL_P (XEXP (operands[1], 0)))
+     {
+-      emit_call_insn (gen_sibcall_value_pcrel (operands[0],
+-					       XEXP (operands[1], 0),
+-					       operands[2]));
++      if (TARGET_FDPIC)
++	emit_call_insn (gen_sibcall_value_pcrel_fdpic (operands[0],
++						       XEXP (operands[1], 0),
++						       operands[2]));
++      else
++	emit_call_insn (gen_sibcall_value_pcrel (operands[0],
++						 XEXP (operands[1], 0),
++						 operands[2]));
+       DONE;
+     }
+   else
+     operands[1] = force_reg (SImode, XEXP (operands[1], 0));
+ 
+-  emit_call_insn (gen_sibcall_valuei (operands[0], operands[1], operands[2]));
++  if (TARGET_FDPIC)
++    {
++      operands[1] = sh_load_function_descriptor (operands[1]);
++      emit_call_insn (gen_sibcall_valuei_fdpic (operands[0], operands[1],
++						operands[2]));
++    }
++  else
++    emit_call_insn (gen_sibcall_valuei (operands[0], operands[1],
++					operands[2]));
+   DONE;
+ })
+ 
+@@ -10370,7 +10627,7 @@ label:
+   emit_insn (gen_force_mode_for_call ());
+ 
+   operands[1] = function_symbol (NULL, "__GCC_shcompact_call_trampoline",
+-				 SFUNC_GOT);
++				 SFUNC_GOT, NULL);
+   operands[1] = force_reg (SImode, operands[1]);
+ 
+   emit_move_insn (r0, func);
+@@ -10568,6 +10825,13 @@ label:
+       DONE;
+     }
+ 
++  if (TARGET_FDPIC)
++    {
++      rtx pic_reg = gen_rtx_REG (Pmode, PIC_REG);
++      emit_move_insn (pic_reg, OUR_FDPIC_REG);
++      DONE;
++    }
++
+   operands[1] = gen_rtx_REG (Pmode, PIC_REG);
+   operands[2] = gen_rtx_SYMBOL_REF (VOIDmode, GOT_SYMBOL_NAME);
+ 
+@@ -10700,9 +10964,15 @@ label:
+    (set (match_operand 0 "" "") (mem (match_dup 3)))]
+   ""
+ {
++  rtx picreg;
+   rtx mem;
+   bool stack_chk_guard_p = false;
+ 
++  if (TARGET_FDPIC)
++    picreg = OUR_FDPIC_REG;
++  else
++    picreg = gen_rtx_REG (Pmode, PIC_REG);
++
+   operands[2] = !can_create_pseudo_p () ? operands[0] : gen_reg_rtx (Pmode);
+   operands[3] = !can_create_pseudo_p () ? operands[0] : gen_reg_rtx (Pmode);
+ 
+@@ -10742,11 +11012,11 @@ label:
+      insn to avoid combining (set A (plus rX r12)) and (set op0 (mem A))
+      when rX is a GOT address for the guard symbol.  Ugly but doesn't
+      matter because this is a rare situation.  */
++// FIXME: original fdpic patch did not have ssp case here ??
+   if (stack_chk_guard_p)
+     emit_insn (gen_chk_guard_add (operands[3], operands[2]));
+   else
+-    emit_move_insn (operands[3], gen_rtx_PLUS (Pmode, operands[2],
+-					       gen_rtx_REG (Pmode, PIC_REG)));
++    emit_move_insn (operands[3], gen_rtx_PLUS (Pmode, operands[2], picreg));
+ 
+   /* N.B. This is not constant for a GOTPLT relocation.  */
+   mem = gen_rtx_MEM (Pmode, operands[3]);
+@@ -10777,6 +11047,26 @@ label:
+   DONE;
+ })
+ 
++(define_expand "sym2GOTFUNCDESC"
++  [(const (unspec [(match_operand 0 "" "")] UNSPEC_GOTFUNCDESC))]
++  "TARGET_FDPIC"
++  "")
++
++(define_expand "symGOTFUNCDESC2reg"
++  [(match_operand 0 "" "") (match_operand 1 "" "")]
++  "TARGET_FDPIC"
++{
++  rtx gotsym, insn;
++
++  gotsym = gen_sym2GOTFUNCDESC (operands[1]);
++  PUT_MODE (gotsym, Pmode);
++  insn = emit_insn (gen_symGOT_load (operands[0], gotsym));
++
++  MEM_READONLY_P (SET_SRC (PATTERN (insn))) = 1;
++
++  DONE;
++})
++
+ (define_expand "symGOTPLT2reg"
+   [(match_operand 0 "" "") (match_operand 1 "" "")]
+   ""
+@@ -10798,23 +11088,49 @@ label:
+   [(match_operand 0 "" "") (match_operand 1 "" "")]
+   ""
+ {
++  rtx picreg;
+   rtx gotoffsym, insn;
+   rtx t = (!can_create_pseudo_p ()
+ 	   ? operands[0]
+ 	   : gen_reg_rtx (GET_MODE (operands[0])));
+ 
++  if (TARGET_FDPIC)
++    picreg = OUR_FDPIC_REG;
++  else
++    picreg = gen_rtx_REG (Pmode, PIC_REG);
++
+   gotoffsym = gen_sym2GOTOFF (operands[1]);
+   PUT_MODE (gotoffsym, Pmode);
+   emit_move_insn (t, gotoffsym);
+-  insn = emit_move_insn (operands[0],
+-			 gen_rtx_PLUS (Pmode, t,
+-				       gen_rtx_REG (Pmode, PIC_REG)));
++  insn = emit_move_insn (operands[0], gen_rtx_PLUS (Pmode, t, picreg));
+ 
+   set_unique_reg_note (insn, REG_EQUAL, operands[1]);
+ 
+   DONE;
+ })
+ 
++(define_expand "sym2GOTOFFFUNCDESC"
++  [(const (unspec [(match_operand 0 "" "")] UNSPEC_GOTOFFFUNCDESC))]
++  "TARGET_FDPIC"
++  "")
++
++(define_expand "symGOTOFFFUNCDESC2reg"
++  [(match_operand 0 "" "") (match_operand 1 "" "")]
++  "TARGET_FDPIC"
++{
++  rtx picreg = OUR_FDPIC_REG;
++  rtx gotoffsym;
++  rtx t = (!can_create_pseudo_p ()
++	   ? operands[0]
++	   : gen_reg_rtx (GET_MODE (operands[0])));
++
++  gotoffsym = gen_sym2GOTOFFFUNCDESC (operands[1]);
++  PUT_MODE (gotoffsym, Pmode);
++  emit_move_insn (t, gotoffsym);
++  emit_move_insn (operands[0], gen_rtx_PLUS (Pmode, t, picreg));
++  DONE;
++})
++
+ (define_expand "symPLT_label2reg"
+   [(set (match_operand:SI 0 "" "")
+ 	(const:SI
+@@ -11491,7 +11807,8 @@ label:
+ {
+   rtx reg = gen_rtx_REG (Pmode, R0_REG);
+ 
+-  function_symbol (reg, "__GCC_shcompact_return_trampoline", SFUNC_STATIC);
++  function_symbol (reg, "__GCC_shcompact_return_trampoline", SFUNC_STATIC,
++  		   NULL);
+   emit_jump_insn (gen_shcompact_return_tramp_i ());
+   DONE;
+ })
+@@ -12581,18 +12898,22 @@ label:
+ (define_insn "block_move_real"
+   [(parallel [(set (mem:BLK (reg:SI R4_REG))
+ 		   (mem:BLK (reg:SI R5_REG)))
+-	      (use (match_operand:SI 0 "arith_reg_operand" "r"))
++	      (use (match_operand:SI 0 "arith_reg_operand" "r,r"))
++	      (use (match_operand 1 "" "Z,Ccl"))
+ 	      (clobber (reg:SI PR_REG))
+ 	      (clobber (reg:SI R0_REG))])]
+   "TARGET_SH1 && ! TARGET_HARD_SH4"
+-  "jsr	@%0%#"
++  "@
++   jsr	@%0%#
++   bsrf	%0\\n%O1:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+ (define_insn "block_lump_real"
+   [(parallel [(set (mem:BLK (reg:SI R4_REG))
+ 		   (mem:BLK (reg:SI R5_REG)))
+-	      (use (match_operand:SI 0 "arith_reg_operand" "r"))
++	      (use (match_operand:SI 0 "arith_reg_operand" "r,r"))
++	      (use (match_operand 1 "" "Z,Ccl"))
+ 	      (use (reg:SI R6_REG))
+ 	      (clobber (reg:SI PR_REG))
+ 	      (clobber (reg:SI T_REG))
+@@ -12601,27 +12922,33 @@ label:
+ 	      (clobber (reg:SI R6_REG))
+ 	      (clobber (reg:SI R0_REG))])]
+   "TARGET_SH1 && ! TARGET_HARD_SH4"
+-  "jsr	@%0%#"
++  "@
++   jsr	@%0%#
++   bsrf	%0\\n%O1:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+ (define_insn "block_move_real_i4"
+   [(parallel [(set (mem:BLK (reg:SI R4_REG))
+ 		   (mem:BLK (reg:SI R5_REG)))
+-	      (use (match_operand:SI 0 "arith_reg_operand" "r"))
++	      (use (match_operand:SI 0 "arith_reg_operand" "r,r"))
++	      (use (match_operand 1 "" "Z,Ccl"))
+ 	      (clobber (reg:SI PR_REG))
+ 	      (clobber (reg:SI R0_REG))
+ 	      (clobber (reg:SI R1_REG))
+ 	      (clobber (reg:SI R2_REG))])]
+   "TARGET_HARD_SH4"
+-  "jsr	@%0%#"
++  "@
++   jsr	@%0%#
++   bsrf	%0\\n%O1:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+ (define_insn "block_lump_real_i4"
+   [(parallel [(set (mem:BLK (reg:SI R4_REG))
+ 		   (mem:BLK (reg:SI R5_REG)))
+-	      (use (match_operand:SI 0 "arith_reg_operand" "r"))
++	      (use (match_operand:SI 0 "arith_reg_operand" "r,r"))
++	      (use (match_operand 1 "" "Z,Ccl"))
+ 	      (use (reg:SI R6_REG))
+ 	      (clobber (reg:SI PR_REG))
+ 	      (clobber (reg:SI T_REG))
+@@ -12633,7 +12960,9 @@ label:
+ 	      (clobber (reg:SI R2_REG))
+ 	      (clobber (reg:SI R3_REG))])]
+   "TARGET_HARD_SH4"
+-  "jsr	@%0%#"
++  "@
++   jsr	@%0%#
++   bsrf	%0\\n%O1:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.opt gcc-5.2.0/gcc/config/sh/sh.opt
+--- ../baseline/gcc-5.2.0/gcc/config/sh/sh.opt	2015-09-04 20:23:46.711452245 +0000
++++ gcc-5.2.0/gcc/config/sh/sh.opt	2015-09-03 21:20:40.109481724 +0000
+@@ -264,6 +264,10 @@ mdivsi3_libfunc=
+ Target RejectNegative Joined Var(sh_divsi3_libfunc) Init("")
+ Specify name for 32 bit signed division function
+ 
++mfdpic
++Target Report Var(TARGET_FDPIC)
++Generate ELF FDPIC code
++
+ mfmovd
+ Target RejectNegative Mask(FMOVD)
+ Enable the use of 64-bit floating point registers in fmov instructions.  See -mdalign if 64-bit alignment is required.
+diff -urp ../baseline/gcc-5.2.0/gcc/config.gcc gcc-5.2.0/gcc/config.gcc
+--- ../baseline/gcc-5.2.0/gcc/config.gcc	2015-09-04 20:23:46.711452245 +0000
++++ gcc-5.2.0/gcc/config.gcc	2015-09-04 21:38:42.364511457 +0000
+@@ -2580,6 +2580,9 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+ 	tm_file="${tm_file} dbxelf.h elfos.h sh/elf.h"
+ 	case ${target} in
+ 	sh*-*-linux*)	tmake_file="${tmake_file} sh/t-linux"
++			if test x$enable_fdpic != xno; then
++				tm_defines="$tm_defines FDPIC_DEFAULT=1"
++			fi
+ 			tm_file="${tm_file} gnu-user.h linux.h glibc-stdint.h sh/linux.h" ;;
+ 	sh*-*-netbsd*)
+ 			tm_file="${tm_file} netbsd.h netbsd-elf.h sh/netbsd-elf.h"
+diff -urp ../baseline/gcc-5.2.0/gcc/doc/install.texi gcc-5.2.0/gcc/doc/install.texi
+--- ../baseline/gcc-5.2.0/gcc/doc/install.texi	2015-05-12 08:49:59.000000000 +0000
++++ gcc-5.2.0/gcc/doc/install.texi	2015-09-04 21:46:28.384483042 +0000
+@@ -1791,6 +1791,9 @@ When neither of these configure options
+ 128-bit @code{long double} when built against GNU C Library 2.4 and later,
+ 64-bit @code{long double} otherwise.
+ 
++@item --enable-fdpic
++On SH Linux systems, generate ELF FDPIC code.
++
+ @item --with-gmp=@var{pathname}
+ @itemx --with-gmp-include=@var{pathname}
+ @itemx --with-gmp-lib=@var{pathname}
+diff -urp ../baseline/gcc-5.2.0/gcc/doc/invoke.texi gcc-5.2.0/gcc/doc/invoke.texi
+--- ../baseline/gcc-5.2.0/gcc/doc/invoke.texi	2015-09-04 20:23:46.568118921 +0000
++++ gcc-5.2.0/gcc/doc/invoke.texi	2015-09-04 21:44:08.541158234 +0000
+@@ -20921,6 +20921,10 @@ in effect.
+ Prefer zero-displacement conditional branches for conditional move instruction
+ patterns.  This can result in faster code on the SH4 processor.
+ 
++@item -mfdpic
++@opindex fdpic
++Generate code using the FDPIC ABI.
++
+ @end table
+ 
+ @node Solaris 2 Options
+diff -urp ../baseline/gcc-5.2.0/libitm/config/sh/sjlj.S gcc-5.2.0/libitm/config/sh/sjlj.S
+--- ../baseline/gcc-5.2.0/libitm/config/sh/sjlj.S	2015-01-05 12:33:28.000000000 +0000
++++ gcc-5.2.0/libitm/config/sh/sjlj.S	2015-09-11 04:56:22.272911159 +0000
+@@ -58,9 +58,6 @@ _ITM_beginTransaction:
+ 	jsr	@r1
+ 	 mov	r15, r5
+ #else
+-	mova	.Lgot, r0
+-	mov.l	.Lgot, r12
+-	add	r0, r12
+ 	mov.l	.Lbegin, r1
+ 	bsrf	r1
+ 	 mov	r15, r5
+@@ -80,13 +77,11 @@ _ITM_beginTransaction:
+ 	cfi_endproc
+ 
+         .align  2
+-.Lgot:
+-	.long	_GLOBAL_OFFSET_TABLE_
+ .Lbegin:
+ #if defined HAVE_ATTRIBUTE_VISIBILITY || !defined __PIC__
+ 	.long	GTM_begin_transaction
+ #else
+-	.long	GTM_begin_transaction@PLT-(.Lbegin0-.)
++	.long	GTM_begin_transaction@PCREL-(.Lbegin0-.)
+ #endif
+ 	.size	_ITM_beginTransaction, . - _ITM_beginTransaction
+ 

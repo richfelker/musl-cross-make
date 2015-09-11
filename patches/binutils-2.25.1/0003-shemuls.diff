@@ -1,0 +1,48 @@
+diff -ur ../baseline/binutils-2.25.1/bfd/config.bfd binutils-2.25.1/bfd/config.bfd
+--- ../baseline/binutils-2.25.1/bfd/config.bfd	2014-10-14 07:32:02.000000000 +0000
++++ binutils-2.25.1/bfd/config.bfd	2015-09-04 19:24:08.678337083 +0000
+@@ -1370,6 +1370,7 @@
+   sh-*-linux*)
+     targ_defvec=sh_elf32_linux_be_vec
+     targ_selvecs="sh_elf32_linux_vec sh64_elf32_linux_vec sh64_elf32_linux_be_vec sh64_elf64_linux_vec sh64_elf64_linux_be_vec"
++    targ_selvecs="${targ_selvecs} sh_elf32_vec sh_elf32_le_vec sh_elf32_fdpic_le_vec sh_elf32_fdpic_be_vec"
+     want64=true
+     ;;
+ #endif /* BFD64 */
+@@ -1377,10 +1378,12 @@
+   sh*eb-*-linux*)
+     targ_defvec=sh_elf32_linux_be_vec
+     targ_selvecs=sh_elf32_linux_vec
++    targ_selvecs="${targ_selvecs} sh_elf32_vec sh_elf32_le_vec sh_elf32_fdpic_le_vec sh_elf32_fdpic_be_vec"
+     ;;
+   sh*-*-linux*)
+     targ_defvec=sh_elf32_linux_vec
+     targ_selvecs=sh_elf32_linux_be_vec
++    targ_selvecs="${targ_selvecs} sh_elf32_vec sh_elf32_le_vec sh_elf32_fdpic_le_vec sh_elf32_fdpic_be_vec"
+     ;;
+ 
+   sh-*-uclinux* | sh[12]-*-uclinux*)
+diff -ur ../baseline/binutils-2.25.1/ld/configure.tgt binutils-2.25.1/ld/configure.tgt
+--- ../baseline/binutils-2.25.1/ld/configure.tgt	2014-10-14 07:32:04.000000000 +0000
++++ binutils-2.25.1/ld/configure.tgt	2015-09-04 19:22:05.151677949 +0000
+@@ -623,15 +623,17 @@
+ score-*-elf)            targ_emul=score7_elf
+ 			targ_extra_emuls=score3_elf ;;
+ sh-*-linux*)		targ_emul=shlelf_linux
+-			targ_extra_emuls=shelf_linux
++			targ_extra_emuls="shelf_linux shlelf_fd shelf_fd shlelf shelf"
+ 			targ_extra_libpath=shelf_linux ;;
+ sh64eb-*-linux*)	targ_emul=shelf32_linux
+ 			targ_extra_emuls="shlelf32_linux" ;;
+ sh64-*-linux*)		targ_emul=shlelf32_linux
+ 			targ_extra_emuls="shelf32_linux"
+ 			targ_extra_libpath=shelf32_linux ;;
+-sh*eb-*-linux*)		targ_emul=shelf_linux ;;
+-sh*-*-linux*)		targ_emul=shlelf_linux ;;
++sh*eb-*-linux*)		targ_emul=shelf_linux
++			targ_extra_emuls="shelf_fd shelf" ;;
++sh*-*-linux*)		targ_emul=shlelf_linux
++			targ_extra_emuls="shlelf_fd shlelf" ;;
+ sh5le-*-netbsd*)	targ_emul=shlelf32_nbsd
+ 			targ_extra_emuls="shelf32_nbsd shelf64_nbsd shlelf64_nbsd shelf_nbsd shlelf_nbsd" ;;
+ sh5-*-netbsd*)		targ_emul=shelf32_nbsd
