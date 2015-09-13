@@ -4,7 +4,14 @@ TARGET = sh2eb-linux-musl
 BINUTILS_VER = 2.25.1
 GCC_VER = 5.2.0
 
+# Recommended options for faster/simpler build
+
 # COMMON_CONFIG += --disable-nls
+# COMMON_CONFIG += MAKEINFO=/bin/false
 # GCC_CONFIG += --enable-languages=c,c++,lto
 # GCC_CONFIG += --disable-multilib
+
+# J2/SH2 specific options
+
 # GCC_CONFIG += --with-cpu=mj2
+# GCC_CONFIG += --enable-fdpic
