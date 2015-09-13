@@ -1870,7 +1870,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config.gcc gcc-5.2.0/gcc/config.gcc
  	tm_file="${tm_file} dbxelf.h elfos.h sh/elf.h"
  	case ${target} in
  	sh*-*-linux*)	tmake_file="${tmake_file} sh/t-linux"
-+			if test x$enable_fdpic != xno; then
++			if test x$enable_fdpic = xyes; then
 +				tm_defines="$tm_defines FDPIC_DEFAULT=1"
 +			fi
  			tm_file="${tm_file} gnu-user.h linux.h glibc-stdint.h sh/linux.h" ;;
