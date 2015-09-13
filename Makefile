@@ -11,7 +11,7 @@ COMMON_CONFIG = --disable-werror \
 	--with-sysroot=$(OUTPUT)/$(TARGET)
 
 BINUTILS_CONFIG = $(COMMON_CONFIG)
-GCC_CONFIG = $(COMMON_CONFIG) \
+GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-libquadmath --disable-decimal-float
 
