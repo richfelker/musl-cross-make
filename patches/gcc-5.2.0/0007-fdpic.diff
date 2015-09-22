@@ -145,7 +145,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-protos.h gcc-5.2.0/gcc/config/s
  #endif /* ! GCC_SH_PROTOS_H */
 diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
 --- ../baseline/gcc-5.2.0/gcc/config/sh/sh.c	2015-09-04 20:23:46.694785580 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh.c	2015-09-21 05:22:57.786789746 +0000
++++ gcc-5.2.0/gcc/config/sh/sh.c	2015-09-21 08:34:37.673856781 +0000
 @@ -288,6 +288,7 @@ static rtx sh_expand_builtin (tree, rtx,
  static void sh_output_mi_thunk (FILE *, tree, HOST_WIDE_INT,
  				HOST_WIDE_INT, tree);
@@ -534,6 +534,15 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  	      || (decl && ! (TREE_PUBLIC (decl) || DECL_WEAK (decl)))
  	      || (decl && DECL_VISIBILITY (decl) != VISIBILITY_DEFAULT)));
  }
+@@ -11719,7 +11859,7 @@ sh_expand_sym_label2reg (rtx reg, rtx sy
+ 
+   if (!is_weak && SYMBOL_REF_LOCAL_P (sym))
+     emit_insn (gen_sym_label2reg (reg, sym, lab));
+-  else if (sibcall_p)
++  else if (sibcall_p && SYMBOL_REF_LOCAL_P (sym))
+     emit_insn (gen_symPCREL_label2reg (reg, sym, lab));
+   else
+     emit_insn (gen_symPLT_label2reg (reg, sym, lab));
 @@ -12718,10 +12858,18 @@ sh_output_mi_thunk (FILE *file, tree thu
      sibcall = gen_sibcalli_thunk (funexp, const0_rtx);
    else
@@ -838,7 +847,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.h gcc-5.2.0/gcc/config/sh/sh.h
  #if (defined CRT_BEGIN || defined CRT_END) && ! __SHMEDIA__
 diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.md
 --- ../baseline/gcc-5.2.0/gcc/config/sh/sh.md	2015-09-04 20:23:46.704785579 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh.md	2015-09-03 22:30:13.462560589 +0000
++++ gcc-5.2.0/gcc/config/sh/sh.md	2015-09-21 07:54:18.237105881 +0000
 @@ -100,6 +100,7 @@
    (R8_REG	8)
    (R9_REG	9)
@@ -1403,7 +1412,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
 +  rtx lab = PATTERN (gen_call_site ());
 +  rtx call_insn;
 +
-+  emit_insn (gen_sym_label2reg (operands[2], operands[0], lab));
++  sh_expand_sym_label2reg (operands[2], operands[0], lab, true);
 +  call_insn = emit_call_insn (gen_sibcalli_pcrel_fdpic (operands[2], operands[1],
 +						  copy_rtx (lab)));
 +  SIBLING_CALL_P (call_insn) = 1;
@@ -1568,7 +1577,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
 +  rtx lab = PATTERN (gen_call_site ());
 +  rtx call_insn;
 +
-+  emit_insn (gen_sym_label2reg (operands[3], operands[1], lab));
++  sh_expand_sym_label2reg (operands[3], operands[1], lab, true);
 +  call_insn = emit_call_insn (gen_sibcall_valuei_pcrel_fdpic (operands[0],
 +							      operands[3],
 +							      operands[2],
