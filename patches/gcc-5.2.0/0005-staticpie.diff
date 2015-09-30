@@ -11,14 +11,14 @@
     %{fvtable-verify=none:%s; \
       fvtable-verify=preinit:vtv_start_preinit.o%s; \
       fvtable-verify=std:vtv_start.o%s}"
---- gcc-5.2.0.orig/gcc/config/sh/linux.h	2015-01-05 12:33:28.000000000 +0000
-+++ gcc-5.2.0/gcc/config/sh/linux.h	2015-08-25 07:57:14.161690536 +0000
-@@ -53,7 +75,7 @@
-    %{!static: \
-      %{rdynamic:-export-dynamic} \
-      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
--   %{static:-static}"
-+   %{static:-static -E --no-dynamic-linker}"
+--- gcc-5.2.0.orig/gcc/gcc.c	2015-03-10 09:37:41.000000000 +0000
++++ gcc-5.2.0/gcc/gcc.c	2015-09-30 00:25:33.225927941 +0000
+@@ -739,7 +739,7 @@
  
- /* Output assembler code to STREAM to call the profiler.  */
- #undef FUNCTION_PROFILER
+ #ifndef LINK_PIE_SPEC
+ #ifdef HAVE_LD_PIE
+-#define LINK_PIE_SPEC "%{pie:-pie} "
++#define LINK_PIE_SPEC "%{pie:-pie %{static:--no-dynamic-linker}} "
+ #else
+ #define LINK_PIE_SPEC "%{pie:} "
+ #endif
