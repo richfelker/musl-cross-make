@@ -1,3 +1,17 @@
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index bf26776..ed118f3 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -2621,6 +2621,9 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+ 	tm_file="${tm_file} dbxelf.h elfos.h sh/elf.h"
+ 	case ${target} in
+ 	sh*-*-linux*)	tmake_file="${tmake_file} sh/t-linux"
++			if test x$enable_fdpic = xyes; then
++				tm_defines="$tm_defines FDPIC_DEFAULT=1"
++			fi
+ 			tm_file="${tm_file} gnu-user.h linux.h glibc-stdint.h sh/linux.h" ;;
+ 	sh*-*-netbsd*)
+ 			tm_file="${tm_file} netbsd.h netbsd-elf.h sh/netbsd-elf.h"
 diff --git a/gcc/config/sh/constraints.md b/gcc/config/sh/constraints.md
 index 4d1eb2d..41c88a2 100644
 --- a/gcc/config/sh/constraints.md
@@ -1953,20 +1967,6 @@ index 8875b5d..7a50ca0 100644
  mfmovd
  Target RejectNegative Mask(FMOVD)
  Enable the use of 64-bit floating point registers in fmov instructions.  See -mdalign if 64-bit alignment is required.
-diff --git a/gcc/config.gcc b/gcc/config.gcc
-index bf26776..ed118f3 100644
---- a/gcc/config.gcc
-+++ b/gcc/config.gcc
-@@ -2621,6 +2621,9 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
- 	tm_file="${tm_file} dbxelf.h elfos.h sh/elf.h"
- 	case ${target} in
- 	sh*-*-linux*)	tmake_file="${tmake_file} sh/t-linux"
-+			if test x$enable_fdpic = xyes; then
-+				tm_defines="$tm_defines FDPIC_DEFAULT=1"
-+			fi
- 			tm_file="${tm_file} gnu-user.h linux.h glibc-stdint.h sh/linux.h" ;;
- 	sh*-*-netbsd*)
- 			tm_file="${tm_file} netbsd.h netbsd-elf.h sh/netbsd-elf.h"
 diff --git a/gcc/doc/install.texi b/gcc/doc/install.texi
 index 1fd773e..fe57b97 100644
 --- a/gcc/doc/install.texi
@@ -1996,35 +1996,6 @@ index ebfaaa1..8b26eac 100644
  @end table
  
  @node Solaris 2 Options
-diff --git a/libitm/config/sh/sjlj.S b/libitm/config/sh/sjlj.S
-index 410cef6..76ec6df 100644
---- a/libitm/config/sh/sjlj.S
-+++ b/libitm/config/sh/sjlj.S
-@@ -58,9 +58,6 @@ _ITM_beginTransaction:
- 	jsr	@r1
- 	 mov	r15, r5
- #else
--	mova	.Lgot, r0
--	mov.l	.Lgot, r12
--	add	r0, r12
- 	mov.l	.Lbegin, r1
- 	bsrf	r1
- 	 mov	r15, r5
-@@ -80,13 +77,11 @@ _ITM_beginTransaction:
- 	cfi_endproc
- 
-         .align  2
--.Lgot:
--	.long	_GLOBAL_OFFSET_TABLE_
- .Lbegin:
- #if defined HAVE_ATTRIBUTE_VISIBILITY || !defined __PIC__
- 	.long	GTM_begin_transaction
- #else
--	.long	GTM_begin_transaction@PLT-(.Lbegin0-.)
-+	.long	GTM_begin_transaction@PCREL-(.Lbegin0-.)
- #endif
- 	.size	_ITM_beginTransaction, . - _ITM_beginTransaction
- 
 diff --git a/include/longlong.h b/include/longlong.h
 index a0b2ce1..19164ed 100644
 --- a/include/longlong.h
@@ -2066,4 +2037,33 @@ index a0b2ce1..19164ed 100644
 +#endif
  
  #define UDIV_TIME 80
+ 
+diff --git a/libitm/config/sh/sjlj.S b/libitm/config/sh/sjlj.S
+index 410cef6..76ec6df 100644
+--- a/libitm/config/sh/sjlj.S
++++ b/libitm/config/sh/sjlj.S
+@@ -58,9 +58,6 @@ _ITM_beginTransaction:
+ 	jsr	@r1
+ 	 mov	r15, r5
+ #else
+-	mova	.Lgot, r0
+-	mov.l	.Lgot, r12
+-	add	r0, r12
+ 	mov.l	.Lbegin, r1
+ 	bsrf	r1
+ 	 mov	r15, r5
+@@ -80,13 +77,11 @@ _ITM_beginTransaction:
+ 	cfi_endproc
+ 
+         .align  2
+-.Lgot:
+-	.long	_GLOBAL_OFFSET_TABLE_
+ .Lbegin:
+ #if defined HAVE_ATTRIBUTE_VISIBILITY || !defined __PIC__
+ 	.long	GTM_begin_transaction
+ #else
+-	.long	GTM_begin_transaction@PLT-(.Lbegin0-.)
++	.long	GTM_begin_transaction@PCREL-(.Lbegin0-.)
+ #endif
+ 	.size	_ITM_beginTransaction, . - _ITM_beginTransaction
  
