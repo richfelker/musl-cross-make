@@ -1,6 +1,7 @@
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/constraints.md gcc-5.2.0/gcc/config/sh/constraints.md
---- ../baseline/gcc-5.2.0/gcc/config/sh/constraints.md	2015-03-23 18:57:58.000000000 +0000
-+++ gcc-5.2.0/gcc/config/sh/constraints.md	2015-09-03 17:12:56.462760038 +0000
+diff --git a/gcc/config/sh/constraints.md b/gcc/config/sh/constraints.md
+index 4d1eb2d..41c88a2 100644
+--- a/gcc/config/sh/constraints.md
++++ b/gcc/config/sh/constraints.md
 @@ -25,6 +25,7 @@
  ;;  Bsc: SCRATCH - for the scratch register in movsi_ie in the
  ;;       fldi0 / fldi0 cases
@@ -21,10 +22,11 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/constraints.md gcc-5.2.0/gcc/confi
  (define_constraint "Css"
    "A signed 16-bit constant, literal or symbolic."
    (and (match_code "const")
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/linux.h gcc-5.2.0/gcc/config/sh/linux.h
---- ../baseline/gcc-5.2.0/gcc/config/sh/linux.h	2015-09-04 20:23:46.714785579 +0000
-+++ gcc-5.2.0/gcc/config/sh/linux.h	2015-09-11 01:48:36.830264737 +0000
-@@ -63,7 +63,8 @@ along with GCC; see the file COPYING3.
+diff --git a/gcc/config/sh/linux.h b/gcc/config/sh/linux.h
+index a9dd43a..5d4dd1f 100644
+--- a/gcc/config/sh/linux.h
++++ b/gcc/config/sh/linux.h
+@@ -69,7 +69,8 @@ along with GCC; see the file COPYING3.  If not see
  #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
  
  #undef SUBTARGET_LINK_EMUL_SUFFIX
@@ -34,10 +36,11 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/linux.h gcc-5.2.0/gcc/config/sh/li
  #undef SUBTARGET_LINK_SPEC
  #define SUBTARGET_LINK_SPEC \
    "%{shared:-shared} \
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-c.c gcc-5.2.0/gcc/config/sh/sh-c.c
---- ../baseline/gcc-5.2.0/gcc/config/sh/sh-c.c	2015-01-09 20:18:42.000000000 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh-c.c	2015-09-03 18:22:04.182507130 +0000
-@@ -149,6 +149,11 @@ sh_cpu_cpp_builtins (cpp_reader* pfile)
+diff --git a/gcc/config/sh/sh-c.c b/gcc/config/sh/sh-c.c
+index a98c148..01a12e6 100644
+--- a/gcc/config/sh/sh-c.c
++++ b/gcc/config/sh/sh-c.c
+@@ -141,6 +141,11 @@ sh_cpu_cpp_builtins (cpp_reader* pfile)
      builtin_define ("__HITACHI__");
    if (TARGET_FMOVD)
      builtin_define ("__FMOVD_ENABLED__");
@@ -49,10 +52,11 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-c.c gcc-5.2.0/gcc/config/sh/sh-
    builtin_define (TARGET_LITTLE_ENDIAN
  		  ? "__LITTLE_ENDIAN__" : "__BIG_ENDIAN__");
  
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc gcc-5.2.0/gcc/config/sh/sh-mem.cc
---- ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc	2015-01-15 13:28:42.000000000 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh-mem.cc	2015-09-03 17:37:09.436004777 +0000
-@@ -136,11 +136,13 @@ expand_block_move (rtx *operands)
+diff --git a/gcc/config/sh/sh-mem.cc b/gcc/config/sh/sh-mem.cc
+index 23a7287..58a5fd0 100644
+--- a/gcc/config/sh/sh-mem.cc
++++ b/gcc/config/sh/sh-mem.cc
+@@ -122,11 +122,13 @@ expand_block_move (rtx *operands)
  	  rtx func_addr_rtx = gen_reg_rtx (Pmode);
  	  rtx r4 = gen_rtx_REG (SImode, 4);
  	  rtx r5 = gen_rtx_REG (SImode, 5);
@@ -68,7 +72,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc gcc-5.2.0/gcc/config/sh/
  	  return true;
  	}
        else if (! optimize_size)
-@@ -151,15 +153,16 @@ expand_block_move (rtx *operands)
+@@ -137,15 +139,16 @@ expand_block_move (rtx *operands)
  	  rtx r4 = gen_rtx_REG (SImode, 4);
  	  rtx r5 = gen_rtx_REG (SImode, 5);
  	  rtx r6 = gen_rtx_REG (SImode, 6);
@@ -87,7 +91,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc gcc-5.2.0/gcc/config/sh/
  	  return true;
  	}
        else
-@@ -171,12 +174,13 @@ expand_block_move (rtx *operands)
+@@ -157,12 +160,13 @@ expand_block_move (rtx *operands)
        rtx func_addr_rtx = gen_reg_rtx (Pmode);
        rtx r4 = gen_rtx_REG (SImode, 4);
        rtx r5 = gen_rtx_REG (SImode, 5);
@@ -103,7 +107,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc gcc-5.2.0/gcc/config/sh/
        return true;
      }
  
-@@ -189,8 +193,9 @@ expand_block_move (rtx *operands)
+@@ -175,8 +179,9 @@ expand_block_move (rtx *operands)
        rtx r4 = gen_rtx_REG (SImode, 4);
        rtx r5 = gen_rtx_REG (SImode, 5);
        rtx r6 = gen_rtx_REG (SImode, 6);
@@ -114,7 +118,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc gcc-5.2.0/gcc/config/sh/
        force_into (XEXP (operands[0], 0), r4);
        force_into (XEXP (operands[1], 0), r5);
  
-@@ -203,7 +208,7 @@ expand_block_move (rtx *operands)
+@@ -189,7 +194,7 @@ expand_block_move (rtx *operands)
        final_switch = 16 - ((bytes / 4) % 16);
        while_loop = ((bytes / 4) / 16 - 1) * 16;
        emit_insn (gen_move_insn (r6, GEN_INT (while_loop + final_switch)));
@@ -123,10 +127,11 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-mem.cc gcc-5.2.0/gcc/config/sh/
        return true;
      }
  
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-protos.h gcc-5.2.0/gcc/config/sh/sh-protos.h
---- ../baseline/gcc-5.2.0/gcc/config/sh/sh-protos.h	2015-09-04 20:23:46.684785581 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh-protos.h	2015-09-03 17:24:17.489385180 +0000
-@@ -379,7 +379,7 @@ extern void fpscr_set_from_mem (int, HAR
+diff --git a/gcc/config/sh/sh-protos.h b/gcc/config/sh/sh-protos.h
+index f94459f..222f4d5 100644
+--- a/gcc/config/sh/sh-protos.h
++++ b/gcc/config/sh/sh-protos.h
+@@ -377,7 +377,7 @@ extern void fpscr_set_from_mem (int, HARD_REG_SET);
  extern void sh_pr_interrupt (struct cpp_reader *);
  extern void sh_pr_trapa (struct cpp_reader *);
  extern void sh_pr_nosave_low_regs (struct cpp_reader *);
@@ -135,18 +140,18 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh-protos.h gcc-5.2.0/gcc/config/s
  extern rtx sh_get_pr_initial_val (void);
  
  extern void sh_init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, tree,
-@@ -398,4 +398,7 @@ extern bool sh_hard_regno_mode_ok (unsig
+@@ -396,4 +396,6 @@ extern bool sh_hard_regno_mode_ok (unsigned int, machine_mode);
  extern machine_mode sh_hard_regno_caller_save_mode (unsigned int, unsigned int,
  						    machine_mode);
  extern bool sh_can_use_simple_return_p (void);
-+extern bool sh_legitimate_constant_p (rtx);
 +extern rtx sh_load_function_descriptor (rtx);
 +extern rtx sh_our_fdpic_reg (void);
  #endif /* ! GCC_SH_PROTOS_H */
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
---- ../baseline/gcc-5.2.0/gcc/config/sh/sh.c	2015-09-04 20:23:46.694785580 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh.c	2015-09-21 08:34:37.673856781 +0000
-@@ -288,6 +288,7 @@ static rtx sh_expand_builtin (tree, rtx,
+diff --git a/gcc/config/sh/sh.c b/gcc/config/sh/sh.c
+index 904201b..b468d69 100644
+--- a/gcc/config/sh/sh.c
++++ b/gcc/config/sh/sh.c
+@@ -268,6 +268,7 @@ static rtx sh_expand_builtin (tree, rtx, rtx, machine_mode, int);
  static void sh_output_mi_thunk (FILE *, tree, HOST_WIDE_INT,
  				HOST_WIDE_INT, tree);
  static void sh_file_start (void);
@@ -154,7 +159,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  static bool flow_dependent_p (rtx, rtx);
  static void flow_dependent_p_1 (rtx, const_rtx, void *);
  static int shiftcosts (rtx);
-@@ -296,6 +297,7 @@ static int addsubcosts (rtx);
+@@ -276,6 +277,7 @@ static int addsubcosts (rtx);
  static int multcosts (rtx);
  static bool unspec_caller_rtx_p (rtx);
  static bool sh_cannot_copy_insn_p (rtx_insn *);
@@ -162,7 +167,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  static bool sh_rtx_costs (rtx, int, int, int, int *, bool);
  static int sh_address_cost (rtx, machine_mode, addr_space_t, bool);
  static int sh_pr_n_sets (void);
-@@ -353,6 +355,7 @@ static void sh_encode_section_info (tree
+@@ -333,6 +335,7 @@ static void sh_encode_section_info (tree, rtx, int);
  static bool sh2a_function_vector_p (tree);
  static void sh_trampoline_init (rtx, tree, rtx);
  static rtx sh_trampoline_adjust_address (rtx);
@@ -170,7 +175,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  static void sh_conditional_register_usage (void);
  static bool sh_legitimate_constant_p (machine_mode, rtx);
  static int mov_insn_size (machine_mode, bool);
-@@ -437,6 +440,9 @@ static const struct attribute_spec sh_at
+@@ -421,6 +424,9 @@ static const struct attribute_spec sh_attribute_table[] =
  #undef TARGET_ASM_FILE_START_FILE_DIRECTIVE
  #define TARGET_ASM_FILE_START_FILE_DIRECTIVE true
  
@@ -180,7 +185,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  #undef TARGET_REGISTER_MOVE_COST
  #define TARGET_REGISTER_MOVE_COST sh_register_move_cost
  
-@@ -695,6 +701,12 @@ static const struct attribute_spec sh_at
+@@ -679,6 +685,12 @@ static const struct attribute_spec sh_attribute_table[] =
  #undef TARGET_ATOMIC_TEST_AND_SET_TRUEVAL
  #define TARGET_ATOMIC_TEST_AND_SET_TRUEVAL 0x80
  
@@ -193,7 +198,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  struct gcc_target targetm = TARGET_INITIALIZER;
  
  
-@@ -1012,6 +1024,13 @@ sh_option_override (void)
+@@ -996,6 +1008,13 @@ sh_option_override (void)
    if (! global_options_set.x_TARGET_ZDCBRANCH && TARGET_HARD_SH4)
      TARGET_ZDCBRANCH = 1;
  
@@ -207,7 +212,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
    for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
      if (! VALID_REGISTER_P (regno))
        sh_register_names[regno][0] = '\0';
-@@ -1020,7 +1039,7 @@ sh_option_override (void)
+@@ -1004,7 +1023,7 @@ sh_option_override (void)
      if (! VALID_REGISTER_P (ADDREGNAMES_REGNO (regno)))
        sh_additional_register_names[regno][0] = '\0';
  
@@ -216,7 +221,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
        || (TARGET_SHMEDIA && !TARGET_PT_FIXED))
      flag_no_function_cse = 1;
  
-@@ -1695,6 +1714,14 @@ sh_asm_output_addr_const_extra (FILE *fi
+@@ -1687,6 +1706,14 @@ sh_asm_output_addr_const_extra (FILE *file, rtx x)
  	  output_addr_const (file, XVECEXP (x, 0, 1));
  	  fputs ("-.)", file);
  	  break;
@@ -231,7 +236,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  	default:
  	  return false;
  	}
-@@ -1721,8 +1748,10 @@ sh_encode_section_info (tree decl, rtx r
+@@ -1713,8 +1740,10 @@ sh_encode_section_info (tree decl, rtx rtl, int first)
  void
  prepare_move_operands (rtx operands[], machine_mode mode)
  {
@@ -243,7 +248,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
        && ! ((mode == Pmode || mode == ptr_mode)
  	    && tls_symbolic_operand (operands[1], Pmode) != TLS_MODEL_NONE))
      {
-@@ -1842,7 +1871,7 @@ prepare_move_operands (rtx operands[], m
+@@ -1850,7 +1879,7 @@ prepare_move_operands (rtx operands[], machine_mode mode)
  	{
  	  rtx tga_op1, tga_ret, tmp, tmp2;
  
@@ -252,7 +257,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  	      && (tls_kind == TLS_MODEL_GLOBAL_DYNAMIC
  		  || tls_kind == TLS_MODEL_LOCAL_DYNAMIC
  		  || tls_kind == TLS_MODEL_INITIAL_EXEC))
-@@ -1863,6 +1892,11 @@ prepare_move_operands (rtx operands[], m
+@@ -1871,6 +1900,11 @@ prepare_move_operands (rtx operands[], machine_mode mode)
  	    {
  	    case TLS_MODEL_GLOBAL_DYNAMIC:
  	      tga_ret = gen_rtx_REG (Pmode, R0_REG);
@@ -264,7 +269,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  	      emit_call_insn (gen_tls_global_dynamic (tga_ret, op1));
  	      tmp = gen_reg_rtx (Pmode);
  	      emit_move_insn (tmp, tga_ret);
-@@ -1871,6 +1905,11 @@ prepare_move_operands (rtx operands[], m
+@@ -1879,6 +1913,11 @@ prepare_move_operands (rtx operands[], machine_mode mode)
  
  	    case TLS_MODEL_LOCAL_DYNAMIC:
  	      tga_ret = gen_rtx_REG (Pmode, R0_REG);
@@ -276,7 +281,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  	      emit_call_insn (gen_tls_local_dynamic (tga_ret, op1));
  
  	      tmp = gen_reg_rtx (Pmode);
-@@ -1888,6 +1927,11 @@ prepare_move_operands (rtx operands[], m
+@@ -1896,6 +1935,11 @@ prepare_move_operands (rtx operands[], machine_mode mode)
  	    case TLS_MODEL_INITIAL_EXEC:
  	      tga_op1 = !can_create_pseudo_p () ? op0 : gen_reg_rtx (Pmode);
  	      tmp = gen_sym2GOTTPOFF (op1);
@@ -288,7 +293,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  	      emit_insn (gen_tls_initial_exec (tga_op1, tmp));
  	      op1 = tga_op1;
  	      break;
-@@ -1914,6 +1958,20 @@ prepare_move_operands (rtx operands[], m
+@@ -1922,6 +1966,20 @@ prepare_move_operands (rtx operands[], machine_mode mode)
  	  operands[1] = op1;
  	}
      }
@@ -309,7 +314,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  }
  
  /* Implement the canonicalize_comparison target hook for the combine
-@@ -3018,6 +3076,26 @@ sh_file_start (void)
+@@ -3026,6 +3084,26 @@ sh_file_start (void)
      }
  }
  
@@ -336,7 +341,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  /* Check if PAT includes UNSPEC_CALLER unspec pattern.  */
  static bool
  unspec_caller_rtx_p (rtx pat)
-@@ -3044,7 +3122,7 @@ sh_cannot_copy_insn_p (rtx_insn *insn)
+@@ -3052,7 +3130,7 @@ sh_cannot_copy_insn_p (rtx_insn *insn)
  {
    rtx pat;
  
@@ -345,7 +350,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
      return false;
  
    if (!NONJUMP_INSN_P (insn))
-@@ -3053,6 +3131,19 @@ sh_cannot_copy_insn_p (rtx_insn *insn)
+@@ -3061,6 +3139,19 @@ sh_cannot_copy_insn_p (rtx_insn *insn)
      return false;
  
    pat = PATTERN (insn);
@@ -365,7 +370,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
    if (GET_CODE (pat) != SET)
      return false;
    pat = SET_SRC (pat);
-@@ -4027,6 +4118,7 @@ expand_ashiftrt (rtx *operands)
+@@ -4037,6 +4128,7 @@ expand_ashiftrt (rtx *operands)
    rtx wrk;
    char func[18];
    int value;
@@ -373,7 +378,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  
    if (TARGET_DYNSHIFT)
      {
-@@ -4092,8 +4184,8 @@ expand_ashiftrt (rtx *operands)
+@@ -4102,8 +4194,8 @@ expand_ashiftrt (rtx *operands)
    /* Load the value into an arg reg and call a helper.  */
    emit_move_insn (gen_rtx_REG (SImode, 4), operands[1]);
    sprintf (func, "__ashiftrt_r4_%d", value);
@@ -384,7 +389,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
    emit_move_insn (operands[0], gen_rtx_REG (SImode, 4));
    return true;
  }
-@@ -7941,7 +8033,9 @@ sh_expand_prologue (void)
+@@ -7954,7 +8046,9 @@ sh_expand_prologue (void)
        stack_usage += d;
      }
  
@@ -395,7 +400,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
      emit_insn (gen_GOTaddr2picreg (const0_rtx));
  
    if (SHMEDIA_REGS_STACK_ADJUST ())
-@@ -7951,7 +8045,7 @@ sh_expand_prologue (void)
+@@ -7964,7 +8058,7 @@ sh_expand_prologue (void)
        function_symbol (gen_rtx_REG (Pmode, R0_REG),
  		       (TARGET_FPU_ANY
  			? "__GCC_push_shmedia_regs"
@@ -404,7 +409,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
        emit_insn (gen_shmedia_save_restore_regs_compact
  		 (GEN_INT (-SHMEDIA_REGS_STACK_ADJUST ())));
      }
-@@ -7974,7 +8068,7 @@ sh_expand_prologue (void)
+@@ -7987,7 +8081,7 @@ sh_expand_prologue (void)
        /* This must NOT go through the PLT, otherwise mach and macl
  	 may be clobbered.  */
        function_symbol (gen_rtx_REG (Pmode, R0_REG),
@@ -413,7 +418,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
        emit_insn (gen_shcompact_incoming_args ());
      }
  
-@@ -8064,7 +8158,7 @@ sh_expand_epilogue (bool sibcall_p)
+@@ -8077,7 +8171,7 @@ sh_expand_epilogue (bool sibcall_p)
        function_symbol (gen_rtx_REG (Pmode, R0_REG),
  		       (TARGET_FPU_ANY
  			? "__GCC_pop_shmedia_regs"
@@ -422,7 +427,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
        /* This must NOT go through the PLT, otherwise mach and macl
  	 may be clobbered.  */
        emit_insn (gen_shmedia_save_restore_regs_compact
-@@ -10445,7 +10539,9 @@ nonpic_symbol_mentioned_p (rtx x)
+@@ -10458,7 +10552,9 @@ nonpic_symbol_mentioned_p (rtx x)
  	  || XINT (x, 1) == UNSPEC_PLT
  	  || XINT (x, 1) == UNSPEC_PCREL
  	  || XINT (x, 1) == UNSPEC_SYMOFF
@@ -433,7 +438,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
      return false;
  
    fmt = GET_RTX_FORMAT (GET_CODE (x));
-@@ -10480,7 +10576,28 @@ legitimize_pic_address (rtx orig, machin
+@@ -10493,7 +10589,28 @@ legitimize_pic_address (rtx orig, machine_mode mode ATTRIBUTE_UNUSED,
        if (reg == NULL_RTX)
  	reg = gen_reg_rtx (Pmode);
  
@@ -463,7 +468,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
        return reg;
      }
    else if (GET_CODE (orig) == SYMBOL_REF)
-@@ -10488,7 +10605,10 @@ legitimize_pic_address (rtx orig, machin
+@@ -10501,7 +10618,10 @@ legitimize_pic_address (rtx orig, machine_mode mode ATTRIBUTE_UNUSED,
        if (reg == NULL_RTX)
  	reg = gen_reg_rtx (Pmode);
  
@@ -475,7 +480,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
        return reg;
      }
    return orig;
-@@ -11662,20 +11782,40 @@ sh_trampoline_init (rtx tramp_mem, tree
+@@ -11675,20 +11795,40 @@ sh_trampoline_init (rtx tramp_mem, tree fndecl, rtx cxt)
        emit_insn (gen_initialize_trampoline (tramp, cxt, fnaddr));
        return;
      }
@@ -525,7 +530,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  			   LCT_NORMAL, VOIDmode, 1, tramp, SImode);
        else
  	emit_insn (gen_ic_invalidate_line (tramp));
-@@ -11705,7 +11845,7 @@ sh_function_ok_for_sibcall (tree decl, t
+@@ -11718,7 +11858,7 @@ sh_function_ok_for_sibcall (tree decl, tree exp ATTRIBUTE_UNUSED)
  	  && (! TARGET_SHCOMPACT
  	      || crtl->args.info.stack_regs == 0)
  	  && ! sh_cfun_interrupt_handler_p ()
@@ -534,7 +539,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  	      || (decl && ! (TREE_PUBLIC (decl) || DECL_WEAK (decl)))
  	      || (decl && DECL_VISIBILITY (decl) != VISIBILITY_DEFAULT)));
  }
-@@ -11719,7 +11859,7 @@ sh_expand_sym_label2reg (rtx reg, rtx sy
+@@ -11732,7 +11872,7 @@ sh_expand_sym_label2reg (rtx reg, rtx sym, rtx lab, bool sibcall_p)
  
    if (!is_weak && SYMBOL_REF_LOCAL_P (sym))
      emit_insn (gen_sym_label2reg (reg, sym, lab));
@@ -543,7 +548,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
      emit_insn (gen_symPCREL_label2reg (reg, sym, lab));
    else
      emit_insn (gen_symPLT_label2reg (reg, sym, lab));
-@@ -12718,10 +12858,18 @@ sh_output_mi_thunk (FILE *file, tree thu
+@@ -12731,10 +12871,18 @@ sh_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
      sibcall = gen_sibcalli_thunk (funexp, const0_rtx);
    else
  #endif
@@ -565,7 +570,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
      }
    else
      {
-@@ -12762,11 +12910,24 @@ sh_output_mi_thunk (FILE *file, tree thu
+@@ -12775,11 +12923,24 @@ sh_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
    epilogue_completed = 0;
  }
  
@@ -591,7 +596,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
    /* If this is not an ordinary function, the name usually comes from a
       string literal or an sprintf buffer.  Make sure we use the same
       string consistently, so that cse will be able to unify address loads.  */
-@@ -12774,7 +12935,7 @@ function_symbol (rtx target, const char
+@@ -12787,7 +12948,7 @@ function_symbol (rtx target, const char *name, enum sh_function_kind kind)
      name = IDENTIFIER_POINTER (get_identifier (name));
    sym = gen_rtx_SYMBOL_REF (Pmode, name);
    SYMBOL_REF_FLAGS (sym) = SYMBOL_FLAG_FUNCTION;
@@ -600,7 +605,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
      switch (kind)
        {
        case FUNCTION_ORDINARY:
-@@ -12789,14 +12950,27 @@ function_symbol (rtx target, const char
+@@ -12802,14 +12963,27 @@ function_symbol (rtx target, const char *name, enum sh_function_kind kind)
  	}
        case SFUNC_STATIC:
  	{
@@ -634,7 +639,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
  	  sym = reg;
  	  break;
  	}
-@@ -13419,6 +13593,12 @@ sh_conditional_register_usage (void)
+@@ -13432,6 +13606,12 @@ sh_conditional_register_usage (void)
        fixed_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
        call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
      }
@@ -647,13 +652,18 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
    /* Renesas saves and restores mac registers on call.  */
    if (TARGET_HITACHI && ! TARGET_NOMACSAVE)
      {
-@@ -14496,4 +14676,84 @@ sh_use_by_pieces_infrastructure_p (unsig
-     }
- }
- 
-+bool
-+sh_legitimate_constant_p (rtx x)
-+{
+@@ -13460,14 +13640,32 @@ sh_conditional_register_usage (void)
+ static bool
+ sh_legitimate_constant_p (machine_mode mode, rtx x)
+ {
+-  return (TARGET_SHMEDIA
+-	  ? ((mode != DFmode && GET_MODE_CLASS (mode) != MODE_VECTOR_FLOAT)
+-	     || x == CONST0_RTX (mode)
+-	     || !TARGET_SHMEDIA_FPU
+-	     || TARGET_SHMEDIA64)
+-	  : (GET_CODE (x) != CONST_DOUBLE
+-	     || mode == DFmode || mode == SFmode
+-	     || mode == DImode || GET_MODE (x) == VOIDmode));
 +  if (SH_OFFSETS_MUST_BE_WITHIN_SECTIONS_P)
 +    {
 +      rtx base, offset;
@@ -670,18 +680,23 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
 +	      && SYMBOLIC_CONST_P (XEXP (XEXP (x, 0), 0)))))
 +    return false;
 +
-+  if (TARGET_SHMEDIA)
-+    return ((GET_MODE (x) != DFmode
-+	     && GET_MODE_CLASS (GET_MODE (x)) != MODE_VECTOR_FLOAT)
-+	    || (x) == CONST0_RTX (GET_MODE (x))
-+	    || ! TARGET_SHMEDIA_FPU
-+	    || TARGET_SHMEDIA64);
++  if (TARGET_SHMEDIA
++      && ((mode != DFmode && GET_MODE_CLASS (mode) != MODE_VECTOR_FLOAT)
++	  || x == CONST0_RTX (mode)
++	  || !TARGET_SHMEDIA_FPU
++	  || TARGET_SHMEDIA64))
++    return false;
 +
 +  return (GET_CODE (x) != CONST_DOUBLE
-+	  || GET_MODE (x) == DFmode || GET_MODE (x) == SFmode
-+	  || GET_MODE (x) == DImode || GET_MODE (x) == VOIDmode);
-+}
-+
++	  || mode == DFmode || mode == SFmode
++	  || mode == DImode || GET_MODE (x) == VOIDmode);
+ }
+ 
+ enum sh_divide_strategy_e sh_div_strategy = SH_DIV_STRATEGY_DEFAULT;
+@@ -14558,4 +14756,53 @@ sh_use_by_pieces_infrastructure_p (unsigned HOST_WIDE_INT size,
+     }
+ }
+ 
 +bool
 +sh_cannot_force_const_mem_p (machine_mode mode ATTRIBUTE_UNUSED,
 +			     rtx x ATTRIBUTE_UNUSED)
@@ -732,19 +747,20 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.c gcc-5.2.0/gcc/config/sh/sh.c
 +}
 +
  #include "gt-sh.h"
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.h gcc-5.2.0/gcc/config/sh/sh.h
---- ../baseline/gcc-5.2.0/gcc/config/sh/sh.h	2015-09-04 20:23:46.711452245 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh.h	2015-09-11 02:17:54.210157580 +0000
-@@ -321,7 +321,7 @@ extern int code_for_indirect_jump_scratc
+diff --git a/gcc/config/sh/sh.h b/gcc/config/sh/sh.h
+index aafcf28..6abfb00 100644
+--- a/gcc/config/sh/sh.h
++++ b/gcc/config/sh/sh.h
+@@ -321,7 +321,7 @@ extern int code_for_indirect_jump_scratch;
  #endif
  
  #ifndef SUBTARGET_ASM_SPEC
 -#define SUBTARGET_ASM_SPEC ""
-+#define SUBTARGET_ASM_SPEC "%{!mno-fdpic:--fdpic}"
++#define SUBTARGET_ASM_SPEC "%{mfdpic:--fdpic}"
  #endif
  
  #if TARGET_ENDIAN_DEFAULT == MASK_LITTLE_ENDIAN
-@@ -349,7 +349,7 @@ extern int code_for_indirect_jump_scratc
+@@ -349,7 +349,7 @@ extern int code_for_indirect_jump_scratch;
  #define ASM_ISA_DEFAULT_SPEC ""
  #endif /* MASK_SH5 */
  
@@ -753,7 +769,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.h gcc-5.2.0/gcc/config/sh/sh.h
  #define SUBTARGET_LINK_SPEC ""
  
  /* Go via SH_LINK_SPEC to avoid code replication.  */
-@@ -383,8 +383,18 @@ extern int code_for_indirect_jump_scratc
+@@ -383,8 +383,18 @@ extern int code_for_indirect_jump_scratch;
  "%{m2a*:%eSH2a does not support little-endian}}"
  #endif
  
@@ -773,7 +789,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.h gcc-5.2.0/gcc/config/sh/sh.h
  
  #define ASSEMBLER_DIALECT assembler_dialect
  
-@@ -942,6 +952,14 @@ extern char sh_additional_register_names
+@@ -942,6 +952,14 @@ extern char sh_additional_register_names[ADDREGNAMES_SIZE] \
     code access to data items.  */
  #define PIC_OFFSET_TABLE_REGNUM	(flag_pic ? PIC_REG : INVALID_REGNUM)
  
@@ -845,9 +861,10 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.h gcc-5.2.0/gcc/config/sh/sh.h
    } while (0)
  
  #if (defined CRT_BEGIN || defined CRT_END) && ! __SHMEDIA__
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.md
---- ../baseline/gcc-5.2.0/gcc/config/sh/sh.md	2015-09-04 20:23:46.704785579 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh.md	2015-09-21 07:54:18.237105881 +0000
+diff --git a/gcc/config/sh/sh.md b/gcc/config/sh/sh.md
+index d758e3b..0b2acec 100644
+--- a/gcc/config/sh/sh.md
++++ b/gcc/config/sh/sh.md
 @@ -100,6 +100,7 @@
    (R8_REG	8)
    (R9_REG	9)
@@ -866,7 +883,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    ;; Misc builtins
    UNSPEC_BUILTIN_STRLEN
  ])
-@@ -2495,15 +2499,18 @@
+@@ -2591,15 +2595,18 @@
  ;; This reload would clobber the value in r0 we are trying to store.
  ;; If we let reload allocate r0, then this problem can never happen.
  (define_insn "udivsi3_i1"
@@ -888,7 +905,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    [(set_attr "type" "sfunc")
     (set_attr "needs_delay_slot" "yes")])
  
-@@ -2552,7 +2559,7 @@
+@@ -2648,7 +2655,7 @@
  })
  
  (define_insn "udivsi3_i4"
@@ -897,7 +914,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  	(udiv:SI (reg:SI R4_REG) (reg:SI R5_REG)))
     (clobber (reg:SI T_REG))
     (clobber (reg:SI PR_REG))
-@@ -2564,16 +2571,19 @@
+@@ -2660,16 +2667,19 @@
     (clobber (reg:SI R4_REG))
     (clobber (reg:SI R5_REG))
     (clobber (reg:SI FPSCR_STAT_REG))
@@ -920,7 +937,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  	(udiv:SI (reg:SI R4_REG) (reg:SI R5_REG)))
     (clobber (reg:SI T_REG))
     (clobber (reg:SI PR_REG))
-@@ -2584,10 +2594,13 @@
+@@ -2680,10 +2690,13 @@
     (clobber (reg:SI R1_REG))
     (clobber (reg:SI R4_REG))
     (clobber (reg:SI R5_REG))
@@ -936,7 +953,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    [(set_attr "type" "sfunc")
     (set_attr "needs_delay_slot" "yes")])
  
-@@ -2641,16 +2654,17 @@
+@@ -2737,16 +2750,17 @@
  	  emit_move_insn (operands[0], operands[2]);
  	  DONE;
  	}
@@ -958,7 +975,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
      }
    else if (TARGET_SHMEDIA_FPU)
      {
-@@ -2670,19 +2684,20 @@
+@@ -2766,19 +2780,20 @@
      {
        function_symbol (operands[3],
  		       TARGET_FPU_ANY ? "__udivsi3_i4" : "__udivsi3",
@@ -979,12 +996,12 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
 -      function_symbol (operands[3], "__udivsi3", SFUNC_STATIC);
 -      last = gen_udivsi3_i1 (operands[0], operands[3]);
 +      rtx lab;
-+      function_symbol (operands[3], \"__udivsi3\", SFUNC_STATIC, &lab);
++      function_symbol (operands[3], "__udivsi3", SFUNC_STATIC, &lab);
 +      last = gen_udivsi3_i1 (operands[0], operands[3], lab);
      }
    emit_move_insn (gen_rtx_REG (SImode, 4), operands[1]);
    emit_move_insn (gen_rtx_REG (SImode, 5), operands[2]);
-@@ -2810,7 +2825,7 @@
+@@ -2906,7 +2921,7 @@
        emit_move_insn (gen_rtx_REG (DImode, R20_REG), x);
        break;
      }
@@ -993,7 +1010,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    emit_insn (gen_divsi3_media_2 (operands[0], sym));
    DONE;
  }
-@@ -2830,31 +2845,37 @@
+@@ -2926,31 +2941,37 @@
  })
  
  (define_insn "divsi3_i4"
@@ -1037,7 +1054,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    [(set_attr "type" "sfunc")
     (set_attr "needs_delay_slot" "yes")])
  
-@@ -2893,16 +2914,17 @@
+@@ -2989,16 +3010,17 @@
    /* Emit the move of the address to a pseudo outside of the libcall.  */
    if (TARGET_DIVIDE_CALL_TABLE)
      {
@@ -1059,7 +1076,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
      }
    else if (TARGET_SH2A)
      {
-@@ -3007,23 +3029,23 @@
+@@ -3103,23 +3125,23 @@
  	  emit_move_insn (gen_rtx_REG (Pmode, R20_REG), tab_base);
  	}
        if (TARGET_FPU_ANY && TARGET_SH1)
@@ -1088,7 +1105,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        last = gen_divsi3_i1 (operands[0], operands[3]);
      }
    emit_move_insn (gen_rtx_REG (SImode, 4), operands[1]);
-@@ -3617,7 +3639,7 @@ label:
+@@ -3713,7 +3735,7 @@ label:
      {
        /* The address must be set outside the libcall,
  	 since it goes into a pseudo.  */
@@ -1097,16 +1114,42 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        rtx addr = force_reg (SImode, sym);
        rtx insns = gen_mulsi3_call (operands[0], operands[1],
  				   operands[2], addr);
-@@ -4873,7 +4895,7 @@ label:
+@@ -4970,8 +4992,9 @@ label:
      {
        emit_move_insn (gen_rtx_REG (SImode, R4_REG), operands[1]);
        rtx funcaddr = gen_reg_rtx (Pmode);
 -      function_symbol (funcaddr, "__ashlsi3_r0", SFUNC_STATIC);
-+      function_symbol (funcaddr, "__ashlsi3_r0", SFUNC_STATIC, NULL);
-       emit_insn (gen_ashlsi3_d_call (operands[0], operands[2], funcaddr));
+-      emit_insn (gen_ashlsi3_d_call (operands[0], operands[2], funcaddr));
++      rtx lab;
++      function_symbol (funcaddr, "__ashlsi3_r0", SFUNC_STATIC, &lab);
++      emit_insn (gen_ashlsi3_d_call (operands[0], operands[2], funcaddr, lab));
  
        DONE;
-@@ -5277,12 +5299,15 @@ label:
+     }
+@@ -5024,15 +5047,18 @@ label:
+ ;; In order to make combine understand the truncation of the shift amount
+ ;; operand we have to allow it to use pseudo regs for the shift operands.
+ (define_insn "ashlsi3_d_call"
+-  [(set (match_operand:SI 0 "arith_reg_dest" "=z")
++  [(set (match_operand:SI 0 "arith_reg_dest" "=z,z")
+ 	(ashift:SI (reg:SI R4_REG)
+-		   (and:SI (match_operand:SI 1 "arith_reg_operand" "z")
++		   (and:SI (match_operand:SI 1 "arith_reg_operand" "z,z")
+ 			   (const_int 31))))
+-   (use (match_operand:SI 2 "arith_reg_operand" "r"))
++   (use (match_operand:SI 2 "arith_reg_operand" "r,r"))
++   (use (match_operand 3 "" "Z,Ccl"))
+    (clobber (reg:SI T_REG))
+    (clobber (reg:SI PR_REG))]
+   "TARGET_SH1 && !TARGET_DYNSHIFT"
+-  "jsr	@%2%#"
++  "@
++   jsr	@%2%#
++   bsrf	%2\\n%O3:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+@@ -5374,12 +5400,15 @@ label:
  (define_insn "ashrsi3_n"
    [(set (reg:SI R4_REG)
  	(ashiftrt:SI (reg:SI R4_REG)
@@ -1125,16 +1168,42 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    [(set_attr "type" "sfunc")
     (set_attr "needs_delay_slot" "yes")])
  
-@@ -5435,7 +5460,7 @@ label:
+@@ -5532,8 +5561,9 @@ label:
      {
        emit_move_insn (gen_rtx_REG (SImode, R4_REG), operands[1]);
        rtx funcaddr = gen_reg_rtx (Pmode);
 -      function_symbol (funcaddr, "__lshrsi3_r0", SFUNC_STATIC);
-+      function_symbol (funcaddr, "__lshrsi3_r0", SFUNC_STATIC, NULL);
-       emit_insn (gen_lshrsi3_d_call (operands[0], operands[2], funcaddr));
+-      emit_insn (gen_lshrsi3_d_call (operands[0], operands[2], funcaddr));
++      rtx lab;
++      function_symbol (funcaddr, "__lshrsi3_r0", SFUNC_STATIC, &lab);
++      emit_insn (gen_lshrsi3_d_call (operands[0], operands[2], funcaddr, lab));
        DONE;
      }
-@@ -7218,7 +7243,8 @@ label:
+ })
+@@ -5585,15 +5615,18 @@ label:
+ ;; In order to make combine understand the truncation of the shift amount
+ ;; operand we have to allow it to use pseudo regs for the shift operands.
+ (define_insn "lshrsi3_d_call"
+-  [(set (match_operand:SI 0 "arith_reg_dest" "=z")
++  [(set (match_operand:SI 0 "arith_reg_dest" "=z,z")
+ 	(lshiftrt:SI (reg:SI R4_REG)
+-		     (and:SI (match_operand:SI 1 "arith_reg_operand" "z")
++		     (and:SI (match_operand:SI 1 "arith_reg_operand" "z,z")
+ 			     (const_int 31))))
+-   (use (match_operand:SI 2 "arith_reg_operand" "r"))
++   (use (match_operand:SI 2 "arith_reg_operand" "r,r"))
++   (use (match_operand 3 "" "Z,Ccl"))
+    (clobber (reg:SI T_REG))
+    (clobber (reg:SI PR_REG))]
+   "TARGET_SH1 && !TARGET_DYNSHIFT"
+-  "jsr	@%2%#"
++  "@
++   jsr	@%2%#
++   bsrf	%2\\n%O3:%#"
+   [(set_attr "type" "sfunc")
+    (set_attr "needs_delay_slot" "yes")])
+ 
+@@ -7315,7 +7348,8 @@ label:
      }
    else if (TARGET_SHCOMPACT)
      {
@@ -1144,7 +1213,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        operands[1] = force_reg (Pmode, operands[1]);
        emit_insn (gen_ic_invalidate_line_compact (operands[0], operands[1]));
        DONE;
-@@ -7300,7 +7326,7 @@ label:
+@@ -7397,7 +7431,7 @@ label:
  
    tramp = force_reg (Pmode, operands[0]);
    sfun = force_reg (Pmode, function_symbol (NULL, "__init_trampoline",
@@ -1153,7 +1222,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    emit_move_insn (gen_rtx_REG (SImode, R2_REG), operands[1]);
    emit_move_insn (gen_rtx_REG (SImode, R3_REG), operands[2]);
  
-@@ -9342,7 +9368,27 @@ label:
+@@ -9459,7 +9493,27 @@ label:
  	 (match_operand 1 "" ""))
     (use (reg:SI FPSCR_MODES_REG))
     (clobber (reg:SI PR_REG))]
@@ -1182,7 +1251,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  {
    if (TARGET_SH2A && (dbr_sequence_length () == 0))
      return "jsr/n	@%0";
-@@ -9471,7 +9517,28 @@ label:
+@@ -9588,7 +9642,28 @@ label:
  	      (match_operand 2 "" "")))
     (use (reg:SI FPSCR_MODES_REG))
     (clobber (reg:SI PR_REG))]
@@ -1212,7 +1281,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  {
    if (TARGET_SH2A && (dbr_sequence_length () == 0))
      return "jsr/n	@%1";
-@@ -9608,6 +9675,12 @@ label:
+@@ -9725,6 +9800,12 @@ label:
  	      (clobber (reg:SI PR_REG))])]
    ""
  {
@@ -1225,7 +1294,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    if (TARGET_SHMEDIA)
      {
        operands[0] = shmedia_prepare_call_address (operands[0], 0);
-@@ -9643,7 +9716,8 @@ label:
+@@ -9760,7 +9841,8 @@ label:
        emit_insn (gen_force_mode_for_call ());
  
        operands[0]
@@ -1235,7 +1304,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        operands[0] = force_reg (SImode, operands[0]);
  
        emit_move_insn (r0, func);
-@@ -9667,7 +9741,7 @@ label:
+@@ -9784,7 +9866,7 @@ label:
        emit_insn (gen_symGOTPLT2reg (reg, XEXP (operands[0], 0)));
        XEXP (operands[0], 0) = reg;
      }
@@ -1244,7 +1313,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        && MEM_P (operands[0])
        && GET_CODE (XEXP (operands[0], 0)) == SYMBOL_REF)
      {
-@@ -9678,7 +9752,7 @@ label:
+@@ -9795,7 +9877,7 @@ label:
  	  DONE;
  	}
      }
@@ -1253,7 +1322,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        && MEM_P (operands[0])
        && GET_CODE (XEXP (operands[0], 0)) == SYMBOL_REF)
      {
-@@ -9691,7 +9765,13 @@ label:
+@@ -9808,7 +9890,13 @@ label:
      operands[1] = operands[2];
    }
  
@@ -1268,7 +1337,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    DONE;
  })
  
-@@ -9771,7 +9851,7 @@ label:
+@@ -9888,7 +9976,7 @@ label:
    emit_insn (gen_force_mode_for_call ());
  
    operands[0] = function_symbol (NULL, "__GCC_shcompact_call_trampoline",
@@ -1277,7 +1346,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    operands[0] = force_reg (SImode, operands[0]);
  
    emit_move_insn (r0, func);
-@@ -9796,6 +9876,12 @@ label:
+@@ -9913,6 +10001,12 @@ label:
  	      (clobber (reg:SI PR_REG))])]
    ""
  {
@@ -1290,7 +1359,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    if (TARGET_SHMEDIA)
      {
        operands[1] = shmedia_prepare_call_address (operands[1], 0);
-@@ -9832,7 +9918,8 @@ label:
+@@ -9949,7 +10043,8 @@ label:
        emit_insn (gen_force_mode_for_call ());
  
        operands[1]
@@ -1300,7 +1369,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        operands[1] = force_reg (SImode, operands[1]);
  
        emit_move_insn (r0, func);
-@@ -9858,7 +9945,7 @@ label:
+@@ -9975,7 +10070,7 @@ label:
        emit_insn (gen_symGOTPLT2reg (reg, XEXP (operands[1], 0)));
        XEXP (operands[1], 0) = reg;
      }
@@ -1309,7 +1378,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        && MEM_P (operands[1])
        && GET_CODE (XEXP (operands[1], 0)) == SYMBOL_REF)
      {
-@@ -9869,7 +9956,7 @@ label:
+@@ -9986,7 +10081,7 @@ label:
  	  DONE;
  	}
      }
@@ -1318,7 +1387,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        && MEM_P (operands[1])
        && GET_CODE (XEXP (operands[1], 0)) == SYMBOL_REF)
      {
-@@ -9880,7 +9967,14 @@ label:
+@@ -9997,7 +10092,14 @@ label:
    else
      operands[1] = force_reg (SImode, XEXP (operands[1], 0));
  
@@ -1334,7 +1403,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    DONE;
  })
  
-@@ -9889,7 +9983,21 @@ label:
+@@ -10006,7 +10108,21 @@ label:
  	 (match_operand 1 "" ""))
     (use (reg:SI FPSCR_MODES_REG))
     (return)]
@@ -1357,7 +1426,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    "jmp	@%0%#"
    [(set_attr "needs_delay_slot" "yes")
     (set (attr "fp_mode")
-@@ -9903,7 +10011,25 @@ label:
+@@ -10020,7 +10136,25 @@ label:
     (use (match_operand 2 "" ""))
     (use (reg:SI FPSCR_MODES_REG))
     (return)]
@@ -1384,7 +1453,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  {
    return       "braf	%0"	"\n"
  	 "%O2:%#";
-@@ -9936,7 +10062,7 @@ label:
+@@ -10053,7 +10187,7 @@ label:
     (use (reg:SI FPSCR_MODES_REG))
     (clobber (match_scratch:SI 2 "=k"))
     (return)]
@@ -1393,7 +1462,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    "#"
    "reload_completed"
    [(const_int 0)]
-@@ -9956,6 +10082,33 @@ label:
+@@ -10073,6 +10207,33 @@ label:
  		      (const_string "single") (const_string "double")))
     (set_attr "type" "jump_ind")])
  
@@ -1427,7 +1496,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  (define_insn "sibcall_compact"
    [(call (mem:SI (match_operand:SI 0 "register_operand" "k,k"))
  	 (match_operand 1 "" ""))
-@@ -10000,6 +10153,12 @@ label:
+@@ -10117,6 +10278,12 @@ label:
       (return)])]
    ""
  {
@@ -1440,7 +1509,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    if (TARGET_SHMEDIA)
      {
        operands[0] = shmedia_prepare_call_address (operands[0], 1);
-@@ -10045,7 +10204,8 @@ label:
+@@ -10162,7 +10329,8 @@ label:
        emit_insn (gen_force_mode_for_call ());
  
        operands[0]
@@ -1450,7 +1519,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        operands[0] = force_reg (SImode, operands[0]);
  
        /* We don't need a return trampoline, since the callee will
-@@ -10071,7 +10231,7 @@ label:
+@@ -10188,7 +10356,7 @@ label:
        emit_insn (gen_symGOT2reg (reg, XEXP (operands[0], 0)));
        XEXP (operands[0], 0) = reg;
      }
@@ -1459,7 +1528,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        && MEM_P (operands[0])
        && GET_CODE (XEXP (operands[0], 0)) == SYMBOL_REF
        /* The PLT needs the PIC register, but the epilogue would have
-@@ -10079,13 +10239,24 @@ label:
+@@ -10196,13 +10364,24 @@ label:
  	 static functions.  */
        && SYMBOL_REF_LOCAL_P (XEXP (operands[0], 0)))
      {
@@ -1486,7 +1555,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    DONE;
  })
  
-@@ -10095,7 +10266,22 @@ label:
+@@ -10212,7 +10391,22 @@ label:
  	      (match_operand 2 "" "")))
     (use (reg:SI FPSCR_MODES_REG))
     (return)]
@@ -1510,7 +1579,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    "jmp	@%1%#"
    [(set_attr "needs_delay_slot" "yes")
     (set (attr "fp_mode")
-@@ -10110,7 +10296,26 @@ label:
+@@ -10227,7 +10421,26 @@ label:
     (use (match_operand 3 "" ""))
     (use (reg:SI FPSCR_MODES_REG))
     (return)]
@@ -1538,7 +1607,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  {
    return       "braf	%1"	"\n"
  	 "%O3:%#";
-@@ -10128,7 +10333,7 @@ label:
+@@ -10245,7 +10458,7 @@ label:
     (use (reg:SI FPSCR_MODES_REG))
     (clobber (match_scratch:SI 3 "=k"))
     (return)]
@@ -1547,7 +1616,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    "#"
    "reload_completed"
    [(const_int 0)]
-@@ -10141,6 +10346,38 @@ label:
+@@ -10258,6 +10471,38 @@ label:
  							operands[3],
  							operands[2],
  							copy_rtx (lab)));
@@ -1586,7 +1655,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    SIBLING_CALL_P (call_insn) = 1;
    DONE;
  }
-@@ -10197,6 +10434,12 @@ label:
+@@ -10314,6 +10559,12 @@ label:
       (return)])]
    ""
  {
@@ -1599,7 +1668,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    if (TARGET_SHMEDIA)
      {
        operands[1] = shmedia_prepare_call_address (operands[1], 1);
-@@ -10243,7 +10486,8 @@ label:
+@@ -10360,7 +10611,8 @@ label:
        emit_insn (gen_force_mode_for_call ());
  
        operands[1]
@@ -1609,7 +1678,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        operands[1] = force_reg (SImode, operands[1]);
  
        /* We don't need a return trampoline, since the callee will
-@@ -10270,7 +10514,7 @@ label:
+@@ -10387,7 +10639,7 @@ label:
        emit_insn (gen_symGOT2reg (reg, XEXP (operands[1], 0)));
        XEXP (operands[1], 0) = reg;
      }
@@ -1618,7 +1687,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
        && MEM_P (operands[1])
        && GET_CODE (XEXP (operands[1], 0)) == SYMBOL_REF
        /* The PLT needs the PIC register, but the epilogue would have
-@@ -10278,15 +10522,28 @@ label:
+@@ -10395,15 +10647,28 @@ label:
  	 static functions.  */
        && SYMBOL_REF_LOCAL_P (XEXP (operands[1], 0)))
      {
@@ -1651,7 +1720,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    DONE;
  })
  
-@@ -10370,7 +10627,7 @@ label:
+@@ -10487,7 +10752,7 @@ label:
    emit_insn (gen_force_mode_for_call ());
  
    operands[1] = function_symbol (NULL, "__GCC_shcompact_call_trampoline",
@@ -1660,7 +1729,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    operands[1] = force_reg (SImode, operands[1]);
  
    emit_move_insn (r0, func);
-@@ -10568,6 +10825,13 @@ label:
+@@ -10685,6 +10950,13 @@ label:
        DONE;
      }
  
@@ -1674,7 +1743,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    operands[1] = gen_rtx_REG (Pmode, PIC_REG);
    operands[2] = gen_rtx_SYMBOL_REF (VOIDmode, GOT_SYMBOL_NAME);
  
-@@ -10700,9 +10964,15 @@ label:
+@@ -10817,9 +11089,15 @@ label:
     (set (match_operand 0 "" "") (mem (match_dup 3)))]
    ""
  {
@@ -1690,7 +1759,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    operands[2] = !can_create_pseudo_p () ? operands[0] : gen_reg_rtx (Pmode);
    operands[3] = !can_create_pseudo_p () ? operands[0] : gen_reg_rtx (Pmode);
  
-@@ -10742,11 +11012,11 @@ label:
+@@ -10859,11 +11137,11 @@ label:
       insn to avoid combining (set A (plus rX r12)) and (set op0 (mem A))
       when rX is a GOT address for the guard symbol.  Ugly but doesn't
       matter because this is a rare situation.  */
@@ -1704,7 +1773,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  
    /* N.B. This is not constant for a GOTPLT relocation.  */
    mem = gen_rtx_MEM (Pmode, operands[3]);
-@@ -10777,6 +11047,26 @@ label:
+@@ -10894,6 +11172,26 @@ label:
    DONE;
  })
  
@@ -1731,7 +1800,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  (define_expand "symGOTPLT2reg"
    [(match_operand 0 "" "") (match_operand 1 "" "")]
    ""
-@@ -10798,23 +11088,49 @@ label:
+@@ -10915,23 +11213,49 @@ label:
    [(match_operand 0 "" "") (match_operand 1 "" "")]
    ""
  {
@@ -1784,7 +1853,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  (define_expand "symPLT_label2reg"
    [(set (match_operand:SI 0 "" "")
  	(const:SI
-@@ -11491,7 +11807,8 @@ label:
+@@ -11608,7 +11932,8 @@ label:
  {
    rtx reg = gen_rtx_REG (Pmode, R0_REG);
  
@@ -1794,7 +1863,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    emit_jump_insn (gen_shcompact_return_tramp_i ());
    DONE;
  })
-@@ -12581,18 +12898,22 @@ label:
+@@ -12688,18 +13013,22 @@ label:
  (define_insn "block_move_real"
    [(parallel [(set (mem:BLK (reg:SI R4_REG))
  		   (mem:BLK (reg:SI R5_REG)))
@@ -1820,7 +1889,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  	      (use (reg:SI R6_REG))
  	      (clobber (reg:SI PR_REG))
  	      (clobber (reg:SI T_REG))
-@@ -12601,27 +12922,33 @@ label:
+@@ -12708,27 +13037,33 @@ label:
  	      (clobber (reg:SI R6_REG))
  	      (clobber (reg:SI R0_REG))])]
    "TARGET_SH1 && ! TARGET_HARD_SH4"
@@ -1858,7 +1927,7 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
  	      (use (reg:SI R6_REG))
  	      (clobber (reg:SI PR_REG))
  	      (clobber (reg:SI T_REG))
-@@ -12633,7 +12960,9 @@ label:
+@@ -12740,7 +13075,9 @@ label:
  	      (clobber (reg:SI R2_REG))
  	      (clobber (reg:SI R3_REG))])]
    "TARGET_HARD_SH4"
@@ -1869,9 +1938,10 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.md gcc-5.2.0/gcc/config/sh/sh.m
    [(set_attr "type" "sfunc")
     (set_attr "needs_delay_slot" "yes")])
  
-diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.opt gcc-5.2.0/gcc/config/sh/sh.opt
---- ../baseline/gcc-5.2.0/gcc/config/sh/sh.opt	2015-09-04 20:23:46.711452245 +0000
-+++ gcc-5.2.0/gcc/config/sh/sh.opt	2015-09-03 21:20:40.109481724 +0000
+diff --git a/gcc/config/sh/sh.opt b/gcc/config/sh/sh.opt
+index 8875b5d..7a50ca0 100644
+--- a/gcc/config/sh/sh.opt
++++ b/gcc/config/sh/sh.opt
 @@ -264,6 +264,10 @@ mdivsi3_libfunc=
  Target RejectNegative Joined Var(sh_divsi3_libfunc) Init("")
  Specify name for 32 bit signed division function
@@ -1883,10 +1953,11 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config/sh/sh.opt gcc-5.2.0/gcc/config/sh/sh.
  mfmovd
  Target RejectNegative Mask(FMOVD)
  Enable the use of 64-bit floating point registers in fmov instructions.  See -mdalign if 64-bit alignment is required.
-diff -urp ../baseline/gcc-5.2.0/gcc/config.gcc gcc-5.2.0/gcc/config.gcc
---- ../baseline/gcc-5.2.0/gcc/config.gcc	2015-09-04 20:23:46.711452245 +0000
-+++ gcc-5.2.0/gcc/config.gcc	2015-09-04 21:38:42.364511457 +0000
-@@ -2580,6 +2580,9 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index bf26776..ed118f3 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -2621,6 +2621,9 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
  	tm_file="${tm_file} dbxelf.h elfos.h sh/elf.h"
  	case ${target} in
  	sh*-*-linux*)	tmake_file="${tmake_file} sh/t-linux"
@@ -1896,10 +1967,11 @@ diff -urp ../baseline/gcc-5.2.0/gcc/config.gcc gcc-5.2.0/gcc/config.gcc
  			tm_file="${tm_file} gnu-user.h linux.h glibc-stdint.h sh/linux.h" ;;
  	sh*-*-netbsd*)
  			tm_file="${tm_file} netbsd.h netbsd-elf.h sh/netbsd-elf.h"
-diff -urp ../baseline/gcc-5.2.0/gcc/doc/install.texi gcc-5.2.0/gcc/doc/install.texi
---- ../baseline/gcc-5.2.0/gcc/doc/install.texi	2015-05-12 08:49:59.000000000 +0000
-+++ gcc-5.2.0/gcc/doc/install.texi	2015-09-04 21:46:28.384483042 +0000
-@@ -1791,6 +1791,9 @@ When neither of these configure options
+diff --git a/gcc/doc/install.texi b/gcc/doc/install.texi
+index 1fd773e..fe57b97 100644
+--- a/gcc/doc/install.texi
++++ b/gcc/doc/install.texi
+@@ -1810,6 +1810,9 @@ When neither of these configure options are used, the default will be
  128-bit @code{long double} when built against GNU C Library 2.4 and later,
  64-bit @code{long double} otherwise.
  
@@ -1909,10 +1981,11 @@ diff -urp ../baseline/gcc-5.2.0/gcc/doc/install.texi gcc-5.2.0/gcc/doc/install.t
  @item --with-gmp=@var{pathname}
  @itemx --with-gmp-include=@var{pathname}
  @itemx --with-gmp-lib=@var{pathname}
-diff -urp ../baseline/gcc-5.2.0/gcc/doc/invoke.texi gcc-5.2.0/gcc/doc/invoke.texi
---- ../baseline/gcc-5.2.0/gcc/doc/invoke.texi	2015-09-04 20:23:46.568118921 +0000
-+++ gcc-5.2.0/gcc/doc/invoke.texi	2015-09-04 21:44:08.541158234 +0000
-@@ -20921,6 +20921,10 @@ in effect.
+diff --git a/gcc/doc/invoke.texi b/gcc/doc/invoke.texi
+index ebfaaa1..8b26eac 100644
+--- a/gcc/doc/invoke.texi
++++ b/gcc/doc/invoke.texi
+@@ -21178,6 +21178,10 @@ in effect.
  Prefer zero-displacement conditional branches for conditional move instruction
  patterns.  This can result in faster code on the SH4 processor.
  
@@ -1923,9 +1996,10 @@ diff -urp ../baseline/gcc-5.2.0/gcc/doc/invoke.texi gcc-5.2.0/gcc/doc/invoke.tex
  @end table
  
  @node Solaris 2 Options
-diff -urp ../baseline/gcc-5.2.0/libitm/config/sh/sjlj.S gcc-5.2.0/libitm/config/sh/sjlj.S
---- ../baseline/gcc-5.2.0/libitm/config/sh/sjlj.S	2015-01-05 12:33:28.000000000 +0000
-+++ gcc-5.2.0/libitm/config/sh/sjlj.S	2015-09-11 04:56:22.272911159 +0000
+diff --git a/libitm/config/sh/sjlj.S b/libitm/config/sh/sjlj.S
+index 410cef6..76ec6df 100644
+--- a/libitm/config/sh/sjlj.S
++++ b/libitm/config/sh/sjlj.S
 @@ -58,9 +58,6 @@ _ITM_beginTransaction:
  	jsr	@r1
  	 mov	r15, r5
@@ -1951,10 +2025,11 @@ diff -urp ../baseline/gcc-5.2.0/libitm/config/sh/sjlj.S gcc-5.2.0/libitm/config/
  #endif
  	.size	_ITM_beginTransaction, . - _ITM_beginTransaction
  
-diff -urp ../baseline/gcc-5.2.0/include/longlong.h gcc-5.2.0/include/longlong.h
---- ../baseline/gcc-5.2.0/include/longlong.h	2014-10-28 20:22:40.000000000 +0000
-+++ gcc-5.2.0/include/longlong.h	2015-09-24 02:40:55.451988407 +0000
-@@ -1102,6 +1102,29 @@ extern UDItype __umulsidi3 (USItype, USI
+diff --git a/include/longlong.h b/include/longlong.h
+index a0b2ce1..19164ed 100644
+--- a/include/longlong.h
++++ b/include/longlong.h
+@@ -1102,6 +1102,29 @@ extern UDItype __umulsidi3 (USItype, USItype);
  /* This is the same algorithm as __udiv_qrnnd_c.  */
  #define UDIV_NEEDS_NORMALIZATION 1
  
@@ -1984,7 +2059,7 @@ diff -urp ../baseline/gcc-5.2.0/include/longlong.h gcc-5.2.0/include/longlong.h
  #define udiv_qrnnd(q, r, n1, n0, d) \
    do {									\
      extern UWtype __udiv_qrnnd_16 (UWtype, UWtype)			\
-@@ -1121,6 +1144,7 @@ extern UDItype __umulsidi3 (USItype, USI
+@@ -1121,6 +1144,7 @@ extern UDItype __umulsidi3 (USItype, USItype);
  	: "1" (n1), "r" (n0), "rm" (d), "r" (&__udiv_qrnnd_16)		\
  	: "r1", "r2", "r4", "r5", "r6", "pr", "t");			\
    } while (0)
