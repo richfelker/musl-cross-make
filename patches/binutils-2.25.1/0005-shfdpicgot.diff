@@ -1,0 +1,11 @@
+--- binutils-2.25.1/bfd/elf32-sh.c.orig	2015-10-08 16:33:04.413334344 +0000
++++ binutils-2.25.1/bfd/elf32-sh.c	2015-10-08 16:23:05.709980166 +0000
+@@ -3604,7 +3604,7 @@ sh_elf_size_dynamic_sections (bfd *outpu
+ 	    return FALSE;
+ 	}
+       else if ((elf_elfheader (output_bfd)->e_flags & EF_SH_FDPIC)
+-	       && htab->sgot->size != 0)
++	       /* && htab->sgot->size != 0 */)
+ 	{
+ 	  if (! add_dynamic_entry (DT_PLTGOT, 0))
+ 	    return FALSE;
