@@ -1,6 +1,7 @@
 
 OUTPUT = $(PWD)/output
 TARGET = sh2eb-linux-musl
+SOURCES = sources
 
 BINUTILS_VER = 2.25.1
 GCC_VER = 5.2.0
@@ -38,29 +39,29 @@ clean:
 	rm -rf steps/configure_* steps/build_* steps/install_*
 
 distclean: clean
-	rm -rf sources/config.sub sources/*.tar.bz2
+	rm -rf $(SOURCES)/config.sub $(SOURCES)/*.tar.bz2
 
 steps/configure_gcc0: steps/install_binutils
 steps/configure_gcc: steps/install_musl
 
 
-sources/config.sub:
+$(SOURCES)/config.sub:
 	wget -O $@ 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 
-sources/binutils-%:
+$(SOURCES)/binutils-%:
 	wget -c -O $@.part http://ftp.gnu.org/pub/gnu/binutils/$(notdir $@)
 	mv $@.part $@
 
-sources/gcc-%:
+$(SOURCES)/gcc-%:
 	wget -c -O $@.part http://ftp.gnu.org/pub/gnu/gcc/$(basename $(basename $(notdir $@)))/$(notdir $@)
 	mv $@.part $@
 
 
 
-steps/extract_binutils: sources/binutils-$(BINUTILS_VER).tar.bz2 sources/config.sub
+steps/extract_binutils: $(SOURCES)/binutils-$(BINUTILS_VER).tar.bz2 $(SOURCES)/config.sub
 	tar jxvf $<
 	cat patches/binutils-$(BINUTILS_VER)/* | ( cd binutils-$(BINUTILS_VER) && patch -p1 )
-	cp sources/config.sub binutils-$(BINUTILS_VER)
+	cp $(SOURCES)/config.sub binutils-$(BINUTILS_VER)
 	touch $@
 
 steps/configure_binutils: steps/extract_binutils
@@ -78,10 +79,10 @@ steps/install_binutils: steps/build_binutils
 
 
 
-steps/extract_gcc: sources/gcc-$(GCC_VER).tar.bz2 sources/config.sub
+steps/extract_gcc: $(SOURCES)/gcc-$(GCC_VER).tar.bz2 $(SOURCES)/config.sub
 	tar jxvf $<
 	cat patches/gcc-$(GCC_VER)/* | ( cd gcc-$(GCC_VER) && patch -p1 )
-	cp sources/config.sub gcc-$(GCC_VER)
+	cp $(SOURCES)/config.sub gcc-$(GCC_VER)
 	touch $@
 
 steps/configure_gcc0: steps/extract_gcc
