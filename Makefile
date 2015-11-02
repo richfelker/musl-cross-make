@@ -21,6 +21,7 @@ GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-libquadmath --disable-decimal-float \
 	--with-target-libiberty=no --with-target-zlib=no \
+	--with-system-zlib \
 	$(GCC_LANG_CONFIG) \
 	$(GCC_MULTILIB_CONFIG)
 
