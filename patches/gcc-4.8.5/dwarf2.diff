@@ -1,0 +1,67 @@
+GCC 4.8.x: default to DWARF2 instead of DWARF4
+
+1) Dwarf4 debug info is 3-4 times bigger than Dwarf2,
+2) it only helps C++11 debugging,
+3) to be able to debug such programs, one needs bleeding edge tools like gdb 7.6.
+   with older versions, there is no error message at all, only a failure to show
+   the right source files (only _start/.init asm is shown).
+
+reversed patch from
+http://repo.or.cz/w/official-gcc.git/patch/052166fd4a8051c7dc4c87d408be091c99aafd55
+
+--- gcc-4.8.2.org/gcc/common.opt
++++ gcc-4.8.2/gcc/common.opt
+@@ -977,7 +977,7 @@
+ Map one directory name to another in debug information
+ 
+ fdebug-types-section
+-Common Report Var(flag_debug_types_section) Init(0)
++Common Report Var(flag_debug_types_section) Init(1)
+ Output .debug_types section when using DWARF v4 debuginfo.
+ 
+ ; Nonzero for -fdefer-pop: don't pop args after each function call
+@@ -2307,7 +2307,7 @@
+ Generate debug information in COFF format
+ 
+ gdwarf-
+-Common Joined UInteger Var(dwarf_version) Init(4) Negative(gstabs)
++Common Joined UInteger Var(dwarf_version) Init(-1) Negative(gstabs)
+ Generate debug information in DWARF v2 (or later) format
+ 
+ ggdb
+@@ -2323,7 +2323,7 @@
+ Generate DWARF pubnames and pubtypes sections.
+ 
+ gno-record-gcc-switches
+-Common RejectNegative Var(dwarf_record_gcc_switches,0) Init(1)
++Common RejectNegative Var(dwarf_record_gcc_switches,0) Init(0)
+ Don't record gcc command line switches in DWARF DW_AT_producer.
+ 
+ grecord-gcc-switches
+@@ -2347,7 +2347,7 @@
+ Generate debug information in extended STABS format
+ 
+ gno-strict-dwarf
+-Common RejectNegative Var(dwarf_strict,0) Init(0)
++Common RejectNegative Var(dwarf_strict,0) Init(-1)
+ Emit DWARF additions beyond selected version
+ 
+ gstrict-dwarf
+--- gcc-4.8.2.org/gcc/toplev.c
++++ gcc-4.8.2/gcc/toplev.c
+@@ -1363,6 +1363,15 @@
+ 	}
+     }
+ 
++  /* Unless over-ridden for the target, assume that all DWARF levels
++     may be emitted, if DWARF2_DEBUG is selected.  */
++  if (dwarf_strict < 0)
++    dwarf_strict = 0;
++
++  /* And select a default dwarf level.  */
++  if (dwarf_version < 0)
++    dwarf_version = 2;
++
+   /* A lot of code assumes write_symbols == NO_DEBUG if the debugging
+      level is 0.  */
+   if (debug_info_level == DINFO_LEVEL_NONE)

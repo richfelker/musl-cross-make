@@ -1,0 +1,39 @@
+From 478ee0c03a08e2ef9371fd88d516738936943e78 Mon Sep 17 00:00:00 2001
+From: David Holsgrove <david.holsgrove@xilinx.com>
+Date: Fri, 28 Sep 2012 16:32:03 +1000
+Subject: [PATCH 06/11] [Patch, microblaze]: Add SIZE_TYPE and PTRDIFF_TYPE to
+ microblaze.h
+
+Fixes warnings like;
+
+warning: format '%zX' expects argument of type 'size_t',
+but argument 3 has type 'unsigned int' [-Wformat]
+
+Changelog
+
+2013-03-18  David Holsgrove <david.holsgrove@xilinx.com>
+
+ * gcc/config/microblaze/microblaze.h: Define SIZE_TYPE
+   and PTRDIFF_TYPE.
+
+Signed-off-by: David Holsgrove <david.holsgrove@xilinx.com>
+---
+ gcc/config/microblaze/microblaze.h |    6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff -r d9fb78d89e6f gcc/config/microblaze/microblaze.h
+--- a/gcc/config/microblaze/microblaze.h	Thu Jan 29 13:42:01 2015 -0500
++++ b/gcc/config/microblaze/microblaze.h	Thu Jan 29 13:42:04 2015 -0500
+@@ -219,6 +219,12 @@
+ #undef PTRDIFF_TYPE
+ #define PTRDIFF_TYPE "int"
+ 
++#undef SIZE_TYPE
++#define SIZE_TYPE "unsigned int"
++
++#undef PTRDIFF_TYPE
++#define PTRDIFF_TYPE "int"
++
+ #define CONSTANT_ALIGNMENT(EXP, ALIGN)					\
+   ((TREE_CODE (EXP) == STRING_CST  || TREE_CODE (EXP) == CONSTRUCTOR)	\
+    && (ALIGN) < BITS_PER_WORD						\

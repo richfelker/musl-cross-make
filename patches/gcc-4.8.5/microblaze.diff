@@ -1,0 +1,31 @@
+# HG changeset patch
+# Parent eb020f66032d779cbaeda8acb97a73d3108189f5
+Microblaze support (again).
+
+diff -r eb020f66032d gcc/config/microblaze/linux.h
+--- a/gcc/config/microblaze/linux.h	Thu Jan 29 13:41:59 2015 -0500
++++ b/gcc/config/microblaze/linux.h	Thu Jan 29 13:42:01 2015 -0500
+@@ -25,7 +25,22 @@
+ #undef TLS_NEEDS_GOT
+ #define TLS_NEEDS_GOT 1
+ 
+-#define DYNAMIC_LINKER "/lib/ld.so.1"
++#if TARGET_BIG_ENDIAN_DEFAULT == 0 /* LE */
++#define MUSL_DYNAMIC_LINKER_E "%{EB:;:el}"
++#else
++#define MUSL_DYNAMIC_LINKER_E "%{EL:el}"
++#endif
++
++#define MUSL_DYNAMIC_LINKER "/lib/ld-musl-microblaze" MUSL_DYNAMIC_LINKER_E ".so.1"
++#define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
++
++#if DEFAULT_LIBC == LIBC_MUSL
++#define DYNAMIC_LINKER MUSL_DYNAMIC_LINKER
++#else
++#define DYNAMIC_LINKER GLIBC_DYNAMIC_LINKER
++#endif
++
++
+ #undef  SUBTARGET_EXTRA_SPECS
+ #define SUBTARGET_EXTRA_SPECS \
+   { "dynamic_linker", DYNAMIC_LINKER }

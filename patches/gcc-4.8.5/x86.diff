@@ -1,0 +1,55 @@
+# HG changeset patch
+# Parent e2d9d64d6835b26cc5cb052112cfebce6280b00a
+Support for i386-linux-musl and x86_64-linux-musl.
+
+diff -r e2d9d64d6835 gcc/config/i386/linux.h
+--- a/gcc/config/i386/linux.h	Thu Jan 29 13:41:48 2015 -0500
++++ b/gcc/config/i386/linux.h	Thu Jan 29 13:41:51 2015 -0500
+@@ -21,3 +21,4 @@
+ 
+ #define GNU_USER_LINK_EMULATION "elf_i386"
+ #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
++#define MUSL_DYNAMIC_LINKER "/lib/ld-musl-i386.so.1"
+diff -r e2d9d64d6835 gcc/config/i386/linux64.h
+--- a/gcc/config/i386/linux64.h	Thu Jan 29 13:41:48 2015 -0500
++++ b/gcc/config/i386/linux64.h	Thu Jan 29 13:41:51 2015 -0500
+@@ -30,3 +30,7 @@
+ #define GLIBC_DYNAMIC_LINKER32 "/lib/ld-linux.so.2"
+ #define GLIBC_DYNAMIC_LINKER64 "/lib64/ld-linux-x86-64.so.2"
+ #define GLIBC_DYNAMIC_LINKERX32 "/libx32/ld-linux-x32.so.2"
++
++#define MUSL_DYNAMIC_LINKER32 "/lib/ld-musl-i386.so.1"
++#define MUSL_DYNAMIC_LINKER64 "/lib/ld-musl-x86_64.so.1"
++#define MUSL_DYNAMIC_LINKERX32 "/lib/ld-musl-x32.so.1"
+diff -r e2d9d64d6835 libitm/config/linux/x86/tls.h
+--- a/libitm/config/linux/x86/tls.h	Thu Jan 29 13:41:48 2015 -0500
++++ b/libitm/config/linux/x86/tls.h	Thu Jan 29 13:41:51 2015 -0500
+@@ -25,16 +25,19 @@
+ #ifndef LIBITM_X86_TLS_H
+ #define LIBITM_X86_TLS_H 1
+ 
+-#if defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 10)
++#if defined(__GLIBC_PREREQ)
++#if __GLIBC_PREREQ(2, 10)
+ /* Use slots in the TCB head rather than __thread lookups.
+    GLIBC has reserved words 10 through 13 for TM.  */
+ #define HAVE_ARCH_GTM_THREAD 1
+ #define HAVE_ARCH_GTM_THREAD_DISP 1
+ #endif
++#endif
+ 
+ #include "config/generic/tls.h"
+ 
+-#if defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 10)
++#if defined(__GLIBC_PREREQ)
++#if __GLIBC_PREREQ(2, 10)
+ namespace GTM HIDDEN {
+ 
+ #ifdef __x86_64__
+@@ -101,5 +104,6 @@
+ 
+ } // namespace GTM
+ #endif /* >= GLIBC 2.10 */
++#endif
+ 
+ #endif // LIBITM_X86_TLS_H
