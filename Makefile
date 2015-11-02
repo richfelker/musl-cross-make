@@ -23,6 +23,10 @@ GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
 	$(GCC_LANG_CONFIG) \
 	$(GCC_MULTILIB_CONFIG)
 
+ifeq ($(TARGET),powerpc-linux-musl)
+GCC_CONFIG += --with-long-double-64
+endif
+
 GCC0_CONFIG = $(GCC_CONFIG) \
 	--with-newlib --disable-libssp --disable-threads \
 	--disable-shared --disable-libgomp --disable-libatomic \
