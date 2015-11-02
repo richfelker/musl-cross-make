@@ -1,0 +1,18 @@
+# HG changeset patch
+# Parent 4618ad6f036f1e944a5262ae5875dcdf62c41f8b
+Support for mips-linux-musl.
+
+diff -r 4618ad6f036f gcc/config/mips/linux.h
+--- a/gcc/config/mips/linux.h	Thu Sep 19 08:56:47 2013 -0400
++++ b/gcc/config/mips/linux.h	Thu Sep 19 09:08:11 2013 -0400
+@@ -18,3 +18,10 @@
+ <http://www.gnu.org/licenses/>.  */
+ 
+ #define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
++
++#if TARGET_ENDIAN_DEFAULT == 0 /* LE */
++#define MUSL_DYNAMIC_LINKER_E "%{EB:;:el}"
++#else
++#define MUSL_DYNAMIC_LINKER_E "%{EL:el}"
++#endif
++#define MUSL_DYNAMIC_LINKER "/lib/ld-musl-mips" MUSL_DYNAMIC_LINKER_E ".so.1"

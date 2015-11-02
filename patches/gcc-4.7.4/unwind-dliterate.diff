@@ -1,0 +1,38 @@
+diff -r 2ebb44d1e6f1 libgcc/unwind-dw2-fde-dip.c
+--- a/libgcc/unwind-dw2-fde-dip.c	Sun Jul 28 12:15:47 2013 -0400
++++ b/libgcc/unwind-dw2-fde-dip.c	Sun Jul 28 12:17:02 2013 -0400
+@@ -47,28 +47,13 @@
+ #include "unwind-compat.h"
+ #include "gthr.h"
+ 
+-#if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
+-    && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 2) \
+-	|| (__GLIBC__ == 2 && __GLIBC_MINOR__ == 2 && defined(DT_CONFIG)))
++#if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) && defined(TARGET_DL_ITERATE_PHDR)
+ # define USE_PT_GNU_EH_FRAME
+-#endif
+-
+-#if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
+-    && defined(__FreeBSD__) && __FreeBSD__ >= 7
+-# define ElfW __ElfN
+-# define USE_PT_GNU_EH_FRAME
+-#endif
+-
+-#if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
+-    && defined(__OpenBSD__)
+-# define ElfW(type) Elf_##type
+-# define USE_PT_GNU_EH_FRAME
+-#endif
+-
+-#if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
+-    && defined(TARGET_DL_ITERATE_PHDR) \
+-    && defined(__sun__) && defined(__svr4__)
+-# define USE_PT_GNU_EH_FRAME
++# ifdef __OpenBSD__
++#  define ElfW(type) Elf_##typ
++# elif defined(__FreeBSD__) && __FreeBSD__ >= 7
++#  define ElfW __ElfN
++# endif
+ #endif
+ 
+ #if defined(USE_PT_GNU_EH_FRAME)

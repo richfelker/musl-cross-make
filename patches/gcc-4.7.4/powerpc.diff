@@ -1,0 +1,138 @@
+# HG changeset patch
+# Parent 2ffe76b215fdb082cbbc262536077627757fa9bf
+Support for powerpc-linux-musl.
+
+diff -r 2ffe76b215fd gcc/config.gcc
+--- a/gcc/config.gcc	Fri Mar 29 16:41:26 2013 -0400
++++ b/gcc/config.gcc	Fri Mar 29 16:41:28 2013 -0400
+@@ -2112,6 +2112,10 @@
+ 	    powerpc*-*-linux*paired*)
+ 		tm_file="${tm_file} rs6000/750cl.h" ;;
+ 	esac
++        case ${target} in
++            *-linux*-musl*)
++                enable_secureplt=yes ;;
++        esac
+ 	if test x${enable_secureplt} = xyes; then
+ 		tm_file="rs6000/secureplt.h ${tm_file}"
+ 	fi
+diff -r 2ffe76b215fd gcc/config/rs6000/linux64.h
+--- a/gcc/config/rs6000/linux64.h	Fri Mar 29 16:41:26 2013 -0400
++++ b/gcc/config/rs6000/linux64.h	Fri Mar 29 16:41:28 2013 -0400
+@@ -364,17 +364,21 @@
+ #define GLIBC_DYNAMIC_LINKER64 "/lib64/ld64.so.1"
+ #define UCLIBC_DYNAMIC_LINKER32 "/lib/ld-uClibc.so.0"
+ #define UCLIBC_DYNAMIC_LINKER64 "/lib/ld64-uClibc.so.0"
++#define MUSL_DYNAMIC_LINKER32 "/lib/ld-musl-powerpc.so.1"
++#define MUSL_DYNAMIC_LINKER64 "/lib/ld-musl-powerpc64.so.1"
+ #if DEFAULT_LIBC == LIBC_UCLIBC
+-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{mglibc:" G ";:" U "}"
++#define CHOOSE_DYNAMIC_LINKER(G, U, M) "%{mglibc:" G ";:%{mmusl:" M ";:" U "}}"
+ #elif DEFAULT_LIBC == LIBC_GLIBC
+-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{muclibc:" U ";:" G "}"
++#define CHOOSE_DYNAMIC_LINKER(G, U, M) "%{muclibc:" U ";:%{mmusl:" M ";:" G "}}"
++#elif DEFAULT_LIBC == LIBC_MUSL
++#define CHOOSE_DYNAMIC_LINKER(G, U, M) "%{mglibc:" G ";:%{muclibc:" U ";:" M "}}"
+ #else
+ #error "Unsupported DEFAULT_LIBC"
+ #endif
+ #define GNU_USER_DYNAMIC_LINKER32 \
+-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER32, UCLIBC_DYNAMIC_LINKER32)
++  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER32, UCLIBC_DYNAMIC_LINKER32, MUSL_DYNAMIC_LINKER32)
+ #define GNU_USER_DYNAMIC_LINKER64 \
+-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER64, UCLIBC_DYNAMIC_LINKER64)
++  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER64, UCLIBC_DYNAMIC_LINKER64, MUSL_DYNAMIC_LINKER64)
+ 
+ 
+ #define LINK_OS_LINUX_SPEC32 "-m elf32ppclinux %{!shared: %{!static: \
+diff -r 2ffe76b215fd gcc/config/rs6000/secureplt.h
+--- a/gcc/config/rs6000/secureplt.h	Fri Mar 29 16:41:26 2013 -0400
++++ b/gcc/config/rs6000/secureplt.h	Fri Mar 29 16:41:28 2013 -0400
+@@ -18,3 +18,4 @@
+ <http://www.gnu.org/licenses/>.  */
+ 
+ #define CC1_SECURE_PLT_DEFAULT_SPEC "-msecure-plt"
++#define LINK_SECURE_PLT_DEFAULT_SPEC "--secure-plt"
+diff -r 2ffe76b215fd gcc/config/rs6000/sysv4.h
+--- a/gcc/config/rs6000/sysv4.h	Fri Mar 29 16:41:26 2013 -0400
++++ b/gcc/config/rs6000/sysv4.h	Fri Mar 29 16:41:28 2013 -0400
+@@ -551,6 +551,9 @@
+ #ifndef CC1_SECURE_PLT_DEFAULT_SPEC
+ #define CC1_SECURE_PLT_DEFAULT_SPEC ""
+ #endif
++#ifndef LINK_SECURE_PLT_DEFAULT_SPEC
++#define LINK_SECURE_PLT_DEFAULT_SPEC ""
++#endif
+ 
+ /* Pass -G xxx to the compiler and set correct endian mode.  */
+ #define	CC1_SPEC "%{G*} %(cc1_cpu) \
+@@ -611,7 +614,8 @@
+ %{mlittle: --oformat elf32-powerpcle } %{mlittle-endian: --oformat elf32-powerpcle } \
+ %{!mlittle: %{!mlittle-endian: %{!mbig: %{!mbig-endian: \
+     %{mcall-i960-old: --oformat elf32-powerpcle} \
+-  }}}}"
++  }}}} \
++%{!mbss-plt: %{!msecure-plt: %(link_secure_plt_default)}}"
+ 
+ /* Any specific OS flags.  */
+ #define LINK_OS_SPEC "\
+@@ -789,15 +793,18 @@
+ 
+ #define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
+ #define UCLIBC_DYNAMIC_LINKER "/lib/ld-uClibc.so.0"
++#define MUSL_DYNAMIC_LINKER "/lib/ld-musl-powerpc.so.1"
+ #if DEFAULT_LIBC == LIBC_UCLIBC
+-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{mglibc:" G ";:" U "}"
++#define CHOOSE_DYNAMIC_LINKER(G, U, M) "%{mglibc:" G ";:%{mmusl:" M ";:" U "}}"
++#elif DEFAULT_LIBC == LIBC_MUSL
++#define CHOOSE_DYNAMIC_LINKER(G, U, M) "%{mglibc:" G ";:%{muclibc:" U ";:" M "}}"
+ #elif !defined (DEFAULT_LIBC) || DEFAULT_LIBC == LIBC_GLIBC
+-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{muclibc:" U ";:" G "}"
++#define CHOOSE_DYNAMIC_LINKER(G, U, M) "%{muclibc:" U ";:%{mmusl:" M ";:" G "}}"
+ #else
+ #error "Unsupported DEFAULT_LIBC"
+ #endif
+ #define GNU_USER_DYNAMIC_LINKER \
+-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER)
++  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER, MUSL_DYNAMIC_LINKER)
+ 
+ #define LINK_OS_LINUX_SPEC "-m elf32ppclinux %{!shared: %{!static: \
+   %{rdynamic:-export-dynamic} \
+@@ -923,6 +930,7 @@
+   { "cc1_endian_little",	CC1_ENDIAN_LITTLE_SPEC },		\
+   { "cc1_endian_default",	CC1_ENDIAN_DEFAULT_SPEC },		\
+   { "cc1_secure_plt_default",	CC1_SECURE_PLT_DEFAULT_SPEC },		\
++  { "link_secure_plt_default",	LINK_SECURE_PLT_DEFAULT_SPEC },		\
+   { "cpp_os_ads",		CPP_OS_ADS_SPEC },			\
+   { "cpp_os_yellowknife",	CPP_OS_YELLOWKNIFE_SPEC },		\
+   { "cpp_os_mvme",		CPP_OS_MVME_SPEC },			\
+--- a/libgcc/config/rs6000/linux-unwind.h	Wed Nov 21 21:23:49 2012 -0500
++++ b/libgcc/config/rs6000/linux-unwind.h	Wed Nov 21 21:45:58 2012 -0500
+@@ -176,6 +176,7 @@
+ }
+ #endif
+ 
++#ifdef __GLIBC__
+ /* Find an entry in the process auxiliary vector.  The canonical way to
+    test for VMX is to look at AT_HWCAP.  */
+ 
+@@ -207,6 +208,7 @@
+       return auxp->a_val;
+   return 0;
+ }
++#endif
+ 
+ /* Do code reading to identify a signal frame, and set the frame
+    state data appropriately.  See unwind-dw2.c for the structs.  */
+@@ -253,7 +255,11 @@
+ 
+   if (hwcap == 0)
+     {
++#ifdef __GLIBC__
+       hwcap = ppc_linux_aux_vector (16);
++#else
++      hwcap = -1;
++#endif
+       /* These will already be set if we found AT_HWCAP.  A nonzero
+ 	 value stops us looking again if for some reason we couldn't
+ 	 find AT_HWCAP.  */
