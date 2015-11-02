@@ -12,9 +12,14 @@ COMMON_CONFIG = --disable-werror \
 	--with-sysroot=$(OUTPUT)/$(TARGET)
 
 BINUTILS_CONFIG = $(COMMON_CONFIG)
+GCC_MULTILIB_CONFIG = --disable-multilib --with-multilib-list=
+ifeq ($(TARGET),x86_64-x32-linux-musl)
+GCC_MULTILIB_CONFIG = --with-multilib-list=mx32
+endif
 GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
 	--disable-libmudflap --disable-libsanitizer \
-	--disable-libquadmath --disable-decimal-float
+	--disable-libquadmath --disable-decimal-float \
+	$(GCC_MULTILIB_CONFIG)
 
 GCC0_CONFIG = $(GCC_CONFIG) \
 	--with-newlib --disable-libssp --disable-threads \
