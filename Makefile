@@ -20,6 +20,7 @@ GCC_LANG_CONFIG = --enable-languages=c,c++,lto
 GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-libquadmath --disable-decimal-float \
+	--with-target-libiberty=no --with-target-zlib=no \
 	$(GCC_LANG_CONFIG) \
 	$(GCC_MULTILIB_CONFIG)
 
