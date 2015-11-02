@@ -1,0 +1,17 @@
+# HG changeset patch
+# Parent 9f2f4e02fced4d4810910db6cced26ed0d47c23f
+Get rid of ever-broken fixincludes on musl.
+
+diff -r 9f2f4e02fced fixincludes/mkfixinc.sh
+--- a/fixincludes/mkfixinc.sh	Sun Jul 26 15:32:19 2015 -0400
++++ b/fixincludes/mkfixinc.sh	Sun Jul 26 15:32:21 2015 -0400
+@@ -19,7 +19,8 @@
+     powerpc-*-eabi*    | \
+     powerpc-*-rtems*   | \
+     powerpcle-*-eabisim* | \
+-    powerpcle-*-eabi* )
++    powerpcle-*-eabi* | \
++    *-musl* )
+ 	#  IF there is no include fixing,
+ 	#  THEN create a no-op fixer and exit
+ 	(echo "#! /bin/sh" ; echo "exit 0" ) > ${target}

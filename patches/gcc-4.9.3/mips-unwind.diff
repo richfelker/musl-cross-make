@@ -1,0 +1,12 @@
+--- gcc-4.7.4.org/libgcc/config/mips/linux-unwind.h
++++ gcc-4.7.4/libgcc/config/mips/linux-unwind.h
+@@ -28,7 +28,8 @@
+    state data appropriately.  See unwind-dw2.c for the structs.  */
+ 
+ #include <signal.h>
+-#include <asm/unistd.h>
++#include <unistd.h>
++#include <sys/syscall.h>
+ 
+ /* The third parameter to the signal handler points to something with
+  * this structure defined in asm/ucontext.h, but the name clashes with

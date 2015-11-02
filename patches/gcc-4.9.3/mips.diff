@@ -1,0 +1,18 @@
+# HG changeset patch
+# Parent 270d6afd029dd396b69553e1d96f35d2ebdd2f99
+Support for mips-linux-musl.
+
+diff -r 270d6afd029d gcc/config/mips/linux.h
+--- a/gcc/config/mips/linux.h	Sun Jul 26 15:32:25 2015 -0400
++++ b/gcc/config/mips/linux.h	Sun Jul 26 15:32:26 2015 -0400
+@@ -23,3 +23,10 @@
+ #undef UCLIBC_DYNAMIC_LINKER
+ #define UCLIBC_DYNAMIC_LINKER \
+   "%{mnan=2008:/lib/ld-uClibc-mipsn8.so.0;:/lib/ld-uClibc.so.0}"
++
++#if TARGET_ENDIAN_DEFAULT == 0 /* LE */
++#define MUSL_DYNAMIC_LINKER_E "%{EB:;:el}"
++#else
++#define MUSL_DYNAMIC_LINKER_E "%{EL:el}"
++#endif
++#define MUSL_DYNAMIC_LINKER "/lib/ld-musl-mips" MUSL_DYNAMIC_LINKER_E "%{msoft-float:-sf}.so.1"
