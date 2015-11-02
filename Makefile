@@ -117,7 +117,12 @@ steps/build_gcc: steps/configure_gcc
 	touch $@
 
 steps/install_gcc: steps/build_gcc
-	cd gcc-$(GCC_VER)/build && $(MAKE) install
+	cd gcc-$(GCC_VER)/build && $(MAKE) -j1 \
+		install-gcc \
+		install-lto-plugin \
+		install-target-libgcc \
+		install-target-libssp \
+		install-target-libstdc++-v3
 	touch $@
 
 
