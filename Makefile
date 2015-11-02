@@ -16,9 +16,11 @@ GCC_MULTILIB_CONFIG = --disable-multilib --with-multilib-list=
 ifeq ($(TARGET),x86_64-x32-linux-musl)
 GCC_MULTILIB_CONFIG = --with-multilib-list=mx32
 endif
+GCC_LANG_CONFIG = --enable-languages=c,c++,lto
 GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-libquadmath --disable-decimal-float \
+	$(GCC_LANG_CONFIG) \
 	$(GCC_MULTILIB_CONFIG)
 
 GCC0_CONFIG = $(GCC_CONFIG) \
