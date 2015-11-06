@@ -15,12 +15,12 @@ GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-libquadmath --disable-decimal-float
 
+GCC0_VARS = CFLAGS="-O0 -g0" CXXFLAGS="-O0 -g0"
 GCC0_CONFIG = $(GCC_CONFIG) \
 	--with-newlib --disable-libssp --disable-threads \
 	--disable-shared --disable-libgomp --disable-libatomic \
 	--disable-libquadmath --disable-decimal-float --disable-nls \
-	--enable-languages=c \
-	CFLAGS="-O0 -g0" CXXFLAGS="-O0 -g0"
+	--enable-languages=c
 
 GCC0_BDIR = $(PWD)/gcc-$(GCC_VER)/build0/gcc
 GCC0_CC = $(GCC0_BDIR)/xgcc -B $(GCC0_BDIR)
@@ -86,7 +86,7 @@ steps/extract_gcc: sources/gcc-$(GCC_VER).tar.bz2 sources/config.sub
 
 steps/configure_gcc0: steps/extract_gcc
 	mkdir -p gcc-$(GCC_VER)/build0
-	test -e gcc-$(GCC_VER)/build0/config.status || ( cd gcc-$(GCC_VER)/build0 && ../configure $(GCC0_CONFIG) )
+	test -e gcc-$(GCC_VER)/build0/config.status || ( cd gcc-$(GCC_VER)/build0 && $(GCC0_VARS) ../configure $(GCC0_CONFIG) )
 	touch $@
 
 steps/build_gcc0: steps/configure_gcc0
