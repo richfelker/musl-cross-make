@@ -1,0 +1,11 @@
+--- binutils-397a64b3.orig//gas/config/tc-sh.c	2015-08-11 01:29:26.000000000 +0000
++++ binutils-397a64b3/gas/config/tc-sh.c	2015-11-02 23:17:03.931462591 +0000
+@@ -4491,6 +4496,8 @@ sh_parse_name (char const *name,
+     reloc_type = BFD_RELOC_SH_TLS_LE_32;
+   else if ((next_end = sh_end_of_match (next + 1, "DTPOFF")))
+     reloc_type = BFD_RELOC_SH_TLS_LDO_32;
++  else if ((next_end = sh_end_of_match (next + 1, "PCREL")))
++    reloc_type = BFD_RELOC_32_PCREL;
+   else
+     goto no_suffix;
+ 

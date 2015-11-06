@@ -19,3 +19,9 @@ GCC_VER = 5.2.0
 # Options for using (plain, non-FDPIC) ELF on NOMMU targets
 
 # GCC_CONFIG += --enable-default-pie
+
+# Last GPLv2 versions
+
+# GCC_VER = 4.2.1
+# BINUTILS_VER = 397a64b3
+# BINUTILS_SITE = http://landley.net/aboriginal/mirror

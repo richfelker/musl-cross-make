@@ -1,0 +1,18 @@
+The binutils build notices that makeinfo is missing, but fails anyway, breaking
+the build.  Make it stop.
+
+The "info" file format is obsolete (similar to "gopher"), was never used
+by anyone but the FSF, and failed to even replace man pages (which are
+now available in HTML).
+
+--- binutils-2.18/missing	2005-07-13 20:24:56.000000000 -0500
++++ binutils-2.18/missing	2008-08-11 02:05:47.000000000 -0500
+@@ -299,7 +299,7 @@
+     fi
+     # If the file does not exist, the user really needs makeinfo;
+     # let's fail without touching anything.
+-    test -f $file || exit 1
++    test -f $file || exit 0
+     touch $file
+     ;;
+ 

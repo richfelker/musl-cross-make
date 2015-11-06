@@ -1,0 +1,377 @@
+diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
+index bd4b576..41803c2 100644
+--- a/bfd/elf32-arm.c
++++ b/bfd/elf32-arm.c
+@@ -13786,7 +13786,7 @@ elf32_arm_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-bfin.c b/bfd/elf32-bfin.c
+index 49ef360..8346d57 100644
+--- a/bfd/elf32-bfin.c
++++ b/bfd/elf32-bfin.c
+@@ -4257,7 +4257,7 @@ elf32_bfinfdpic_size_dynamic_sections (bfd *output_bfd,
+   if (htab->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-cris.c b/bfd/elf32-cris.c
+index 3031173..5b40524 100644
+--- a/bfd/elf32-cris.c
++++ b/bfd/elf32-cris.c
+@@ -3764,7 +3764,7 @@ elf_cris_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-frv.c b/bfd/elf32-frv.c
+index b55a7ab..ef72c23 100644
+--- a/bfd/elf32-frv.c
++++ b/bfd/elf32-frv.c
+@@ -5444,7 +5444,7 @@ elf32_frvfdpic_size_dynamic_sections (bfd *output_bfd,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-hppa.c b/bfd/elf32-hppa.c
+index 41bf5c5..62c7cf6 100644
+--- a/bfd/elf32-hppa.c
++++ b/bfd/elf32-hppa.c
+@@ -2215,7 +2215,7 @@ elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+   if (htab->etab.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  sec = bfd_get_linker_section (dynobj, ".interp");
+ 	  if (sec == NULL)
+diff --git a/bfd/elf32-i370.c b/bfd/elf32-i370.c
+index 7fba4d1..458f694 100644
+--- a/bfd/elf32-i370.c
++++ b/bfd/elf32-i370.c
+@@ -594,7 +594,7 @@ i370_elf_size_dynamic_sections (bfd *output_bfd,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-i386.c b/bfd/elf32-i386.c
+index 7642d0f..b0844c8 100644
+--- a/bfd/elf32-i386.c
++++ b/bfd/elf32-i386.c
+@@ -2834,7 +2834,7 @@ elf_i386_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+   if (htab->elf.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  if (s == NULL)
+diff --git a/bfd/elf32-m32r.c b/bfd/elf32-m32r.c
+index 155d079..a2e3c7c 100644
+--- a/bfd/elf32-m32r.c
++++ b/bfd/elf32-m32r.c
+@@ -2170,7 +2170,7 @@ m32r_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+   if (htab->root.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-m68k.c b/bfd/elf32-m68k.c
+index 10d2fcb..489f3f1 100644
+--- a/bfd/elf32-m68k.c
++++ b/bfd/elf32-m68k.c
+@@ -3257,7 +3257,7 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
+index 8415f1e..5597051 100644
+--- a/bfd/elf32-ppc.c
++++ b/bfd/elf32-ppc.c
+@@ -6191,7 +6191,7 @@ ppc_elf_size_dynamic_sections (bfd *output_bfd,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (htab->elf.dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-s390.c b/bfd/elf32-s390.c
+index de37ca4..a1e628c 100644
+--- a/bfd/elf32-s390.c
++++ b/bfd/elf32-s390.c
+@@ -2039,7 +2039,7 @@ elf_s390_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+   if (htab->elf.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  if (s == NULL)
+diff --git a/bfd/elf32-sh.c b/bfd/elf32-sh.c
+index 012ee4e..a51453f 100644
+--- a/bfd/elf32-sh.c
++++ b/bfd/elf32-sh.c
+@@ -3349,7 +3349,7 @@ sh_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+   if (htab->root.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-vax.c b/bfd/elf32-vax.c
+index 6089e8c..893ea8d 100644
+--- a/bfd/elf32-vax.c
++++ b/bfd/elf32-vax.c
+@@ -1124,7 +1124,7 @@ elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf32-xtensa.c b/bfd/elf32-xtensa.c
+index 73538cd..37ea5da 100644
+--- a/bfd/elf32-xtensa.c
++++ b/bfd/elf32-xtensa.c
+@@ -1637,7 +1637,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+ 		  && htab->sgotloc != NULL);
+ 
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  if (s == NULL)
+diff --git a/bfd/elf64-alpha.c b/bfd/elf64-alpha.c
+index f67b0af..1973cd0 100644
+--- a/bfd/elf64-alpha.c
++++ b/bfd/elf64-alpha.c
+@@ -2877,7 +2877,7 @@ elf64_alpha_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf64-hppa.c b/bfd/elf64-hppa.c
+index 6f40b88..3b628b4 100644
+--- a/bfd/elf64-hppa.c
++++ b/bfd/elf64-hppa.c
+@@ -1558,7 +1558,7 @@ elf64_hppa_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  sec = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (sec != NULL);
+diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
+index 8cff990..851845f 100644
+--- a/bfd/elf64-ppc.c
++++ b/bfd/elf64-ppc.c
+@@ -9748,7 +9748,7 @@ ppc64_elf_size_dynamic_sections (bfd *output_bfd,
+   if (htab->elf.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  if (s == NULL)
+diff --git a/bfd/elf64-s390.c b/bfd/elf64-s390.c
+index 2e505f3..406bb66 100644
+--- a/bfd/elf64-s390.c
++++ b/bfd/elf64-s390.c
+@@ -1989,7 +1989,7 @@ elf_s390_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+   if (htab->elf.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  if (s == NULL)
+diff --git a/bfd/elf64-sh64.c b/bfd/elf64-sh64.c
+index e460895..d920598 100644
+--- a/bfd/elf64-sh64.c
++++ b/bfd/elf64-sh64.c
+@@ -3404,7 +3404,7 @@ sh64_elf64_size_dynamic_sections (bfd *output_bfd,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
+index f15d33e..870aadf 100644
+--- a/bfd/elf64-x86-64.c
++++ b/bfd/elf64-x86-64.c
+@@ -3181,7 +3181,7 @@ elf_x86_64_size_dynamic_sections (bfd *output_bfd,
+   if (htab->elf.dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  if (s == NULL)
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index 7f04271..5b3438d 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -246,7 +246,7 @@ _bfd_elf_link_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
+ 
+   /* A dynamically linked executable has a .interp section, but a
+      shared library does not.  */
+-  if (info->executable)
++  if (info->executable && !info->nointerp)
+     {
+       s = bfd_make_section_anyway_with_flags (abfd, ".interp",
+ 					      flags | SEC_READONLY);
+@@ -5763,7 +5763,7 @@ bfd_elf_size_dynamic_sections (bfd *output_bfd,
+       bfd_boolean all_defined;
+ 
+       *sinterpptr = bfd_get_section_by_name (dynobj, ".interp");
+-      BFD_ASSERT (*sinterpptr != NULL || !info->executable);
++      BFD_ASSERT (*sinterpptr != NULL || !info->executable || info->nointerp);
+ 
+       if (soname != NULL)
+ 	{
+diff --git a/bfd/elfxx-mips.c b/bfd/elfxx-mips.c
+index be1e59a..329dec3 100644
+--- a/bfd/elfxx-mips.c
++++ b/bfd/elfxx-mips.c
+@@ -9579,7 +9579,7 @@ _bfd_mips_elf_size_dynamic_sections (bfd *output_bfd,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/bfd/elfxx-sparc.c b/bfd/elfxx-sparc.c
+index 9bb71a9..db0d4f1 100644
+--- a/bfd/elfxx-sparc.c
++++ b/bfd/elfxx-sparc.c
+@@ -2559,7 +2559,7 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
+   if (elf_hash_table (info)->dynamic_sections_created)
+     {
+       /* Set the contents of the .interp section to the interpreter.  */
+-      if (info->executable)
++      if (info->executable && !info->nointerp)
+ 	{
+ 	  s = bfd_get_linker_section (dynobj, ".interp");
+ 	  BFD_ASSERT (s != NULL);
+diff --git a/include/bfdlink.h b/include/bfdlink.h
+index 797a465..cf533dd 100644
+--- a/include/bfdlink.h
++++ b/include/bfdlink.h
+@@ -433,6 +433,9 @@ struct bfd_link_info
+   /* TRUE if BND prefix in PLT entries is always generated.  */
+   unsigned int bndplt: 1;
+ 
++  /* TRUE if generation of .interp/PT_INTERP should be suppressed.  */
++  unsigned int nointerp: 1;
++
+   /* Char that may appear as the first char of a symbol, but should be
+      skipped (like symbol_leading_char) when looking up symbols in
+      wrap_hash.  Used by PowerPC Linux for 'dot' symbols.  */
+diff --git a/ld/ld.texinfo b/ld/ld.texinfo
+index cf3b586..1e5e5cf 100644
+--- a/ld/ld.texinfo
++++ b/ld/ld.texinfo
+@@ -1426,6 +1426,13 @@ generating dynamically linked ELF executables.  The default dynamic
+ linker is normally correct; don't use this unless you know what you are
+ doing.
+ 
++@kindex --no-dynamic-linker
++@item --no-dynamic-linker
++When producing an executable file, omit the request for a dynamic
++linker to be used at load-time.  This is only meaningful for ELF
++executables that contain dynamic relocations, and usually requires
++entry point code that is capable of processing these relocations.
++
+ @kindex --fatal-warnings
+ @kindex --no-fatal-warnings
+ @item --fatal-warnings
+diff --git a/ld/lexsup.c b/ld/lexsup.c
+index 59bd14f..8b57f84 100644
+--- a/ld/lexsup.c
++++ b/ld/lexsup.c
+@@ -33,6 +33,7 @@ enum option_values
+   OPTION_DEFSYM,
+   OPTION_DEMANGLE,
+   OPTION_DYNAMIC_LINKER,
++  OPTION_NO_DYNAMIC_LINKER,
+   OPTION_SYSROOT,
+   OPTION_EB,
+   OPTION_EL,
+diff --git a/ld/lexsup.c b/ld/lexsup.c
+index 777d6e2..1b992f7 100644
+--- a/ld/lexsup.c
++++ b/ld/lexsup.c
+@@ -138,6 +138,9 @@ static const struct ld_option ld_options[] =
+   { {"dynamic-linker", required_argument, NULL, OPTION_DYNAMIC_LINKER},
+     'I', N_("PROGRAM"), N_("Set PROGRAM as the dynamic linker to use"),
+     TWO_DASHES },
++  { {"no-dynamic-linker", no_argument, NULL, OPTION_NO_DYNAMIC_LINKER},
++    '\0', NULL, N_("Produce an executable with no program interpreter header"),
++    TWO_DASHES },
+   { {"library", required_argument, NULL, 'l'},
+     'l', N_("LIBNAME"), N_("Search for library LIBNAME"), TWO_DASHES },
+   { {"library-path", required_argument, NULL, 'L'},
+@@ -762,6 +765,10 @@ parse_args (unsigned argc, char **argv)
+ 	case 'I':		/* Used on Solaris.  */
+ 	case OPTION_DYNAMIC_LINKER:
+ 	  command_line.interpreter = optarg;
++	  link_info.nointerp = 0;
++	  break;
++	case OPTION_NO_DYNAMIC_LINKER:
++	  link_info.nointerp = 1;
+ 	  break;
+ 	case OPTION_SYSROOT:
+ 	  /* Already handled in ldmain.c.  */
