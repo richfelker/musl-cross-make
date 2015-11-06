@@ -6,6 +6,10 @@ BINUTILS_VER = 2.25.1
 GCC_VER = 5.2.0
 MUSL_TAG = master
 
+GNU_SITE = http://ftp.gnu.org/pub/gnu
+GCC_SITE = $(GNU_SITE)/gcc
+BINUTILS_SITE = $(GNU_SITE)/binutils
+
 COMMON_CONFIG = --disable-werror \
 	--target=$(TARGET) --prefix=$(OUTPUT) \
 	--with-sysroot=$(OUTPUT)/$(TARGET)
@@ -48,11 +52,11 @@ sources/config.sub:
 	wget -O $@ 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 
 sources/binutils-%:
-	wget -c -O $@.part http://ftp.gnu.org/pub/gnu/binutils/$(notdir $@)
+	wget -c -O $@.part $(BINUTILS_SITE)/$(notdir $@)
 	mv $@.part $@
 
 sources/gcc-%:
-	wget -c -O $@.part http://ftp.gnu.org/pub/gnu/gcc/$(basename $(basename $(notdir $@)))/$(notdir $@)
+	wget -c -O $@.part $(GCC_SITE)/$(basename $(basename $(notdir $@)))/$(notdir $@)
 	mv $@.part $@
 
 
