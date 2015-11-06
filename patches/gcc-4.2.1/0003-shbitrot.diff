@@ -1,0 +1,79 @@
+diff --git a/config.sub b/config.sub
+index b83660a..b81ad9a 100755
+--- a/config.sub
++++ b/config.sub
+@@ -277,7 +277,7 @@ case $basic_machine in
+ 	| powerpc | powerpc64 | powerpc64le | powerpcle | ppcbe \
+ 	| pyramid \
+ 	| score \
+-	| sh | sh[1234] | sh[24]a | sh[23]e | sh[34]eb | sheb | shbe | shle | sh[1234]le | sh3ele \
++	| sh | sh[1234] | sh[24]a | sh[23]e | sh[1234]eb | sheb | shbe | shle | sh[1234]le | sh3ele \
+ 	| sh64 | sh64le \
+ 	| sparc | sparc64 | sparc64b | sparc64v | sparc86x | sparclet | sparclite \
+ 	| sparcv8 | sparcv9 | sparcv9b | sparcv9v \
+@@ -358,7 +358,7 @@ case $basic_machine in
+ 	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* | ppcbe-* \
+ 	| pyramid-* \
+ 	| romp-* | rs6000-* \
+-	| sh-* | sh[1234]-* | sh[24]a-* | sh[23]e-* | sh[34]eb-* | sheb-* | shbe-* \
++	| sh-* | sh[1234]-* | sh[24]a-* | sh[23]e-* | sh[1234]eb-* | sheb-* | shbe-* \
+ 	| shle-* | sh[1234]le-* | sh3ele-* | sh64-* | sh64le-* \
+ 	| sparc-* | sparc64-* | sparc64b-* | sparc64v-* | sparc86x-* | sparclet-* \
+ 	| sparclite-* \
+@@ -1127,7 +1127,7 @@ case $basic_machine in
+ 	we32k)
+ 		basic_machine=we32k-att
+ 		;;
+-	sh[1234] | sh[24]a | sh[34]eb | sh[1234]le | sh[23]ele)
++	sh[1234] | sh[24]a | sh[1234]eb | sh[1234]le | sh[23]ele)
+ 		basic_machine=sh-unknown
+ 		;;
+ 	sparc | sparcv8 | sparcv9 | sparcv9b | sparcv9v)
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index 25136b7..3779369 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -1967,7 +1967,7 @@ score-*-elf)
+         ;;
+ sh-*-elf* | sh[12346l]*-*-elf* | sh*-*-kaos* | \
+ sh-*-symbianelf* | sh[12346l]*-*-symbianelf* | \
+-  sh-*-linux* | sh[346lbe]*-*-linux* | \
++  sh-*-linux* | sh[12346lbe]*-*-linux* | \
+   sh-*-netbsdelf* | shl*-*-netbsdelf* | sh5-*-netbsd* | sh5l*-*-netbsd* | \
+    sh64-*-netbsd* | sh64l*-*-netbsd*)
+ 	tmake_file="${tmake_file} sh/t-sh sh/t-elf"
+@@ -2911,7 +2911,7 @@ case "${target}" in
+ 		esac
+ 		;;
+ 
+-	sh[123456ble]-*-* | sh-*-*)
++	sh[123456ble]*-*-* | sh-*-*)
+ 		supported_defaults="cpu"
+ 		case "`echo $with_cpu | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ_ abcdefghijklmnopqrstuvwxyz- | sed s/sh/m/`" in
+ 		"" | m1 | m2 | m2e | m3 | m3e | m4 | m4-single | m4-single-only | m4-nofpu )
+diff --git a/gcc/configure b/gcc/configure
+index a248d39..c12f091 100755
+--- a/gcc/configure
++++ b/gcc/configure
+@@ -14564,7 +14564,7 @@ foo:	.long	25
+ 	tls_first_minor=14
+ 	tls_as_opt="-m64 -Aesame --fatal-warnings"
+ 	;;
+-  sh-*-* | sh[34]-*-*)
++  sh-*-* | sh[123456789lbe]*-*-*)
+     conftest_s='
+ 	.section ".tdata","awT",@progbits
+ foo:	.long	25
+diff --git a/gcc/configure.ac b/gcc/configure.ac
+index b6c394c..1414f9e 100644
+--- a/gcc/configure.ac
++++ b/gcc/configure.ac
+@@ -2538,7 +2538,7 @@ foo:	.long	25
+ 	tls_first_minor=14
+ 	tls_as_opt="-m64 -Aesame --fatal-warnings"
+ 	;;
+-  sh-*-* | sh[34]-*-*)
++  sh-*-* | sh[123456789lbe]*-*-*)
+     conftest_s='
+ 	.section ".tdata","awT",@progbits
+ foo:	.long	25

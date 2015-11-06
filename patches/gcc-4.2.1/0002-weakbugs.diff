@@ -1,0 +1,62 @@
+diff --git a/gcc/cgraph.c b/gcc/cgraph.c
+index fcdc02e..db04afd 100644
+--- a/gcc/cgraph.c
++++ b/gcc/cgraph.c
+@@ -1169,7 +1169,7 @@ cgraph_function_body_availability (struct cgraph_node *node)
+      inline and offline) having same side effect characteristics as
+      good optimization is what this optimization is about.  */
+ 
+-  else if (!(*targetm.binds_local_p) (node->decl)
++  else if ((DECL_WEAK (node->decl) || !(*targetm.binds_local_p) (node->decl))
+ 	   && !DECL_COMDAT (node->decl) && !DECL_EXTERNAL (node->decl))
+     avail = AVAIL_OVERWRITABLE;
+   else avail = AVAIL_AVAILABLE;
+@@ -1190,7 +1190,8 @@ cgraph_variable_initializer_availability (struct cgraph_varpool_node *node)
+   /* If the variable can be overwritten, return OVERWRITABLE.  Takes
+      care of at least two notable extensions - the COMDAT variables
+      used to share template instantiations in C++.  */
+-  if (!(*targetm.binds_local_p) (node->decl) && !DECL_COMDAT (node->decl))
++  if ((DECL_WEAK (node->decl) || !(*targetm.binds_local_p) (node->decl))
++       && !DECL_COMDAT (node->decl))
+     return AVAIL_OVERWRITABLE;
+   return AVAIL_AVAILABLE;
+ }
+diff --git a/gcc/ipa-inline.c b/gcc/ipa-inline.c
+index 84ef830..73d9fcc 100644
+--- a/gcc/ipa-inline.c
++++ b/gcc/ipa-inline.c
+@@ -300,7 +300,7 @@ cgraph_default_inline_p (struct cgraph_node *n, const char **reason)
+ 
+   if (n->inline_decl)
+     decl = n->inline_decl;
+-  if (!DECL_INLINE (decl))
++  if (!DECL_INLINE (decl) || DECL_WEAK (decl))
+     {
+       if (reason)
+ 	*reason = N_("function not inlinable");
+diff --git a/gcc/ipa-pure-const.c b/gcc/ipa-pure-const.c
+index fdaff50..1bfd577 100644
+--- a/gcc/ipa-pure-const.c
++++ b/gcc/ipa-pure-const.c
+@@ -512,7 +512,7 @@ analyze_function (struct cgraph_node *fn)
+   /* If this function does not return normally or does not bind local,
+      do not touch this unless it has been marked as const or pure by the
+      front end.  */
+-  if (TREE_THIS_VOLATILE (decl)
++  if (TREE_THIS_VOLATILE (decl) || DECL_WEAK (decl)
+       || !targetm.binds_local_p (decl))
+     {
+       l->pure_const_state = IPA_NEITHER;
+diff --git a/gcc/tree-inline.c b/gcc/tree-inline.c
+index 1c0b79b..5a3ba7e 100644
+--- a/gcc/tree-inline.c
++++ b/gcc/tree-inline.c
+@@ -1522,6 +1522,8 @@ inlinable_function_p (tree fn)
+   else if (!DECL_INLINE (fn) && !flag_unit_at_a_time)
+     inlinable = false;
+ 
++  else if (DECL_WEAK (fn))
++    inlinable = false;
+   else if (inline_forbidden_p (fn))
+     {
+       /* See if we should warn about uninlinable functions.  Previously,

@@ -1,0 +1,53 @@
+diff --git a/gcc/toplev.c b/gcc/toplev.c
+index 53fcdfe..85f8504 100644
+--- a/gcc/toplev.c
++++ b/gcc/toplev.c
+@@ -533,6 +533,7 @@ read_integral_parameter (const char *p, const char *pname, const int  defval)
+ 
+ #if GCC_VERSION < 3004 || !defined (__cplusplus)
+ 
++#if 0
+ /* Given X, an unsigned number, return the largest int Y such that 2**Y <= X.
+    If X is 0, return -1.  */
+ 
+@@ -582,6 +583,7 @@ exact_log2 (unsigned HOST_WIDE_INT x)
+   return floor_log2 (x);
+ #endif
+ }
++#endif
+ 
+ #endif /*  GCC_VERSION < 3004 || !defined (__cplusplus)  */
+ 
+diff --git a/gcc/toplev.h b/gcc/toplev.h
+index c935f7e..c8d4bb2 100644
+--- a/gcc/toplev.h
++++ b/gcc/toplev.h
+@@ -152,10 +152,10 @@ extern void decode_d_option		(const char *);
+ extern bool fast_math_flags_set_p	(void);
+ 
+ /* Return log2, or -1 if not exact.  */
+-extern int exact_log2                  (unsigned HOST_WIDE_INT);
++//extern int exact_log2                  (unsigned HOST_WIDE_INT);
+ 
+ /* Return floor of log2, with -1 for zero.  */
+-extern int floor_log2                  (unsigned HOST_WIDE_INT);
++//extern int floor_log2                  (unsigned HOST_WIDE_INT);
+ 
+ /* Inline versions of the above for speed.  */
+ #if GCC_VERSION >= 3004
+@@ -170,13 +170,13 @@ extern int floor_log2                  (unsigned HOST_WIDE_INT);
+ #  define CTZ_HWI __builtin_ctz
+ # endif
+ 
+-extern inline int
++static inline int
+ floor_log2 (unsigned HOST_WIDE_INT x)
+ {
+   return x ? HOST_BITS_PER_WIDE_INT - 1 - (int) CLZ_HWI (x) : -1;
+ }
+ 
+-extern inline int
++static inline int
+ exact_log2 (unsigned HOST_WIDE_INT x)
+ {
+   return x == (x & -x) && x ? (int) CTZ_HWI (x) : -1;

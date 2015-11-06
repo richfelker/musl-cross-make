@@ -1,0 +1,39 @@
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index 3779369..a6d95ca 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -3101,6 +3101,12 @@ case ${target} in
+ 		;;
+ esac
+ 
++case "x${enable_default_pie}" in
++xyes)
++	tm_defines="${tm_defines} ENABLE_DEFAULT_PIE"
++	;;
++esac
++
+ t=
+ all_defaults="abi cpu arch tune schedule float mode fpu divide"
+ for option in $all_defaults
+diff --git a/gcc/gcc.c b/gcc/gcc.c
+index 41d17a5..b9bbcb6 100644
+--- a/gcc/gcc.c
++++ b/gcc/gcc.c
+@@ -846,8 +846,16 @@ static const char *const multilib_defaults_raw[] = MULTILIB_DEFAULTS;
+ #define GOMP_SELF_SPECS "%{fopenmp: -pthread}"
+ #endif
+ 
++#ifndef PIE_SELF_SPECS
++#ifdef ENABLE_DEFAULT_PIE
++#define PIE_SELF_SPECS "%{shared|pie|r|nostdlib|nopie|no-pie:;:-pie} %{fpic|fPIC|fpie|fPIE|fno-pic|fno-PIC|fno-pie|fno-PIE|D__KERNEL__:;:-fPIE}"
++#else
++#define PIE_SELF_SPECS ""
++#endif
++#endif
++
+ static const char *const driver_self_specs[] = {
+-  DRIVER_SELF_SPECS, GOMP_SELF_SPECS
++  DRIVER_SELF_SPECS, GOMP_SELF_SPECS, PIE_SELF_SPECS
+ };
+ 
+ #ifndef OPTION_DEFAULT_SPECS

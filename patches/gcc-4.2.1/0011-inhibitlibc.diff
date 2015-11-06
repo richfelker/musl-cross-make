@@ -1,0 +1,36 @@
+diff -ru gcc-core/gcc/config/sh/linux-unwind.h gcc-core/gcc/config/sh/linux-unwind.h
+--- gcc-core/gcc/config/sh/linux-unwind.h	2005-06-28 20:45:37.000000000 -0500
++++ gcc-core/gcc/config/sh/linux-unwind.h	2008-02-06 17:41:12.000000000 -0600
+@@ -26,6 +26,8 @@
+ the Free Software Foundation, 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.  */
+ 
++#ifndef inhibit_libc
++
+ /* Do code reading to identify a signal frame, and set the frame
+    state data appropriately.  See unwind-dw2.c for the structs.  */
+ 
+@@ -249,3 +251,5 @@
+   return _URC_NO_REASON;
+ }
+ #endif /* defined (__SH5__) */
++
++#endif
+diff -ru gcc-core/gcc/config/alpha/linux-unwind.h gcc-core2/gcc/config/alpha/linux-unwind.h
+--- gcc-core/gcc/config/alpha/linux-unwind.h	2005-06-24 20:22:41.000000000 -0500
++++ gcc-core2/gcc/config/alpha/linux-unwind.h	2010-01-10 20:05:56.000000000 -0600
+@@ -26,6 +26,8 @@
+ the Free Software Foundation, 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.  */
+ 
++#ifndef inhibit_libc
++
+ /* Do code reading to identify a signal frame, and set the frame
+    state data appropriately.  See unwind-dw2.c for the structs.  */
+ 
+@@ -80,3 +82,5 @@
+   fs->retaddr_column = 64;
+   return _URC_NO_REASON;
+ }
++
++#endif

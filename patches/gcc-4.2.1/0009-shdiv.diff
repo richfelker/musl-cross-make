@@ -1,0 +1,15 @@
+diff --git a/gcc/config/sh/sh.h b/gcc/config/sh/sh.h
+index fc4e1f2..1a4cf00 100644
+--- a/gcc/config/sh/sh.h
++++ b/gcc/config/sh/sh.h
+@@ -649,10 +649,6 @@ do {									\
+ 	/* ??? Should we use the integer SHmedia function instead?  */	\
+ 	else if (TARGET_SHCOMPACT && TARGET_FPU_ANY)			\
+ 	  sh_div_strategy = SH_DIV_CALL_FP;				\
+-        /* SH1 .. SH3 cores often go into small-footprint systems, so	\
+-	   default to the smallest implementation available.  */	\
+-	else if (TARGET_SH2)	/* ??? EXPERIMENTAL */			\
+-	  sh_div_strategy = SH_DIV_CALL_TABLE;				\
+ 	else								\
+ 	  sh_div_strategy = SH_DIV_CALL_DIV1;				\
+     }									\

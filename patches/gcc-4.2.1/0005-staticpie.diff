@@ -1,0 +1,28 @@
+diff --git a/gcc/config/linux.h b/gcc/config/linux.h
+index 1967b46..39f8cb4 100644
+--- a/gcc/config/linux.h
++++ b/gcc/config/linux.h
+@@ -41,8 +41,8 @@ Boston, MA 02110-1301, USA.  */
+ #undef	STARTFILE_SPEC
+ #if defined HAVE_LD_PIE
+ #define STARTFILE_SPEC \
+-  "%{!shared: %{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}} \
+-   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
++  "%{!shared: %{pg|p|profile:gcrt1.o%s;pie:%{static:rcrt1.o%s;:Scrt1.o%s};:crt1.o%s}} \
++   crti.o%s %{shared|pie:crtbeginS.o%s;static:crtbeginT.o%s;:crtbegin.o%s}"
+ #else
+ #define STARTFILE_SPEC \
+   "%{!shared: %{pg|p|profile:gcrt1.o%s;:crt1.o%s}} \
+diff --git a/gcc/gcc.c b/gcc/gcc.c
+index 0b5ee4b..41d17a5 100644
+--- a/gcc/gcc.c
++++ b/gcc/gcc.c
+@@ -684,7 +684,7 @@ proper position among the other output files.  */
+ 
+ #ifndef LINK_PIE_SPEC
+ #ifdef HAVE_LD_PIE
+-#define LINK_PIE_SPEC "%{pie:-pie} "
++#define LINK_PIE_SPEC "%{pie:-pie %{static:--no-dynamic-linker}} "
+ #else
+ #define LINK_PIE_SPEC "%{pie:} "
+ #endif

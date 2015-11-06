@@ -1,0 +1,13 @@
+diff --git a/Makefile.in b/Makefile.in
+index 218d8fa..45c1764 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -208,7 +208,7 @@ BASE_TARGET_EXPORTS = \
+ 	RANLIB="$(RANLIB_FOR_TARGET)"; export RANLIB; \
+ 	STRIP="$(STRIP_FOR_TARGET)"; export STRIP; \
+ 	WINDRES="$(WINDRES_FOR_TARGET)"; export WINDRES; \
+-	$(RPATH_ENVVAR)=`echo "$(HOST_LIB_PATH)$(TARGET_LIB_PATH)$$$(RPATH_ENVVAR)" | sed 's,::*,:,g;s,^:*,,;s,:*$$,,'`; export $(RPATH_ENVVAR);
++	$(RPATH_ENVVAR)=`echo "$(HOST_LIB_PATH)$$$(RPATH_ENVVAR)" | sed 's,::*,:,g;s,^:*,,;s,:*$$,,'`; export $(RPATH_ENVVAR);
+ 
+ RAW_CXX_TARGET_EXPORTS = \
+ 	$(BASE_TARGET_EXPORTS) \
