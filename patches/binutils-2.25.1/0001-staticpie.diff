@@ -459,7 +459,7 @@ index cf3b586..1e5e5cf 100644
  doing.
  
 +@kindex --no-dynamic-linker
-+@itemx --no-dynamic-linker
++@item --no-dynamic-linker
 +When producing an executable file, omit the request for a dynamic
 +linker to be used at load-time.  This is only meaningful for ELF
 +executables that contain dynamic relocations, and usually requires
