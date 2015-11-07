@@ -23,8 +23,7 @@ GCC0_VARS = CFLAGS="-O0 -g0" CXXFLAGS="-O0 -g0"
 GCC0_CONFIG = $(GCC_CONFIG) \
 	--with-newlib --disable-libssp --disable-threads \
 	--disable-shared --disable-libgomp --disable-libatomic \
-	--disable-libquadmath --disable-decimal-float --disable-nls \
-	--enable-languages=c
+	--disable-nls --enable-languages=c
 
 GCC0_BDIR = $(PWD)/gcc-$(GCC_VER)/build0/gcc
 GCC0_CC = $(GCC0_BDIR)/xgcc -B $(GCC0_BDIR)
