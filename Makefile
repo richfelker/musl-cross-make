@@ -1,6 +1,5 @@
 
 OUTPUT = $(PWD)/output
-TARGET = sh2eb-linux-musl
 
 BINUTILS_VER = 2.25.1
 GCC_VER = 5.2.0
@@ -32,6 +31,9 @@ MUSL_CONFIG = CC="$(GCC0_CC)" --prefix=
 
 -include config.mak
 
+ifeq ($(TARGET),)
+$(error TARGET must be set via config.mak or command line)
+endif
 
 all: install_binutils install_musl install_gcc
 
