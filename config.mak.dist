@@ -8,7 +8,7 @@ GCC_VER = 5.2.0
 
 # COMMON_CONFIG += --disable-nls
 # COMMON_CONFIG += MAKEINFO=/bin/false
-# GCC_CONFIG += --enable-languages=c,c++,lto
+# GCC_CONFIG += --enable-languages=c,c++
 # GCC_CONFIG += --disable-libquadmath --disable-decimal-float
 # GCC_CONFIG += --disable-multilib
 
