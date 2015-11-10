@@ -1,5 +1,6 @@
 
 OUTPUT = $(PWD)/output
+SOURCES = sources
 
 BINUTILS_VER = 2.25.1
 GCC_VER = 5.2.0
@@ -41,7 +42,7 @@ clean:
 	rm -rf gcc-$(GCC_VER) binutils-$(BINUTILS_VER) musl
 
 distclean: clean
-	rm -rf sources/config.sub sources/*.tar.bz2
+	rm -rf sources
 
 .PHONY: extract_binutils extract_gcc clone_musl
 .PHONY: configure_binutils configure_gcc0 configure_gcc configure_musl
@@ -67,25 +68,26 @@ install_gcc: gcc-$(GCC_VER)/build/.mcm_installed
 install_musl: musl/.mcm_installed
 
 
+$(SOURCES):
+	mkdir -p $@
 
-
-sources/config.sub:
+$(SOURCES)/config.sub: | $(SOURCES)
 	wget -O $@ 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 
-sources/binutils-%:
+$(SOURCES)/binutils-%: | $(SOURCES)
 	wget -c -O $@.part $(BINUTILS_SITE)/$(notdir $@)
 	mv $@.part $@
 
-sources/gcc-%:
+$(SOURCES)/gcc-%: | $(SOURCES)
 	wget -c -O $@.part $(GCC_SITE)/$(basename $(basename $(notdir $@)))/$(notdir $@)
 	mv $@.part $@
 
 
 
-binutils-$(BINUTILS_VER)/.mcm_extracted: sources/binutils-$(BINUTILS_VER).tar.bz2 sources/config.sub
+binutils-$(BINUTILS_VER)/.mcm_extracted: $(SOURCES)/binutils-$(BINUTILS_VER).tar.bz2 $(SOURCES)/config.sub
 	tar jxvf $<
 	cat patches/binutils-$(BINUTILS_VER)/* | ( cd binutils-$(BINUTILS_VER) && patch -p1 )
-	cp sources/config.sub binutils-$(BINUTILS_VER)
+	cp $(SOURCES)/config.sub binutils-$(BINUTILS_VER)
 	touch $@
 
 binutils-$(BINUTILS_VER)/.mcm_configured: binutils-$(BINUTILS_VER)/.mcm_extracted
@@ -103,10 +105,10 @@ binutils-$(BINUTILS_VER)/.mcm_installed: binutils-$(BINUTILS_VER)/.mcm_built
 
 
 
-gcc-$(GCC_VER)/.mcm_extracted: sources/gcc-$(GCC_VER).tar.bz2 sources/config.sub
+gcc-$(GCC_VER)/.mcm_extracted: $(SOURCES)/gcc-$(GCC_VER).tar.bz2 $(SOURCES)/config.sub
 	tar jxvf $<
 	cat patches/gcc-$(GCC_VER)/* | ( cd gcc-$(GCC_VER) && patch -p1 )
-	cp sources/config.sub gcc-$(GCC_VER)
+	cp $(SOURCES)/config.sub gcc-$(GCC_VER)
 	touch $@
 
 gcc-$(GCC_VER)/build0/.mcm_configured: gcc-$(GCC_VER)/.mcm_extracted | binutils-$(BINUTILS_VER)/.mcm_installed
