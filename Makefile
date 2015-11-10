@@ -16,8 +16,7 @@ COMMON_CONFIG = --disable-werror \
 
 BINUTILS_CONFIG = $(COMMON_CONFIG)
 GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
-	--disable-libmudflap --disable-libsanitizer \
-	--disable-libquadmath --disable-decimal-float
+	--disable-libmudflap --disable-libsanitizer
 
 GCC0_VARS = CFLAGS="-O0 -g0" CXXFLAGS="-O0 -g0"
 GCC0_CONFIG = $(GCC_CONFIG) \
