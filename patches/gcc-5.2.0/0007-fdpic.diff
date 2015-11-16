@@ -808,7 +808,7 @@ index aafcf28..e232179 100644
  
  #if (defined CRT_BEGIN || defined CRT_END) && ! __SHMEDIA__
 diff --git a/gcc/config/sh/sh.md b/gcc/config/sh/sh.md
-index d758e3b..7a40d0f 100644
+index d758e3b..45c9995 100644
 --- a/gcc/config/sh/sh.md
 +++ b/gcc/config/sh/sh.md
 @@ -170,6 +170,9 @@ (define_c_enum "unspec" [
@@ -1588,7 +1588,7 @@ index d758e3b..7a40d0f 100644
    operands[1] = gen_rtx_REG (Pmode, PIC_REG);
    operands[2] = gen_rtx_SYMBOL_REF (VOIDmode, GOT_SYMBOL_NAME);
  
-@@ -10820,6 +11076,9 @@ (define_expand "symGOT_load"
+@@ -10820,10 +11076,13 @@ (define_expand "symGOT_load"
    rtx mem;
    bool stack_chk_guard_p = false;
  
@@ -1598,6 +1598,11 @@ index d758e3b..7a40d0f 100644
    operands[2] = !can_create_pseudo_p () ? operands[0] : gen_reg_rtx (Pmode);
    operands[3] = !can_create_pseudo_p () ? operands[0] : gen_reg_rtx (Pmode);
  
+-  if (!TARGET_SHMEDIA
++  if (!TARGET_SHMEDIA && !TARGET_FDPIC
+       && flag_stack_protect
+       && GET_CODE (operands[1]) == CONST
+       && GET_CODE (XEXP (operands[1], 0)) == UNSPEC
 @@ -10862,8 +11121,7 @@ (define_expand "symGOT_load"
    if (stack_chk_guard_p)
      emit_insn (gen_chk_guard_add (operands[3], operands[2]));
