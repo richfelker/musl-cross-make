@@ -1,6 +1,10 @@
 OUTPUT = $(PWD)/output
 TARGET = sh2eb-linux-musl
 
+# See the patches directory for supported versions. Versions
+# without patches should not be expected to work until gcc 6.
+# Older versions may have known bugs or limited functionality.
+
 BINUTILS_VER = 2.25.1
 GCC_VER = 5.2.0
 

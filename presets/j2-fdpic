@@ -1,0 +1,14 @@
+OUTPUT = $(PWD)/output
+TARGET = sh2eb-linux-muslfdpic
+
+BINUTILS_VER = 2.25.1
+GCC_VER = 5.2.0
+
+COMMON_CONFIG += --disable-nls
+COMMON_CONFIG += MAKEINFO=/bin/false
+GCC_CONFIG += --enable-languages=c,c++
+GCC_CONFIG += --disable-libquadmath --disable-decimal-float
+GCC_CONFIG += --disable-multilib
+
+GCC_CONFIG += --with-cpu=mj2
+GCC_CONFIG += --enable-fdpic

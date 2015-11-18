@@ -1,0 +1,14 @@
+OUTPUT = $(PWD)/output
+TARGET = sh2eb-linux-musl
+
+GCC_VER = 4.2.1
+BINUTILS_VER = 397a64b3
+BINUTILS_SITE = http://landley.net/aboriginal/mirror
+
+COMMON_CONFIG += --disable-nls
+BINUTILS_CONFIG += MAKEINFO=/bin/false
+GCC_CONFIG += --enable-languages=c,c++
+GCC_CONFIG += --disable-libquadmath --disable-decimal-float
+GCC_CONFIG += --disable-multilib
+
+GCC_CONFIG += --enable-default-pie
