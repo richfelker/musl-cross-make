@@ -39,7 +39,7 @@
  
  /* 10001111i8p1.... bf/s <bdisp8>       */{"bf/s",{A_BDISP8},{HEX_8,HEX_F,BRANCH_8}, arch_sh2_up},
 +
-+/* 0011nnnnmmmm0001 cas.l <REG_M>,<REG_N>,@R0*/{"cas.l",{A_REG_M,A_REG_N,A_IND_0},{HEX_3,REG_N,REG_M,HEX_1}, arch_sh2_up},
++/* 0010nnnnmmmm0011 cas.l <REG_M>,<REG_N>,@R0*/{"cas.l",{A_REG_M,A_REG_N,A_IND_0},{HEX_2,REG_N,REG_M,HEX_3}, arch_sh2_up},
  
  /* 0000000010001000 clrdmxy             */{"clrdmxy",{0},{HEX_0,HEX_0,HEX_8,HEX_8}, arch_sh4al_dsp_up},
  
