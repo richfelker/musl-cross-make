@@ -1,0 +1,12 @@
+--- binutils-2.25.1/bfd/elf32-microblaze.c.orig	2016-02-11 23:12:00.301992882 +0000
++++ binutils-2.25.1/bfd/elf32-microblaze.c	2016-02-11 23:28:12.043074209 +0000
+@@ -3293,8 +3293,7 @@
+          The entry in the global offset table will already have been
+          initialized in the relocate_section function.  */
+       if (info->shared
+-          && (info->symbolic || h->dynindx == -1)
+-          && h->def_regular)
++          && ((info->symbolic && h->def_regular) || h->dynindx == -1))
+         {
+           asection *sec = h->root.u.def.section;
+           microblaze_elf_output_dynamic_relocation (output_bfd,
