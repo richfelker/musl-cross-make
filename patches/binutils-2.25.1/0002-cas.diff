@@ -1,45 +1,641 @@
---- binutils-2.25.1.orig/gas/config/tc-sh.c
-+++ binutils-2.25.1/gas/config/tc-sh.c
-@@ -1730,6 +1730,11 @@
- 		goto fail;
- 	      break;
+diff --git a/bfd/archures.c b/bfd/archures.c
+index 51068b9..c67d76b 100644
+--- a/bfd/archures.c
++++ b/bfd/archures.c
+@@ -294,10 +294,12 @@ DESCRIPTION
+ .#define bfd_mach_sh_dsp     0x2d
+ .#define bfd_mach_sh2a       0x2a
+ .#define bfd_mach_sh2a_nofpu 0x2b
++.#define bfd_mach_shj2       0x2c
+ .#define bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu 0x2a1
+ .#define bfd_mach_sh2a_nofpu_or_sh3_nommu 0x2a2
+ .#define bfd_mach_sh2a_or_sh4  0x2a3
+ .#define bfd_mach_sh2a_or_sh3e 0x2a4
++.#define bfd_mach_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu 0x2a5
+ .#define bfd_mach_sh2e       0x2e
+ .#define bfd_mach_sh3        0x30
+ .#define bfd_mach_sh3_nommu  0x31
+diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
+index ca0cafd..99e92c6 100644
+--- a/bfd/bfd-in2.h
++++ b/bfd/bfd-in2.h
+@@ -2109,10 +2109,12 @@ enum bfd_architecture
+ #define bfd_mach_sh_dsp     0x2d
+ #define bfd_mach_sh2a       0x2a
+ #define bfd_mach_sh2a_nofpu 0x2b
++#define bfd_mach_shj2       0x2c
+ #define bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu 0x2a1
+ #define bfd_mach_sh2a_nofpu_or_sh3_nommu 0x2a2
+ #define bfd_mach_sh2a_or_sh4  0x2a3
+ #define bfd_mach_sh2a_or_sh3e 0x2a4
++#define bfd_mach_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu 0x2a5
+ #define bfd_mach_sh2e       0x2e
+ #define bfd_mach_sh3        0x30
+ #define bfd_mach_sh3_nommu  0x31
+diff --git a/bfd/cpu-sh.c b/bfd/cpu-sh.c
+index d516d66..66d21a5 100644
+--- a/bfd/cpu-sh.c
++++ b/bfd/cpu-sh.c
+@@ -44,7 +44,9 @@
+ #define SH2A_NOFPU_OR_SH3_NOMMU_NEXT       arch_info_struct + 17
+ #define SH2A_OR_SH4_NEXT                   arch_info_struct + 18
+ #define SH2A_OR_SH3E_NEXT                  arch_info_struct + 19
+-#define SH64_NEXT                          NULL
++#define SH64_NEXT                          arch_info_struct + 20
++#define SHJ2_NEXT       		   arch_info_struct + 21
++#define SH2A_NOFPU_OR_SH3_NOMMU_OR_SHJ2_NOFPU_NEXT       NULL
  
+ static const bfd_arch_info_type arch_info_struct[] =
+ {
+@@ -348,6 +350,36 @@ static const bfd_arch_info_type arch_info_struct[] =
+     bfd_arch_default_fill,
+     SH64_NEXT
+   },
++  {
++    32,				/* 32 bits in a word.  */
++    32,				/* 32 bits in an address.  */
++    8,				/* 8 bits in a byte.  */
++    bfd_arch_sh,
++    bfd_mach_shj2,
++    "sh",			/* Architecture name. .  */
++    "j2",			/* Machine name.  */
++    1,
++    FALSE,			/* Not the default.  */
++    bfd_default_compatible,
++    bfd_default_scan,
++    bfd_arch_default_fill,
++    SHJ2_NEXT
++  },
++  {
++    32,				/* 32 bits in a word.  */
++    32,				/* 32 bits in an address.  */
++    8,				/* 8 bits in a byte.  */
++    bfd_arch_sh,
++    bfd_mach_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu,
++    "sh",			/* Architecture name. .  */
++    "sh2a-or-sh3e-or-j2",	/* Machine name.  */
++    1,
++    FALSE,			/* Not the default.  */
++    bfd_default_compatible,
++    bfd_default_scan,
++    bfd_arch_default_fill,
++    SH2A_NOFPU_OR_SH3_NOMMU_OR_SHJ2_NOFPU_NEXT
++  },
+ };
+ 
+ const bfd_arch_info_type bfd_sh_arch =
+@@ -398,6 +430,8 @@ static struct { unsigned long bfd_mach, arch, arch_up; } bfd_to_arch_table[] =
+   { bfd_mach_sh4_nofpu,       arch_sh4_nofpu,       arch_sh4_nofpu_up },
+   { bfd_mach_sh4_nommu_nofpu, arch_sh4_nommu_nofpu, arch_sh4_nommu_nofpu_up },
+   { bfd_mach_sh4a_nofpu,      arch_sh4a_nofpu,      arch_sh4a_nofpu_up },
++  { bfd_mach_shj2,            arch_shj2,            arch_shj2_up },
++  { bfd_mach_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu, arch_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu, arch_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu_up },
+   { 0, 0, 0 }   /* Terminator.  */
+ };
+ 
+diff --git a/binutils/readelf.c b/binutils/readelf.c
+index a31db52..5ec21b0 100644
+--- a/binutils/readelf.c
++++ b/binutils/readelf.c
+@@ -3217,6 +3217,8 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
+ 	    case EF_SH2A_SH3_NOFPU: strcat (buf, ", sh2a-nofpu-or-sh3-nommu"); break;
+ 	    case EF_SH2A_SH4: strcat (buf, ", sh2a-or-sh4"); break;
+ 	    case EF_SH2A_SH3E: strcat (buf, ", sh2a-or-sh3e"); break;
++	    case EF_SHJ2: strcat (buf, ", j2"); break;
++	    case EF_SH2A_SH3_SHJ2: strcat (buf, ", sh2a-nofpu-or-sh3-nommu-or-shj2 -nofpu"); break;
+ 	    default: strcat (buf, _(", unknown ISA")); break;
+ 	    }
+ 
+diff --git a/gas/config/tc-sh.c b/gas/config/tc-sh.c
+index 125f073..37f6fb0 100644
+--- a/gas/config/tc-sh.c
++++ b/gas/config/tc-sh.c
+@@ -1648,6 +1648,8 @@ get_operands (sh_opcode_info *info, char *args, sh_operand_info *operand)
+ 		  ptr++;
+ 		}
+ 	      get_operand (&ptr, operand + 2);
++	      if (strcmp (info->name,"cas") == 0)
++		operand[2].type = A_IND_0;
+ 	    }
+ 	  else
+ 	    {
+@@ -2187,7 +2189,10 @@ get_specific (sh_opcode_info *opcode, sh_operand_info *operands)
+ 		goto fail;
+ 	      reg_m = 4;
+ 	      break;
+-
 +	    case A_IND_0:
-+	      if (user->type != A_IND_N || user->reg != 0)
++	      if (user->reg != 0)
 +		goto fail;
 +	      break;
-+
- 	    case A_REG_N:
- 	    case A_INC_N:
- 	    case A_DEC_N:
---- binutils-2.25.1.orig/opcodes/sh-dis.c
-+++ binutils-2.25.1/opcodes/sh-dis.c
-@@ -703,6 +703,9 @@
- 	    case AS_DEC_N:
- 	      fprintf_fn (stream, "@-r%d", rn);
+ 	    default:
+ 	      printf (_("unhandled %d\n"), arg);
+ 	      goto fail;
+diff --git a/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh3-nommu.s b/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh3-nommu.s
+index cc29889..a3e18b5 100644
+--- a/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh3-nommu.s
++++ b/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh3-nommu.s
+@@ -12,8 +12,6 @@
+ sh2a_nofpu_or_sh3_nommu:
+ ! Instructions introduced into sh2a-nofpu-or-sh3-nommu
+ 	pref @r4                  ;!/* 0000nnnn10000011 pref @<REG_N>       */{"pref",{A_IND_N},{HEX_0,REG_N,HEX_8,HEX_3}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
+ 
+ ! Instructions inherited from ancestors: sh sh2
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh4-nommu-nofpu.s b/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh4-nommu-nofpu.s
+index c702845..812aa76 100644
+--- a/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh4-nommu-nofpu.s
++++ b/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh4-nommu-nofpu.s
+@@ -12,7 +12,7 @@
+ sh2a_nofpu_or_sh4_nommu_nofpu:
+ ! Instructions introduced into sh2a-nofpu-or-sh4-nommu-nofpu
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -119,8 +119,8 @@ sh2a_nofpu_or_sh4_nommu_nofpu:
+ 	rte                       ;!/* 0000000000101011 rte                 */{"rte",{0},{HEX_0,HEX_0,HEX_2,HEX_B}, arch_sh_up}
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh2a-nofpu.s b/gas/testsuite/gas/sh/arch/sh2a-nofpu.s
+index 6f4a17e..5b38643 100644
+--- a/gas/testsuite/gas/sh/arch/sh2a-nofpu.s
++++ b/gas/testsuite/gas/sh/arch/sh2a-nofpu.s
+@@ -64,7 +64,7 @@ sh2a_nofpu:
+ 	movu.b @(2048,r5),r4      ;!/* 0011nnnnmmmm0001 1000dddddddddddd movu.b @(<DISP12>,<REG_M>),<REG_N> */  {"movu.b",{A_DISP_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_1,HEX_8,DISP0_12}, arch_sh2a_nofpu_up | arch_op32}
+ 	movu.w @(2048,r5),r4      ;!/* 0011nnnnmmmm0001 1001dddddddddddd movu.w @(<DISP12>,<REG_M>),<REG_N> */  {"movu.w",{A_DISP_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_1,HEX_9,DISP0_12BY2}, arch_sh2a_nofpu_up | arch_op32}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -171,8 +171,8 @@ sh2a_nofpu:
+ 	rte                       ;!/* 0000000000101011 rte                 */{"rte",{0},{HEX_0,HEX_0,HEX_2,HEX_B}, arch_sh_up}
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh2a-or-sh3e.s b/gas/testsuite/gas/sh/arch/sh2a-or-sh3e.s
+index 25c8ae1..69d3536 100644
+--- a/gas/testsuite/gas/sh/arch/sh2a-or-sh3e.s
++++ b/gas/testsuite/gas/sh/arch/sh2a-or-sh3e.s
+@@ -13,7 +13,7 @@ sh2a_or_sh3e:
+ ! Instructions introduced into sh2a-or-sh3e
+ 	fsqrt fr1                 ;!/* 1111nnnn01101101 fsqrt <F_REG_N>    */{"fsqrt",{F_REG_N},{HEX_F,REG_N,HEX_6,HEX_D}, arch_sh2a_or_sh3e_up}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2e
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2e
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -124,8 +124,8 @@ sh2a_or_sh3e:
+ 	rte                       ;!/* 0000000000101011 rte                 */{"rte",{0},{HEX_0,HEX_0,HEX_2,HEX_B}, arch_sh_up}
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh2a-or-sh4.s b/gas/testsuite/gas/sh/arch/sh2a-or-sh4.s
+index d3300ca..c697268 100644
+--- a/gas/testsuite/gas/sh/arch/sh2a-or-sh4.s
++++ b/gas/testsuite/gas/sh/arch/sh2a-or-sh4.s
+@@ -39,7 +39,7 @@ sh2a_or_sh4:
+ 	fsub dr4,dr2              ;!/* 1111nnn0mmm00001 fsub <D_REG_M>,<D_REG_N>*/{"fsub",{D_REG_M,D_REG_N},{HEX_F,REG_N,REG_M,HEX_1}, arch_sh2a_or_sh4_up}
+ 	ftrc dr2,FPUL             ;!/* 1111nnnn00111101 ftrc <D_REG_N>,FPUL*/{"ftrc",{D_REG_N,FPUL_M},{HEX_F,REG_N,HEX_3,HEX_D}, arch_sh2a_or_sh4_up}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu sh2a-or-sh3e sh2e
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu sh2a-or-sh3e sh2e
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -150,8 +150,8 @@ sh2a_or_sh4:
+ 	rte                       ;!/* 0000000000101011 rte                 */{"rte",{0},{HEX_0,HEX_0,HEX_2,HEX_B}, arch_sh_up}
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh2a.s b/gas/testsuite/gas/sh/arch/sh2a.s
+index 370dbd4..0d9f3b0 100644
+--- a/gas/testsuite/gas/sh/arch/sh2a.s
++++ b/gas/testsuite/gas/sh/arch/sh2a.s
+@@ -16,7 +16,7 @@ sh2a:
+ 	fmov.s fr2,@(2048,r4)     ;!/* 0011nnnnmmmm0001 0011dddddddddddd fmov.s <F_REG_M>,@(<DISP12>,<REG_N>) */  {"fmov.s",{F_REG_M,A_DISP_REG_N},{HEX_3,REG_N,REG_M,HEX_1,HEX_3,DISP1_12BY4}, arch_sh2a_up | arch_op32}
+ 	fmov.s @(2048,r5),fr1     ;!/* 0011nnnnmmmm0001 0111dddddddddddd fmov.s @(<DISP12>,<REG_M>),<F_REG_N> */  {"fmov.s",{A_DISP_REG_M,F_REG_N},{HEX_3,REG_N,REG_M,HEX_1,HEX_7,DISP0_12BY4}, arch_sh2a_up | arch_op32}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu sh2a-or-sh3e sh2a-or-sh4 sh2e
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu sh2a-or-sh3e sh2a-or-sh4 sh2e
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -140,8 +140,8 @@ sh2a:
+ 	rte                       ;!/* 0000000000101011 rte                 */{"rte",{0},{HEX_0,HEX_0,HEX_2,HEX_B}, arch_sh_up}
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh3-dsp.s b/gas/testsuite/gas/sh/arch/sh3-dsp.s
+index acc26be..cfd4dfe 100644
+--- a/gas/testsuite/gas/sh/arch/sh3-dsp.s
++++ b/gas/testsuite/gas/sh/arch/sh3-dsp.s
+@@ -12,7 +12,7 @@
+ sh3_dsp:
+ ! Instructions introduced into sh3-dsp
+ 
+-! Instructions inherited from ancestors: sh sh-dsp sh2 sh2a-nofpu-or-sh3-nommu sh3 sh3-nommu
++! Instructions inherited from ancestors: sh sh-dsp sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh3 sh3-nommu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -152,8 +152,8 @@ sh3_dsp:
+ 	setrc #4                  ;!/* 10000010i8*1.... setrc #<imm>        */{"setrc",{A_IMM},{HEX_8,HEX_2,IMM0_8}, arch_sh_dsp_up}
+ 	repeat 10 20 r4           ;!/* repeat start end <REG_N>       	*/{"repeat",{A_DISP_PC,A_DISP_PC,A_REG_N},{REPEAT,REG_N,HEX_1,HEX_4}, arch_sh_dsp_up}
+ 	repeat 10 20 #4           ;!/* repeat start end #<imm>        	*/{"repeat",{A_DISP_PC,A_DISP_PC,A_IMM},{REPEAT,HEX_2,IMM0_8,HEX_8}, arch_sh_dsp_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh3-nommu.s b/gas/testsuite/gas/sh/arch/sh3-nommu.s
+index 3e8ff02..dacaae1 100644
+--- a/gas/testsuite/gas/sh/arch/sh3-nommu.s
++++ b/gas/testsuite/gas/sh/arch/sh3-nommu.s
+@@ -26,7 +26,7 @@ sh3_nommu:
+ 	stc.l SPC,@-r4            ;!/* 0100nnnn01000011 stc.l SPC,@-<REG_N> */{"stc.l",{A_SPC,A_DEC_N},{HEX_4,REG_N,HEX_4,HEX_3}, arch_sh3_nommu_up}
+ 	stc.l r1_bank,@-r4        ;!/* 0100nnnn1xxx0011 stc.l Rn_BANK,@-<REG_N> */{"stc.l",{A_REG_B,A_DEC_N},{HEX_4,REG_N,REG_B,HEX_3}, arch_sh3_nommu_up}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -133,8 +133,8 @@ sh3_nommu:
+ 	rte                       ;!/* 0000000000101011 rte                 */{"rte",{0},{HEX_0,HEX_0,HEX_2,HEX_B}, arch_sh_up}
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh3.s b/gas/testsuite/gas/sh/arch/sh3.s
+index 97ab939..aa70fc3 100644
+--- a/gas/testsuite/gas/sh/arch/sh3.s
++++ b/gas/testsuite/gas/sh/arch/sh3.s
+@@ -13,7 +13,7 @@ sh3:
+ ! Instructions introduced into sh3
+ 	ldtlb                     ;!/* 0000000000111000 ldtlb               */{"ldtlb",{0},{HEX_0,HEX_0,HEX_3,HEX_8}, arch_sh3_up}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh3-nommu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh3-nommu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -128,8 +128,8 @@ sh3:
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sets                      ;!/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh3_nommu_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh3e.s b/gas/testsuite/gas/sh/arch/sh3e.s
+index f5c8ab9..215e5ec 100644
+--- a/gas/testsuite/gas/sh/arch/sh3e.s
++++ b/gas/testsuite/gas/sh/arch/sh3e.s
+@@ -12,7 +12,7 @@
+ sh3e:
+ ! Instructions introduced into sh3e
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-or-sh3e sh2e sh3 sh3-nommu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-or-sh3e sh2e sh3 sh3-nommu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -132,8 +132,8 @@ sh3e:
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sets                      ;!/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh3_nommu_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh4-nofpu.s b/gas/testsuite/gas/sh/arch/sh4-nofpu.s
+index 32b58f9..1fef035 100644
+--- a/gas/testsuite/gas/sh/arch/sh4-nofpu.s
++++ b/gas/testsuite/gas/sh/arch/sh4-nofpu.s
+@@ -12,7 +12,7 @@
+ sh4_nofpu:
+ ! Instructions introduced into sh4-nofpu
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu sh3 sh3-nommu sh4-nommu-nofpu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu sh3 sh3-nommu sh4-nommu-nofpu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -136,8 +136,8 @@ sh4_nofpu:
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sets                      ;!/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh3_nommu_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh4-nommu-nofpu.s b/gas/testsuite/gas/sh/arch/sh4-nommu-nofpu.s
+index 61f0bc6..65d11c5 100644
+--- a/gas/testsuite/gas/sh/arch/sh4-nommu-nofpu.s
++++ b/gas/testsuite/gas/sh/arch/sh4-nommu-nofpu.s
+@@ -24,7 +24,7 @@ sh4_nommu_nofpu:
+ 	stc.l SGR,@-r4            ;!/* 0100nnnn00110010 stc.l SGR,@-<REG_N> */{"stc.l",{A_SGR,A_DEC_N},{HEX_4,REG_N,HEX_3,HEX_2}, arch_sh4_nommu_nofpu_up}
+ 	stc.l DBR,@-r4            ;!/* 0100nnnn11110010 stc.l DBR,@-<REG_N> */{"stc.l",{A_DBR,A_DEC_N},{HEX_4,REG_N,HEX_F,HEX_2}, arch_sh4_nommu_nofpu_up}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu sh3-nommu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu sh3-nommu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -139,8 +139,8 @@ sh4_nommu_nofpu:
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sets                      ;!/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh3_nommu_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh4.s b/gas/testsuite/gas/sh/arch/sh4.s
+index af135ce..dc199cb 100644
+--- a/gas/testsuite/gas/sh/arch/sh4.s
++++ b/gas/testsuite/gas/sh/arch/sh4.s
+@@ -17,7 +17,7 @@ sh4:
+ 	fsrra fr1                 ;!/* 1111nnnn01111101 fsrra <F_REG_N>    */{"fsrra",{F_REG_N},{HEX_F,REG_N,HEX_7,HEX_D}, arch_sh4_up}
+ 	ftrv xmtrx,fv0            ;!/* 1111nn0111111101 ftrv XMTRX_M4,<V_REG_n>*/{"ftrv",{XMTRX_M4,V_REG_N},{HEX_F,REG_N_B01,HEX_F,HEX_D}, arch_sh4_up}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu sh2a-or-sh3e sh2a-or-sh4 sh2e sh3 sh3-nommu sh3e sh4-nofpu sh4-nommu-nofpu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu sh2a-or-sh3e sh2a-or-sh4 sh2e sh3 sh3-nommu sh3e sh4-nofpu sh4-nommu-nofpu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -145,8 +145,8 @@ sh4:
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sets                      ;!/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh3_nommu_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh4a-nofpu.s b/gas/testsuite/gas/sh/arch/sh4a-nofpu.s
+index 9522bb6..7581f47 100644
+--- a/gas/testsuite/gas/sh/arch/sh4a-nofpu.s
++++ b/gas/testsuite/gas/sh/arch/sh4a-nofpu.s
+@@ -19,7 +19,7 @@ sh4a_nofpu:
+ 	prefi @r4                 ;!/* 0000nnnn11010011 prefi @<REG_N>      */{"prefi",{A_IND_N},{HEX_0,REG_N,HEX_D,HEX_3}, arch_sh4a_nofpu_up}
+ 	synco                     ;!/* 0000000010101011 synco               */{"synco",{0},{HEX_0,HEX_0,HEX_A,HEX_B}, arch_sh4a_nofpu_up}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu sh3 sh3-nommu sh4-nofpu sh4-nommu-nofpu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu sh3 sh3-nommu sh4-nofpu sh4-nommu-nofpu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -143,8 +143,8 @@ sh4a_nofpu:
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sets                      ;!/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh3_nommu_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh4a.s b/gas/testsuite/gas/sh/arch/sh4a.s
+index 950ed2d..55e9611 100644
+--- a/gas/testsuite/gas/sh/arch/sh4a.s
++++ b/gas/testsuite/gas/sh/arch/sh4a.s
+@@ -13,7 +13,7 @@ sh4a:
+ ! Instructions introduced into sh4a
+ 	fpchg                     ;!/* 1111011111111101 fpchg               */{"fpchg",{0},{HEX_F,HEX_7,HEX_F,HEX_D}, arch_sh4a_up}
+ 
+-! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu sh2a-or-sh3e sh2a-or-sh4 sh2e sh3 sh3-nommu sh3e sh4 sh4-nofpu sh4-nommu-nofpu sh4a-nofpu
++! Instructions inherited from ancestors: sh sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu sh2a-or-sh3e sh2a-or-sh4 sh2e sh3 sh3-nommu sh3e sh4 sh4-nofpu sh4-nommu-nofpu sh4a-nofpu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -147,8 +147,8 @@ sh4a:
+ 	rts                       ;!/* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh_up}
+ 	sets                      ;!/* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh3_nommu_up}
+ 	sett                      ;!/* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/gas/testsuite/gas/sh/arch/sh4al-dsp.s b/gas/testsuite/gas/sh/arch/sh4al-dsp.s
+index 6caaf2c..fde6c1e 100644
+--- a/gas/testsuite/gas/sh/arch/sh4al-dsp.s
++++ b/gas/testsuite/gas/sh/arch/sh4al-dsp.s
+@@ -48,7 +48,7 @@ sh4al_dsp:
+ 	dct pswap x1,m0           ;!/* 10011101xx01zzzz pswap <DSP_REG_X>,<DSP_REG_N> */  {"pswap", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_9,HEX_D,HEX_1}, arch_sh4al_dsp_up}
+ 	dct pswap y0,m0           ;!/* 1011110101yyzzzz pswap <DSP_REG_Y>,<DSP_REG_N> */  {"pswap", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_B,HEX_D,HEX_4}, arch_sh4al_dsp_up}
+ 
+-! Instructions inherited from ancestors: sh sh-dsp sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh4-nommu-nofpu sh3 sh3-dsp sh3-nommu sh4-nofpu sh4-nommu-nofpu sh4a-nofpu
++! Instructions inherited from ancestors: sh sh-dsp sh2 sh2a-nofpu-or-sh3-nommu sh2a-nofpu-or-sh3-nommu-or-sh2j-nofpu sh2a-nofpu-or-sh4-nommu-nofpu sh3 sh3-dsp sh3-nommu sh4-nofpu sh4-nommu-nofpu sh4a-nofpu
+ 	add #4,r4                 ;!/* 0111nnnni8*1.... add #<imm>,<REG_N>  */{"add",{A_IMM,A_REG_N},{HEX_7,REG_N,IMM0_8}, arch_sh_up}
+ 	add r5,r4                 ;!/* 0011nnnnmmmm1100 add <REG_M>,<REG_N> */{"add",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_C}, arch_sh_up}
+ 	addc r5,r4                ;!/* 0011nnnnmmmm1110 addc <REG_M>,<REG_N>*/{"addc",{ A_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_E}, arch_sh_up}
+@@ -202,8 +202,8 @@ sh4al_dsp:
+ 	setrc #4                  ;!/* 10000010i8*1.... setrc #<imm>        */{"setrc",{A_IMM},{HEX_8,HEX_2,IMM0_8}, arch_sh_dsp_up}
+ 	repeat 10 20 r4           ;!/* repeat start end <REG_N>       	*/{"repeat",{A_DISP_PC,A_DISP_PC,A_REG_N},{REPEAT,REG_N,HEX_1,HEX_4}, arch_sh_dsp_up}
+ 	repeat 10 20 #4           ;!/* repeat start end #<imm>        	*/{"repeat",{A_DISP_PC,A_DISP_PC,A_IMM},{REPEAT,HEX_2,IMM0_8,HEX_8}, arch_sh_dsp_up}
+-	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
+-	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
++	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
++	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_sh2j_nofpu_up}
+ 	shal r4                   ;!/* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up}
+ 	shar r4                   ;!/* 0100nnnn00100001 shar <REG_N>        */{"shar",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_1}, arch_sh_up}
+ 	shll r4                   ;!/* 0100nnnn00000000 shll <REG_N>        */{"shll",{A_REG_N},{HEX_4,REG_N,HEX_0,HEX_0}, arch_sh_up}
+diff --git a/include/elf/sh.h b/include/elf/sh.h
+index a54158f..109d90f 100644
+--- a/include/elf/sh.h
++++ b/include/elf/sh.h
+@@ -35,6 +35,7 @@
+ #define EF_SH2E            11
+ #define EF_SH4A		   12
+ #define EF_SH2A            13
++#define EF_SHJ2            14
+ 
+ #define EF_SH4_NOFPU	   16
+ #define EF_SH4A_NOFPU	   17
+@@ -46,6 +47,7 @@
+ #define EF_SH2A_SH3_NOFPU  22
+ #define EF_SH2A_SH4        23
+ #define EF_SH2A_SH3E       24
++#define EF_SH2A_SH3_SHJ2   25
+ 
+ /* This one can only mix in objects from other EF_SH5 objects.  */
+ #define EF_SH5		  10
+@@ -68,7 +70,8 @@
+ /* EF_SH2E		*/ bfd_mach_sh2e	, \
+ /* EF_SH4A		*/ bfd_mach_sh4a	, \
+ /* EF_SH2A		*/ bfd_mach_sh2a        , \
+-/* 14, 15		*/ 0, 0, \
++/* EF_SHJ2		*/ bfd_mach_shj2        , \
++/* 15			*/ 0, \
+ /* EF_SH4_NOFPU		*/ bfd_mach_sh4_nofpu	, \
+ /* EF_SH4A_NOFPU	*/ bfd_mach_sh4a_nofpu	, \
+ /* EF_SH4_NOMMU_NOFPU	*/ bfd_mach_sh4_nommu_nofpu, \
+@@ -77,7 +80,8 @@
+ /* EF_SH2A_SH4_NOFPU    */ bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu, \
+ /* EF_SH2A_SH3_NOFPU    */ bfd_mach_sh2a_nofpu_or_sh3_nommu, \
+ /* EF_SH2A_SH4          */ bfd_mach_sh2a_or_sh4 , \
+-/* EF_SH2A_SH3E         */ bfd_mach_sh2a_or_sh3e
++/* EF_SH2A_SH3E         */ bfd_mach_sh2a_or_sh3e, \
++/* EF_SH2A_SH3_SHJ2_NOFPU */ bfd_mach_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu
+ 
+ /* Convert arch_sh* into EF_SH*.  */
+ int sh_find_elf_flags (unsigned int arch_set);
+diff --git a/opcodes/sh-dis.c b/opcodes/sh-dis.c
+index d4e1a6d..181e21a 100644
+--- a/opcodes/sh-dis.c
++++ b/opcodes/sh-dis.c
+@@ -868,6 +868,9 @@ print_insn_sh (bfd_vma memaddr, struct disassemble_info *info)
+ 	    case XMTRX_M4:
+ 	      fprintf_fn (stream, "xmtrx");
  	      break;
 +	    case A_IND_0:
 +	      fprintf_fn (stream, "@r0");
 +	      break;
- 	    case A_IND_N:
- 	    case AS_IND_N:
- 	      fprintf_fn (stream, "@r%d", rn);
---- binutils-2.25.1.orig/opcodes/sh-opc.h
-+++ binutils-2.25.1/opcodes/sh-opc.h
-@@ -112,6 +112,7 @@
-     A_IMM,
-     A_INC_M,
-     A_INC_N,
-+    A_IND_0,
-     A_IND_M,
-     A_IND_N,
-     A_IND_R0_REG_M,
-@@ -410,6 +411,8 @@
- /* 10001111i8p1.... bf.s <bdisp8>       */{"bf.s",{A_BDISP8},{HEX_8,HEX_F,BRANCH_8}, arch_sh2_up},
+ 	    default:
+ 	      abort ();
+ 	    }
+diff --git a/opcodes/sh-opc.h b/opcodes/sh-opc.h
+index 5863aa9..19c5a61 100644
+--- a/opcodes/sh-opc.h
++++ b/opcodes/sh-opc.h
+@@ -187,7 +187,8 @@ typedef enum
+     FPUL_N,
+     FPUL_M,
+     FPSCR_N,
+-    FPSCR_M
++    FPSCR_M,
++    A_IND_0
+   }
+ sh_arg_type;
  
- /* 10001111i8p1.... bf/s <bdisp8>       */{"bf/s",{A_BDISP8},{HEX_8,HEX_F,BRANCH_8}, arch_sh2_up},
-+
-+/* 0010nnnnmmmm0011 cas.l <REG_M>,<REG_N>,@R0*/{"cas.l",{A_REG_M,A_REG_N,A_IND_0},{HEX_2,REG_N,REG_M,HEX_3}, arch_sh2_up},
+@@ -214,9 +215,11 @@ sh_dsp_reg_nums;
+ #define arch_sh4_base	    (1 << 5)
+ #define arch_sh4a_base	    (1 << 6)
+ #define arch_sh2a_base      (1 << 7)
+-#define arch_sh_base_mask   MASK (0, 7)
++#define arch_shj2_base      (1 << 8)
++#define arch_sh2a_sh3_shj2_base  (1 << 9)
++#define arch_sh_base_mask   MASK (0, 9)
  
- /* 0000000010001000 clrdmxy             */{"clrdmxy",{0},{HEX_0,HEX_0,HEX_8,HEX_8}, arch_sh4al_dsp_up},
+-/* Bits 8 ... 24 are currently free.  */
++/* Bits 10 ... 24 are currently free.  */
+ 
+ /* This is an annotation on instruction types, but we
+    abuse the arch field in instructions to denote it.  */
+@@ -254,6 +257,8 @@ sh_dsp_reg_nums;
+ #define arch_sh2a_nofpu_or_sh3_nommu       (arch_sh2a_sh3_base|arch_sh_no_mmu |arch_sh_no_co)
+ #define arch_sh2a_or_sh3e                  (arch_sh2a_sh4_base|arch_sh_no_mmu |arch_sh_sp_fpu)
+ #define arch_sh2a_or_sh4                   (arch_sh2a_sh4_base|arch_sh_no_mmu |arch_sh_dp_fpu)
++#define arch_shj2                          (arch_shj2_base    |arch_sh_no_mmu |arch_sh_no_co)
++#define arch_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu       (arch_sh2a_sh3_shj2_base|arch_sh_no_mmu |arch_sh_no_co)
+ 
+ #define SH_MERGE_ARCH_SET(SET1, SET2) ((SET1) & (SET2))
+ #define SH_VALID_BASE_ARCH_SET(SET) (((SET) & arch_sh_base_mask) != 0)
+@@ -319,7 +324,8 @@ SH4AL-dsp                                          SH4A
+ #define arch_sh2_up                            (arch_sh2 \
+ 		| arch_sh2e_up \
+ 		| arch_sh2a_nofpu_or_sh3_nommu_up \
+-		| arch_sh_dsp_up)
++		| arch_sh_dsp_up \
++		| arch_shj2_up)
+ #define arch_sh2a_nofpu_or_sh3_nommu_up        (arch_sh2a_nofpu_or_sh3_nommu \
+ 		| arch_sh2a_nofpu_or_sh4_nommu_nofpu_up \
+ 		| arch_sh2a_or_sh3e_up \
+@@ -345,6 +351,12 @@ SH4AL-dsp                                          SH4A
+ #define arch_sh4a_nofpu_up                     (arch_sh4a_nofpu \
+ 		| arch_sh4a_up \
+ 		| arch_sh4al_dsp_up)
++#define arch_shj2_up		       	       ( arch_shj2)
++#define arch_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu_up (arch_sh2a_nofpu_or_sh3_nommu \
++		| arch_sh2a_nofpu_or_sh4_nommu_nofpu_up \
++		| arch_sh2a_or_sh3e_up \
++		| arch_sh3_nommu_up \
++		| arch_shj2_up)
+ 
+ /* Right branches.  */
+ #define arch_sh2e_up                           (arch_sh2e \
+@@ -713,9 +725,9 @@ const sh_opcode_info sh_table[] =
+ 
+ /* repeat start end #<imm>        	*/{"repeat",{A_DISP_PC,A_DISP_PC,A_IMM},{REPEAT,HEX_2,IMM0_8,HEX_8}, arch_sh_dsp_up},
+ 
+-/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up},
++/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu_up},
+ 
+-/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up},
++/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_or_shj2_nofpu_up},
+ 
+ /* 0100nnnn00100000 shal <REG_N>        */{"shal",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_0}, arch_sh_up},
+ 
+@@ -1193,7 +1205,7 @@ const sh_opcode_info sh_table[] =
+ {"movu.b",{A_DISP_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_1,HEX_8,DISP0_12}, arch_sh2a_nofpu_up | arch_op32},
+ /* 0011nnnnmmmm0001 1001dddddddddddd movu.w @(<DISP12>,<REG_M>),<REG_N> */
+ {"movu.w",{A_DISP_REG_M,A_REG_N},{HEX_3,REG_N,REG_M,HEX_1,HEX_9,DISP0_12BY2}, arch_sh2a_nofpu_up | arch_op32},
+-
++  /* 0010nnnnmmmm0011 cas.l Rm,Rn,@R0 */       {"cas.l", { A_REG_M,A_REG_N,A_IND_0},{HEX_2,REG_N,REG_M,HEX_3}, arch_shj2_up},
+ { 0, {0}, {0}, 0 } 
+ };
  
