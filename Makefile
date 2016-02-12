@@ -143,7 +143,6 @@ musl/.mcm_cloned:
 
 musl/.mcm_configured: musl/.mcm_cloned gcc-$(GCC_VER)/build0/.mcm_built
 	cd musl && ./configure $(MUSL_CONFIG)
-	cat patches/musl-complex-hack >> musl/config.mak
 	touch $@
 
 musl/.mcm_built: musl/.mcm_configured

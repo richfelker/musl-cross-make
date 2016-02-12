@@ -1,2 +1,0 @@
-$(patsubst %.c,%.o,$(wildcard src/complex/*.c)): CFLAGS += -fno-optimize-sibling-calls
-$(patsubst %.c,%.lo,$(wildcard src/complex/*.c)): CFLAGS += -fno-optimize-sibling-calls
