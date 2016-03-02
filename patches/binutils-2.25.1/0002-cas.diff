@@ -135,10 +135,9 @@ diff --git a/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh3-nommu.s b/gas/testsuite
 index cc29889..a3e18b5 100644
 --- a/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh3-nommu.s
 +++ b/gas/testsuite/gas/sh/arch/sh2a-nofpu-or-sh3-nommu.s
-@@ -12,8 +12,6 @@
+@@ -12,7 +12,5 @@
  sh2a_nofpu_or_sh3_nommu:
  ! Instructions introduced into sh2a-nofpu-or-sh3-nommu
- 	pref @r4                  ;!/* 0000nnnn10000011 pref @<REG_N>       */{"pref",{A_IND_N},{HEX_0,REG_N,HEX_8,HEX_3}, arch_sh2a_nofpu_or_sh3_nommu_up}
 -	shad r5,r4                ;!/* 0100nnnnmmmm1100 shad <REG_M>,<REG_N>*/{"shad",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_C}, arch_sh2a_nofpu_or_sh3_nommu_up}
 -	shld r5,r4                ;!/* 0100nnnnmmmm1101 shld <REG_M>,<REG_N>*/{"shld",{ A_REG_M,A_REG_N},{HEX_4,REG_N,REG_M,HEX_D}, arch_sh2a_nofpu_or_sh3_nommu_up}
  
