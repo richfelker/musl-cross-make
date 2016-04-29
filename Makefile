@@ -146,7 +146,7 @@ musl/.mcm_configured: musl/.mcm_cloned gcc-$(GCC_VER)/build0/.mcm_built
 	touch $@
 
 musl/.mcm_built: musl/.mcm_configured
-	cd musl && $(MAKE)
+	cd musl && $(MAKE) AR=$(OUTPUT)/bin/$(TARGET)-ar RANLIB=$(OUTPUT)/bin/$(TARGET)-ranlib
 	touch $@
 
 musl/.mcm_installed: musl/.mcm_built
