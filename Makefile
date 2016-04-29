@@ -139,6 +139,7 @@ gcc-$(GCC_VER)/build/.mcm_installed: gcc-$(GCC_VER)/build/.mcm_built
 
 musl/.mcm_cloned:
 	test -d musl || git clone -b $(MUSL_TAG) git://git.musl-libc.org/musl musl
+	cat patches/musl/* | ( cd musl && patch -p1 )
 	touch $@
 
 musl/.mcm_configured: musl/.mcm_cloned gcc-$(GCC_VER)/build0/.mcm_built

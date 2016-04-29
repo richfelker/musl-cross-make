@@ -1,0 +1,16 @@
+diff --git a/Makefile b/Makefile
+index ec54880..b048cbd 100644
+--- a/Makefile
++++ b/Makefile
+@@ -170,7 +170,11 @@ lib/libc.a: $(AOBJS)
+ 
+ $(EMPTY_LIBS):
+ 	rm -f $@
++ifeq ($(shell uname),Darwin)
++	touch $@
++else
+ 	$(AR) rc $@
++endif
+ 
+ lib/%.o: obj/crt/$(ARCH)/%.o
+ 	cp $< $@
