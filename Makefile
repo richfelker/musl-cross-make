@@ -95,7 +95,16 @@ binutils-$(BINUTILS_VER)/.mcm_configured: binutils-$(BINUTILS_VER)/.mcm_extracte
 	touch $@
 
 binutils-$(BINUTILS_VER)/.mcm_built: binutils-$(BINUTILS_VER)/.mcm_configured
-	cd binutils-$(BINUTILS_VER) && $(MAKE)
+ifeq ($(shell uname),Darwin)
+	echo '#define HAVE_STDLIB_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
+	echo '#define HAVE_LIMITS_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
+	echo '#define HAVE_STRING_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
+	echo '#define HAVE_SYS_TYPES_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
+	echo '#define HAVE_SYS_STAT_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
+	echo '#define HAVE_UNISTD_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
+	echo '#define HAVE_FCNTL_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
+endif
+	$(MAKE) -C binutils-$(BINUTILS_VER)
 	touch $@
 
 binutils-$(BINUTILS_VER)/.mcm_installed: binutils-$(BINUTILS_VER)/.mcm_built
@@ -114,6 +123,24 @@ gcc-$(GCC_VER)/.mcm_extracted: $(SOURCES)/gcc-$(GCC_VER).tar.bz2 $(SOURCES)/conf
 gcc-$(GCC_VER)/build0/.mcm_configured: gcc-$(GCC_VER)/.mcm_extracted | binutils-$(BINUTILS_VER)/.mcm_installed
 	mkdir -p gcc-$(GCC_VER)/build0
 	test -e gcc-$(GCC_VER)/build0/config.status || ( cd gcc-$(GCC_VER)/build0 && $(GCC0_VARS) ../configure $(GCC0_CONFIG) )
+ifeq ($(shell uname),Darwin)
+	echo '#define HAVE_STDLIB_H 1' >> gcc-$(GCC_VER)/build0/libiberty/config.h
+	echo '#define HAVE_LIMITS_H 1' >> gcc-$(GCC_VER)/build0/libiberty/config.h
+	echo '#define HAVE_STRING_H 1' >> gcc-$(GCC_VER)/build0/libiberty/config.h
+	echo '#define HAVE_SYS_TYPES_H 1' >> gcc-$(GCC_VER)/build0/libiberty/config.h
+	echo '#define HAVE_SYS_STAT_H 1' >> gcc-$(GCC_VER)/build0/libiberty/config.h
+	echo '#define HAVE_UNISTD_H 1' >> gcc-$(GCC_VER)/build0/libiberty/config.h
+	echo '#define HAVE_FCNTL_H 1' >> gcc-$(GCC_VER)/build0/libiberty/config.h
+	echo '#define HAVE_STDLIB_H 1' >> gcc-$(GCC_VER)/build0/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_LIMITS_H 1' >> gcc-$(GCC_VER)/build0/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_STRING_H 1' >> gcc-$(GCC_VER)/build0/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_SYS_TYPES_H 1' >> gcc-$(GCC_VER)/build0/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_SYS_STAT_H 1' >> gcc-$(GCC_VER)/build0/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_UNISTD_H 1' >> gcc-$(GCC_VER)/build0/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_FCNTL_H 1' >> gcc-$(GCC_VER)/build0/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_LIMITS_H 1' >> gcc-$(GCC_VER)/build0/gcc/auto-host.h
+	echo '#define HAVE_SYS_PARAM_H 1' >> gcc-$(GCC_VER)/build0/gcc/auto-host.h
+endif
 	touch $@
 
 gcc-$(GCC_VER)/build0/.mcm_built: gcc-$(GCC_VER)/build0/.mcm_configured
@@ -123,6 +150,24 @@ gcc-$(GCC_VER)/build0/.mcm_built: gcc-$(GCC_VER)/build0/.mcm_configured
 gcc-$(GCC_VER)/build/.mcm_configured:  gcc-$(GCC_VER)/.mcm_extracted | binutils-$(BINUTILS_VER)/.mcm_installed musl/.mcm_installed
 	mkdir -p gcc-$(GCC_VER)/build
 	test -e gcc-$(GCC_VER)/build/config.status || ( cd gcc-$(GCC_VER)/build && ../configure $(GCC_CONFIG) )
+ifeq ($(shell uname),Darwin)
+	echo '#define HAVE_STDLIB_H 1' >> gcc-$(GCC_VER)/build/libiberty/config.h
+	echo '#define HAVE_LIMITS_H 1' >> gcc-$(GCC_VER)/build/libiberty/config.h
+	echo '#define HAVE_STRING_H 1' >> gcc-$(GCC_VER)/build/libiberty/config.h
+	echo '#define HAVE_SYS_TYPES_H 1' >> gcc-$(GCC_VER)/build/libiberty/config.h
+	echo '#define HAVE_SYS_STAT_H 1' >> gcc-$(GCC_VER)/build/libiberty/config.h
+	echo '#define HAVE_UNISTD_H 1' >> gcc-$(GCC_VER)/build/libiberty/config.h
+	echo '#define HAVE_FCNTL_H 1' >> gcc-$(GCC_VER)/build/libiberty/config.h
+	echo '#define HAVE_STDLIB_H 1' >> gcc-$(GCC_VER)/build/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_LIMITS_H 1' >> gcc-$(GCC_VER)/build/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_STRING_H 1' >> gcc-$(GCC_VER)/build/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_SYS_TYPES_H 1' >> gcc-$(GCC_VER)/build/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_SYS_STAT_H 1' >> gcc-$(GCC_VER)/build/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_UNISTD_H 1' >> gcc-$(GCC_VER)/build/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_FCNTL_H 1' >> gcc-$(GCC_VER)/build/build-i386-apple-darwin$(shell uname -r)/libiberty/config.h
+	echo '#define HAVE_LIMITS_H 1' >> gcc-$(GCC_VER)/build/gcc/auto-host.h
+	echo '#define HAVE_SYS_PARAM_H 1' >> gcc-$(GCC_VER)/build/gcc/auto-host.h
+endif
 	touch $@
 
 gcc-$(GCC_VER)/build/.mcm_built: gcc-$(GCC_VER)/build/.mcm_configured
@@ -139,6 +184,7 @@ gcc-$(GCC_VER)/build/.mcm_installed: gcc-$(GCC_VER)/build/.mcm_built
 
 musl/.mcm_cloned:
 	test -d musl || git clone -b $(MUSL_TAG) git://git.musl-libc.org/musl musl
+	cat patches/musl/* | ( cd musl && patch -p1 )
 	touch $@
 
 musl/.mcm_configured: musl/.mcm_cloned gcc-$(GCC_VER)/build0/.mcm_built
