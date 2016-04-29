@@ -92,19 +92,10 @@ binutils-$(BINUTILS_VER)/.mcm_extracted: $(SOURCES)/binutils-$(BINUTILS_VER).tar
 
 binutils-$(BINUTILS_VER)/.mcm_configured: binutils-$(BINUTILS_VER)/.mcm_extracted
 	test -e binutils-$(BINUTILS_VER)/config.status || ( cd binutils-$(BINUTILS_VER) && ./configure $(BINUTILS_CONFIG) )
-ifeq ($(shell uname),Darwin)
-	echo '#define HAVE_STDLIB_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
-	echo '#define HAVE_LIMITS_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
-	echo '#define HAVE_STRING_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
-	echo '#define HAVE_SYS_TYPES_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
-	echo '#define HAVE_SYS_STAT_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
-	echo '#define HAVE_UNISTD_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
-	echo '#define HAVE_FCNTL_H 1' >> binutils-$(BINUTILS_VER)/libiberty/config.h
-endif
 	touch $@
 
 binutils-$(BINUTILS_VER)/.mcm_built: binutils-$(BINUTILS_VER)/.mcm_configured
-	$(MAKE) -C binutils-$(BINUTILS_VER)
+	cd binutils-$(BINUTILS_VER) && $(MAKE)
 	touch $@
 
 binutils-$(BINUTILS_VER)/.mcm_installed: binutils-$(BINUTILS_VER)/.mcm_built
@@ -118,16 +109,6 @@ gcc-$(GCC_VER)/.mcm_extracted: $(SOURCES)/gcc-$(GCC_VER).tar.bz2 $(SOURCES)/conf
 	tar jxvf $<
 	cat patches/gcc-$(GCC_VER)/* | ( cd gcc-$(GCC_VER) && patch -p1 )
 	cp $(SOURCES)/config.sub gcc-$(GCC_VER)
-ifeq ($(shell uname),Darwin)
-	echo '#define HAVE_STDLIB_H 1' >> gcc-$(GCC_VER)/libiberty/config.in
-	echo '#define HAVE_LIMITS_H 1' >> gcc-$(GCC_VER)/libiberty/config.in
-	echo '#define HAVE_STRING_H 1' >> gcc-$(GCC_VER)/libiberty/config.in
-	echo '#define HAVE_SYS_TYPES_H 1' >> gcc-$(GCC_VER)/libiberty/config.in
-	echo '#define HAVE_SYS_STAT_H 1' >> gcc-$(GCC_VER)/libiberty/config.inø
-	echo '#define HAVE_UNISTD_H 1' >> gcc-$(GCC_VER)/libiberty/config.in
-	echo '#define HAVE_FCNTL_H 1' >> gcc-$(GCC_VER)/gcc/auto-host.h
-	echo '#define HAVE_SYS_PARAM_H 1' >> gcc-$(GCC_VER)/gcc/auto-host.h
-endif
 	touch $@
 
 gcc-$(GCC_VER)/build0/.mcm_configured: gcc-$(GCC_VER)/.mcm_extracted | binutils-$(BINUTILS_VER)/.mcm_installed
