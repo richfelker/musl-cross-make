@@ -3,4 +3,8 @@
 /output/
 /binutils-*/
 /gcc-*/
-/musl/
+/musl-*/
+/gmp-*/
+/mpc-*/
+/mpfr-*/
+/build-*/

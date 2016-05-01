@@ -1,17 +1,117 @@
 musl-cross-make
 ===============
 
-This is a quick and simple makefile-based alternative for producing
-musl-based cross compilers. The current focus is on SH2/J2 Core
-targets and NOMMU (where PIE or FDPIC is mandatory) since these are
-not adequately supported by other musl cross-compiler toolchain build
-systems, but all musl-supported targets are intended to work.
+This is a the second generation of musl-cross-make, a fast, simple,
+but advanced makefile-based approach for producing musl-targeting
+cross compilers. Features include:
 
-In addition to the build system, musl-cross-make provides a number of
-patches, including:
+- Single-stage GCC build, used to build both musl libc and its own
+  shared target libs depending on libc.
 
-- Updated versions of the musl target patches going into upstream GCC
-- Static-PIE support and optionally defaulting to PIE
+- No hard-coded absoluete paths; resulting cross compilers can be
+  copied/moved anywhere.
+
+- Ability to build multiple cross compilers for different targets
+  using a single set of patched source trees.
+
+- Nothing is installed until running "make install", and the
+  installation location can be chosen at install time.
+
+- Automatic download of source packages, including GCC prerequisites
+  (GMP, MPC, MPFR), using https and checking hashes.
+
+- Automatic patching with canonical musl support patches and patches
+  which provide bug fixes and features musl depends on for some arch
+  targets.
+
+
+Usage
+-----
+
+The build system can be configured by providing a config.mak file in
+the top-level directory. The only mandatory variable is TARGET, which
+should contain a gcc target tuple (such as i486-linux-musl), but many
+more options are available. See the provided config.mak.dist and
+presets/* for examples.
+
+To compile, run make. To install to $(OUTPUT), run "make install".
+
+The default value for $(OUTPUT) is output; after installing here you
+can move the cross compiler toolchain to another location as desired.
+
+
+
+How it works
+------------
+
+The current musl-cross-make is factored into two layers:
+
+1. The top-level Makefile which is responsible for downloading,
+   verifying, extracting, and patching sources, and for setting up a
+   build directory, and
+
+2. Litecross, the cross compiler build system, which is itself a
+   Makefile symlinked into the build directory.
+
+Most of the real magic takes place in litecross. It begins by setting
+up symlinks to all the source trees provided to it by the caller, then
+builds a combined "src_toolchain" directory of symlinks that combines
+the contents of the top-level gcc and binutils source trees and
+symlinks to gmp, mpc, and mpfr. One configured invocation them
+configures all the GNU toolchain components together in a manner that
+does not require any of them to be installed in order for the others
+to use them.
+
+Rather than building the whole toolchain tree at once, though,
+litecross starts by building just the gcc directory and its
+prerequisites, to get an "xgcc" that can be used to configure musl. It
+then configures musl, installs musl's headers to a staging "build
+sysroot", and builds libgcc.a using those headers. At this point it
+has all the prerequisites to build musl libc.a and libc.so, which the
+rest of the gcc target-libs depend on; once they are built, the full
+toolchain "make all" can proceed.
+
+Litecross does not actually depend on the musl-cross-make top-level
+build system; it can be used with any pre-extracted, properly patched
+set of source trees.
+
+
+Project scope and goals
+-----------------------
+
+The primary goals of this project are to:
+
+- Provide canonical musl support patches for GCC and binutils.
+
+- Serve as a canonical example of how GCC should be built to target
+  musl.
+
+- Streamline the production of musl-targeting cross compilers so that
+  musl users can easily produce musl-linked applications or bootstrap
+  new systems using musl.
+
+- Assist musl and toolchain developers in development and testing.
+
+While the patches applied to GCC and binutils are all intended not to
+break non-musl configurations, musl-cross-make itself is specific to
+musl. Changes to add support for exotic target variants outside of
+what upstream musl supports are probably out-of-scope unless they are
+non-invasive. Changes to fix issues building musl-cross-make to run on
+non-Linux systems are well within scope as long as they are clean.
+
+Most importantly, this is a side project to benefit musl and its
+users. It's not intended to be something high-maintenance or to divert
+development effort away from musl itself.
+
+
+Patches included
+----------------
+
+In addition to canonical musl support patches for GCC,
+musl-cross-make's patch set provides:
+
+- Static-linked PIE support
+- Addition of --enable-default-pie
 - Fixes for SH-specific bugs and bitrot in GCC
 - Support for J2 Core CPU target in GCC & binutils
 - SH/FDPIC ABI support
@@ -22,25 +122,3 @@ build systems, if desired.
 
 Some functionality (SH/FDPIC, and support for J2 specific features) is
 presently only available with gcc 5.2.0 and binutils 2.25.1.
-
-
-Usage
------
-
-The build system make be configured by providing a config.mak file in
-the top-level directory. The only mandatory variable is TARGET, which
-should contain a gcc target tuple (such as sh2eb-linux-musl), but many
-more options are available. The top-level config.mak.dist file shows
-examples, and several full configurations are available in presets/*.
-
-For recent gcc versions that need gmp/mpfr/mpc, suitable versions need
-to be installed in the default library path, or the appropriate --with
-configure options need to be added to GCC_CONFIG in config.mak so that
-the gcc configure process can find them.
-
-After setting up config.mak, simply run make. Parallel builds are
-supported.
-
-The resulting toolchain will be placed ./output by default, or the
-OUTPUT directory specified in config.mak. It is sysrooted and can be
-freely moved to a different location.

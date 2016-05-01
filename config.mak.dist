@@ -1,14 +1,37 @@
-OUTPUT = $(PWD)/output
-TARGET = sh2eb-linux-musl
+#
+# config.mak.dist - sample musl-cross-make configuration
+#
+# Copy to config.mak and edit as desired.
+#
 
-# See the patches directory for supported versions. Versions
-# without patches should not be expected to work until gcc 6.
-# Older versions may have known bugs or limited functionality.
+# There is no default TARGET; you must select one here or on the make
+# command line. Some examples:
 
-BINUTILS_VER = 2.25.1
-GCC_VER = 5.2.0
+# TARGET = i486-linux-musl
+# TARGET = x86_64-linux-musl
+# TARGET = arm-linux-musleabi
+# TARGET = arm-linux-musleabihf
+# TARGET = sh2eb-linux-muslfdpic
+# ...
 
-# Recommended options for faster/simpler build
+# By default, cross compilers are installed to ./output under the top-level
+# musl-cross-make directory and can later be moved wherever you want them.
+# To install directly to a specific location, set it here. Multiple targets
+# can safely be installed in the same location. Some examples:
+
+# OUTPUT = /opt/cross
+# OUTPUT = /usr/local
+
+# By default, latest supported release versions of musl and the toolchain
+# components are used. You can override those here, but the version selected
+# must be supported (under hashes/ and patches/) to work. For musl, you
+# can use "git-refname" (e.g. git-master) instead of a release.
+
+# BINUTILS_VER = 2.25.1
+# GCC_VER = 5.2.0
+# MUSL_VER = git-master
+
+# Recommended options for faster/simpler build:
 
 # COMMON_CONFIG += --disable-nls
 # COMMON_CONFIG += MAKEINFO=/bin/false
@@ -16,17 +39,19 @@ GCC_VER = 5.2.0
 # GCC_CONFIG += --disable-libquadmath --disable-decimal-float
 # GCC_CONFIG += --disable-multilib
 
-# J2/SH2 specific options
+# The following are options needed to make certain targets work right.
+# They may be moved to main build logic rather than config.mak at some
+# point in the future.
 
-# GCC_CONFIG += --with-cpu=mj2
-# GCC_CONFIG += --enable-fdpic
+ifeq ($(TARGET),sh2eb-linux-muslfdpic)
+GCC_CONFIG += --with-cpu=mj2
+GCC_CONFIG += --enable-fdpic
+endif
 
-# Options for using (plain, non-FDPIC) ELF on NOMMU targets
+ifeq ($(TARGET),mips64-linux-musl)
+GCC_CONFIG += --with-abi=64
+endif
 
-# GCC_CONFIG += --enable-default-pie
-
-# Last GPLv2 versions
-
-# GCC_VER = 4.2.1
-# BINUTILS_VER = 397a64b3
-# BINUTILS_SITE = http://landley.net/aboriginal/mirror
+ifeq ($(TARGET),arm-linux-musleabihf)
+GCC_CONFIG += --with-float=hard
+endif

@@ -2,154 +2,137 @@
 OUTPUT = $(PWD)/output
 SOURCES = sources
 
+CONFIG_SUB_REV = 3d5db9ebe860
 BINUTILS_VER = 2.25.1
 GCC_VER = 5.2.0
-MUSL_TAG = master
+MUSL_VER = 1.1.14
+GMP_VER = 6.1.0
+MPC_VER = 1.0.3
+MPFR_VER = 3.1.4
 
-GNU_SITE = http://ftp.gnu.org/pub/gnu
+GNU_SITE = https://ftp.gnu.org/pub/gnu
 GCC_SITE = $(GNU_SITE)/gcc
 BINUTILS_SITE = $(GNU_SITE)/binutils
+GMP_SITE = $(GNU_SITE)/gmp
+MPC_SITE = $(GNU_SITE)/mpc
+MPFR_SITE = $(GNU_SITE)/mpfr
 
-COMMON_CONFIG = --disable-werror \
-	--target=$(TARGET) --prefix=$(OUTPUT) \
-	--with-sysroot=$(OUTPUT)/$(TARGET)
+MUSL_SITE = https://www.musl-libc.org/releases
+MUSL_REPO = git://git.musl-libc.org/musl
 
-BINUTILS_CONFIG = $(COMMON_CONFIG)
-GCC_CONFIG = $(COMMON_CONFIG) --enable-tls \
-	--disable-libmudflap --disable-libsanitizer
-
-GCC0_VARS = CFLAGS="-O0 -g0" CXXFLAGS="-O0 -g0"
-GCC0_CONFIG = $(GCC_CONFIG) \
-	--with-newlib --disable-libssp --disable-threads \
-	--disable-shared --disable-libgomp --disable-libatomic \
-	--disable-libquadmath --disable-decimal-float --disable-nls \
-	--enable-languages=c
-
-GCC0_BDIR = $(PWD)/gcc-$(GCC_VER)/build0/gcc
-GCC0_CC = $(GCC0_BDIR)/xgcc -B $(GCC0_BDIR)
-
-MUSL_CONFIG = CC="$(GCC0_CC)" --prefix=
+BUILD_DIR = build-$(TARGET)
 
 -include config.mak
 
-ifeq ($(TARGET),)
-$(error TARGET must be set via config.mak or command line)
-endif
+SRC_DIRS = gcc-$(GCC_VER) binutils-$(BINUTILS_VER) musl-$(MUSL_VER) \
+	$(if $(GMP_VER),gmp-$(GMP_VER)) \
+	$(if $(MPC_VER),mpc-$(MPC_VER)) \
+	$(if $(MPFR_VER),mpfr-$(MPFR_VER))
 
-all: install_binutils install_musl install_gcc
+all:
 
 clean:
-	rm -rf gcc-$(GCC_VER) binutils-$(BINUTILS_VER) musl
+	rm -rf gcc-* binutils-* musl-* gmp-* mpc-* mpfr-* build-*
 
 distclean: clean
 	rm -rf sources
 
-.PHONY: extract_binutils extract_gcc clone_musl
-.PHONY: configure_binutils configure_gcc0 configure_gcc configure_musl
-.PHONY: build_binutils build_gcc0 build_gcc build_musl
-.PHONY: install_binutils install_gcc install_musl
 
-extract_binutils: binutils-$(BINUTILS_VER)/.mcm_extracted
-extract_gcc: gcc-$(GCC_VER)/.mcm_extracted
-clone_musl: musl/.mcm_cloned
+# Rules for downloading and verifying sources. Treat an external SOURCES path as
+# immutable and do not try to download anything into it.
 
-configure_binutils: binutils-$(BINUTILS_VER)/.mcm_configured
-configure_gcc0: gcc-$(GCC_VER)/build0/.mcm_configured
-configure_gcc: gcc-$(GCC_VER)/build/.mcm_configured
-configure_musl: musl/.mcm_configured
+ifeq ($(SOURCES),sources)
 
-build_binutils: binutils-$(BINUTILS_VER)/.mcm_built
-build_gcc0: gcc-$(GCC_VER)/build0/.mcm_built
-build_gcc: gcc-$(GCC_VER)/build/.mcm_built
-build_musl: musl/.mcm_built
-
-install_binutils: binutils-$(BINUTILS_VER)/.mcm_installed
-install_gcc: gcc-$(GCC_VER)/build/.mcm_installed
-install_musl: musl/.mcm_installed
-
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/gmp*)): SITE = $(GMP_SITE)
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/mpc*)): SITE = $(MPC_SITE)
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/mpfr*)): SITE = $(MPFR_SITE)
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/binutils*)): SITE = $(BINUTILS_SITE)
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/gcc*)): SITE = $(GCC_SITE)/$(basename $(basename $(notdir $@)))
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/musl*)): SITE = $(MUSL_SITE)
 
 $(SOURCES):
 	mkdir -p $@
 
 $(SOURCES)/config.sub: | $(SOURCES)
-	wget -O $@ 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+	mkdir -p $@.tmp
+	cd $@.tmp && wget -c -O $(notdir $@) "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
+	cd $@.tmp && touch $(notdir $@)
+	cd $@.tmp && sha1sum -c $(PWD)/hashes/$(notdir $@).$(CONFIG_SUB_REV).sha1
+	mv $@.tmp/$(notdir $@) $@
+	rm -rf $@.tmp
 
-$(SOURCES)/binutils-%: | $(SOURCES)
-	wget -c -O $@.part $(BINUTILS_SITE)/$(notdir $@)
-	mv $@.part $@
+$(SOURCES)/%: hashes/%.sha1 | $(SOURCES)
+	mkdir -p $@.tmp
+	cd $@.tmp && wget -c -O $(notdir $@) $(SITE)/$(notdir $@)
+	cd $@.tmp && touch $(notdir $@)
+	cd $@.tmp && sha1sum -c $(PWD)/hashes/$(notdir $@).sha1
+	mv $@.tmp/$(notdir $@) $@
+	rm -rf $@.tmp
 
-$(SOURCES)/gcc-%: | $(SOURCES)
-	wget -c -O $@.part $(GCC_SITE)/$(basename $(basename $(notdir $@)))/$(notdir $@)
-	mv $@.part $@
-
-
-
-binutils-$(BINUTILS_VER)/.mcm_extracted: $(SOURCES)/binutils-$(BINUTILS_VER).tar.bz2 $(SOURCES)/config.sub
-	tar jxvf $<
-	cat patches/binutils-$(BINUTILS_VER)/* | ( cd binutils-$(BINUTILS_VER) && patch -p1 )
-	cp $(SOURCES)/config.sub binutils-$(BINUTILS_VER)
-	touch $@
-
-binutils-$(BINUTILS_VER)/.mcm_configured: binutils-$(BINUTILS_VER)/.mcm_extracted
-	test -e binutils-$(BINUTILS_VER)/config.status || ( cd binutils-$(BINUTILS_VER) && ./configure $(BINUTILS_CONFIG) )
-	touch $@
-
-binutils-$(BINUTILS_VER)/.mcm_built: binutils-$(BINUTILS_VER)/.mcm_configured
-	cd binutils-$(BINUTILS_VER) && $(MAKE)
-	touch $@
-
-binutils-$(BINUTILS_VER)/.mcm_installed: binutils-$(BINUTILS_VER)/.mcm_built
-	cd binutils-$(BINUTILS_VER) && $(MAKE) install
-	touch $@
+endif
 
 
+# Rules for extracting and patching sources, or checking them out from git.
+
+musl-git-%:
+	rm -rf $@.tmp
+	git clone -b $(patsubst musl-git-%,%,$@) $(MUSL_REPO) $@.tmp
+	cd $@.tmp && git fsck
+	mv $@.tmp $@
+
+%: $(SOURCES)/%.tar.gz | $(SOURCES)/config.sub
+	rm -rf $@.tmp
+	mkdir $@.tmp
+	( cd $@.tmp && tar zxvf - ) < $<
+	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp/$@ && patch -p1 )
+	test ! -f $@.tmp/$@/config.sub || cp -f $(SOURCES)/config.sub $@.tmp/$@
+	rm -rf $@
+	touch $@.tmp/$@
+	mv $@.tmp/$@ $@
+	rm -rf $@.tmp
+
+%: $(SOURCES)/%.tar.bz2 | $(SOURCES)/config.sub
+	rm -rf $@.tmp
+	mkdir $@.tmp
+	( cd $@.tmp && tar jxvf - ) < $<
+	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp/$@ && patch -p1 )
+	test ! -f $@.tmp/$@/config.sub || cp -f $(SOURCES)/config.sub $@.tmp/$@
+	rm -rf $@
+	touch $@.tmp/$@
+	mv $@.tmp/$@ $@
+	rm -rf $@.tmp
 
 
-gcc-$(GCC_VER)/.mcm_extracted: $(SOURCES)/gcc-$(GCC_VER).tar.bz2 $(SOURCES)/config.sub
-	tar jxvf $<
-	cat patches/gcc-$(GCC_VER)/* | ( cd gcc-$(GCC_VER) && patch -p1 )
-	cp $(SOURCES)/config.sub gcc-$(GCC_VER)
-	touch $@
+# Rules for building.
 
-gcc-$(GCC_VER)/build0/.mcm_configured: gcc-$(GCC_VER)/.mcm_extracted | binutils-$(BINUTILS_VER)/.mcm_installed
-	mkdir -p gcc-$(GCC_VER)/build0
-	test -e gcc-$(GCC_VER)/build0/config.status || ( cd gcc-$(GCC_VER)/build0 && $(GCC0_VARS) ../configure $(GCC0_CONFIG) )
-	touch $@
+ifeq ($(TARGET),)
 
-gcc-$(GCC_VER)/build0/.mcm_built: gcc-$(GCC_VER)/build0/.mcm_configured
-	cd gcc-$(GCC_VER)/build0 && $(MAKE)
-	touch $@
+all:
+	@echo TARGET must be set via config.mak or command line.
+	@exit 1
 
-gcc-$(GCC_VER)/build/.mcm_configured:  gcc-$(GCC_VER)/.mcm_extracted | binutils-$(BINUTILS_VER)/.mcm_installed musl/.mcm_installed
-	mkdir -p gcc-$(GCC_VER)/build
-	test -e gcc-$(GCC_VER)/build/config.status || ( cd gcc-$(GCC_VER)/build && ../configure $(GCC_CONFIG) )
-	touch $@
+else
 
-gcc-$(GCC_VER)/build/.mcm_built: gcc-$(GCC_VER)/build/.mcm_configured
-	cd gcc-$(GCC_VER)/build && $(MAKE)
-	touch $@
+$(BUILD_DIR):
+	mkdir -p $@
 
-gcc-$(GCC_VER)/build/.mcm_installed: gcc-$(GCC_VER)/build/.mcm_built
-	cd gcc-$(GCC_VER)/build && $(MAKE) install
-	touch $@
+$(BUILD_DIR)/Makefile: | $(BUILD_DIR)
+	ln -sf ../litecross/Makefile $@
 
+$(BUILD_DIR)/config.mak: | $(BUILD_DIR)
+	printf >$@ -- '%s\n' \
+	"MUSL_SRCDIR = ../musl-$(MUSL_VER)" \
+	"GCC_SRCDIR = ../gcc-$(GCC_VER)" \
+	"BINUTILS_SRCDIR = ../binutils-$(BINUTILS_VER)" \
+	$(if $(GMP_VER),"GMP_SRCDIR = ../gmp-$(GMP_VER)") \
+	$(if $(MPC_VER),"MPC_SRCDIR = ../mpc-$(MPC_VER)") \
+	$(if $(MPFR_VER),"MPFR_SRCDIR = ../mpfr-$(MPFR_VER)") \
+	"-include ../config.mak"
 
+all: | $(SRC_DIRS) $(BUILD_DIR) $(BUILD_DIR)/Makefile $(BUILD_DIR)/config.mak
+	cd $(BUILD_DIR) && $(MAKE) $@
 
+install: | $(SRC_DIRS) $(BUILD_DIR) $(BUILD_DIR)/Makefile $(BUILD_DIR)/config.mak
+	cd $(BUILD_DIR) && $(MAKE) OUTPUT=$(OUTPUT) $@
 
-
-musl/.mcm_cloned:
-	test -d musl || git clone -b $(MUSL_TAG) git://git.musl-libc.org/musl musl
-	touch $@
-
-musl/.mcm_configured: musl/.mcm_cloned gcc-$(GCC_VER)/build0/.mcm_built
-	cd musl && ./configure $(MUSL_CONFIG)
-	touch $@
-
-musl/.mcm_built: musl/.mcm_configured
-	cd musl && $(MAKE) AR=$(OUTPUT)/bin/$(TARGET)-ar RANLIB=$(OUTPUT)/bin/$(TARGET)-ranlib
-	touch $@
-
-musl/.mcm_installed: musl/.mcm_built
-	cd musl && $(MAKE) install DESTDIR=$(OUTPUT)/$(TARGET)
-	ln -sfn . $(OUTPUT)/$(TARGET)/usr
-	touch $@
+endif
