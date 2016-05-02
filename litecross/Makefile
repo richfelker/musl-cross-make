@@ -99,7 +99,7 @@ obj_toolchain/.lc_configured: | obj_toolchain src_toolchain
 	touch $@
 
 obj_toolchain/gcc/.lc_built: | obj_toolchain/.lc_configured obj_sysroot/usr obj_sysroot/lib64 obj_sysroot/include
-	cd obj_toolchain && $(MAKE) LC_ROOT=$(PWD) all-gcc
+	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD) all-gcc
 	touch $@
 
 obj_musl/.lc_configured: | obj_toolchain/gcc/.lc_built obj_musl src_musl
@@ -111,11 +111,11 @@ obj_sysroot/.lc_headers: | obj_musl/.lc_configured obj_sysroot
 	touch $@
 
 obj_toolchain/$(TARGET)/libgcc/.lc_configured: | obj_sysroot/.lc_headers
-	cd obj_toolchain && $(MAKE) LC_ROOT=$(PWD) configure-target-libgcc
+	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD) configure-target-libgcc
 	touch $@
 
 obj_toolchain/$(TARGET)/libgcc/libgcc.a: | obj_toolchain/$(TARGET)/libgcc/.lc_configured
-	cd $(dir $@) && $(MAKE) LC_ROOT=$(PWD) libgcc.a
+	cd $(dir $@) && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD) libgcc.a
 
 obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
 	cd obj_musl && $(MAKE) $(MUSL_VARS)
@@ -126,14 +126,14 @@ obj_sysroot/.lc_libs: | obj_musl/.lc_built
 	touch $@
 
 obj_toolchain/.lc_built: | obj_toolchain/.lc_configured obj_sysroot/.lc_libs
-	cd obj_toolchain && $(MAKE) LC_ROOT=$(PWD)
+	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD)
 	touch $@
 
 install-musl: | obj_musl/.lc_built
 	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(DESTDIR)$(OUTPUT)/$(TARGET) install
 
 install-toolchain: | obj_toolchain/.lc_built
-	cd obj_toolchain && $(MAKE) LC_ROOT=$(PWD) DESTDIR=$(DESTDIR)$(OUTPUT) install
+	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD) DESTDIR=$(DESTDIR)$(OUTPUT) install
 
 endif
 
