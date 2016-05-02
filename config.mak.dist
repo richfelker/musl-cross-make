@@ -36,6 +36,10 @@
 # MPC_VER =
 # MPFR_VER =
 
+# Recommended options for smaller build for deploying binaries:
+
+# COMMON_CONFIG += CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"
+
 # Recommended options for faster/simpler build:
 
 # COMMON_CONFIG += --disable-nls
