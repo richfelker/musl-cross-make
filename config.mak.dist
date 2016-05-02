@@ -25,11 +25,16 @@
 # By default, latest supported release versions of musl and the toolchain
 # components are used. You can override those here, but the version selected
 # must be supported (under hashes/ and patches/) to work. For musl, you
-# can use "git-refname" (e.g. git-master) instead of a release.
+# can use "git-refname" (e.g. git-master) instead of a release. Setting a
+# blank version for gmp, mpc, and mpfr will suppress download and in-tree
+# build of these libraries and instead depend on pre-installed libraries.
 
 # BINUTILS_VER = 2.25.1
 # GCC_VER = 5.2.0
 # MUSL_VER = git-master
+# GMP_VER =
+# MPC_VER =
+# MPFR_VER =
 
 # Recommended options for faster/simpler build:
 
