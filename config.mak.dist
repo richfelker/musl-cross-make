@@ -38,7 +38,6 @@
 
 # Recommended options for faster/simpler build:
 
-# MAKE += MAKEINFO=true
 # COMMON_CONFIG += --disable-nls
 # GCC_CONFIG += --enable-languages=c,c++
 # GCC_CONFIG += --disable-libquadmath --disable-decimal-float
