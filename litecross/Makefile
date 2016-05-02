@@ -54,23 +54,32 @@ src_gcc: | $(GCC_SRCDIR)
 src_musl: | $(MUSL_SRCDIR)
 	ln -sf $(MUSL_SRCDIR) $@
 
+ifneq ($(GMP_SRCDIR),)
+src_toolchain: src_gmp
 src_gmp: | $(GMP_SRCDIR)
 	ln -sf "$(GMP_SRCDIR)" $@
+endif
 
+ifneq ($(MPC_SRCDIR),)
+src_toolchain: src_mpc
 src_mpc: | $(MPC_SRCDIR)
 	ln -sf "$(MPC_SRCDIR)" $@
+endif
 
+ifneq ($(MPFR_SRCDIR),)
+src_toolchain: src_mpfr
 src_mpfr: | $(MPFR_SRCDIR)
 	ln -sf "$(MPFR_SRCDIR)" $@
+endif
 
-src_toolchain: src_binutils src_gcc src_gmp src_mpc src_mpfr
+src_toolchain: src_binutils src_gcc
 	rm -rf $@ $@.tmp
 	mkdir $@.tmp
 	cd $@.tmp && ln -sf ../src_binutils/* .
 	cd $@.tmp && ln -sf ../src_gcc/* .
-	cd $@.tmp && ln -sf ../src_gmp gmp
-	cd $@.tmp && ln -sf ../src_mpc mpc
-	cd $@.tmp && ln -sf ../src_mpfr mpfr
+	$(if $(GMP_SRCDIR),cd $@.tmp && ln -sf ../src_gmp gmp)
+	$(if $(MPC_SRCDIR),cd $@.tmp && ln -sf ../src_mpc mpc)
+	$(if $(MPFR_SRCDIR),cd $@.tmp && ln -sf ../src_mpfr mpfr)
 	mv $@.tmp $@
 
 obj_%:
