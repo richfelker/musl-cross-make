@@ -60,7 +60,7 @@ src_gmp: | $(GMP_SRCDIR)
 src_mpc: | $(MPC_SRCDIR)
 	ln -sf "$(MPC_SRCDIR)" $@
 
-src_mpfr: | $(GMP_SRCDIR)
+src_mpfr: | $(MPFR_SRCDIR)
 	ln -sf "$(MPFR_SRCDIR)" $@
 
 src_toolchain: src_binutils src_gcc src_gmp src_mpc src_mpfr
