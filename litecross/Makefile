@@ -15,7 +15,7 @@ MUSL_CONFIG = CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" --
 
 -include config.mak
 
-MAKE += INFO_DEPS=
+MAKE += INFO_DEPS= infodir=
 MAKE += ac_cv_prog_lex_root=lex.yy.c
 
 FULL_TOOLCHAIN_CONFIG = $(TOOLCHAIN_CONFIG) \
