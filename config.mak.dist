@@ -55,6 +55,12 @@
 # GCC_CONFIG += --disable-libquadmath --disable-decimal-float
 # GCC_CONFIG += --disable-multilib
 
+# You can keep the local build path out of your toolchain binaries and
+# target libraries with the following, but then gdb needs to be told
+# where to look for source files.
+
+# COMMON_CONFIG += --with-debug-prefix-map=$(PWD)=
+
 # The following are options needed to make certain targets work right.
 # They may be moved to main build logic rather than config.mak at some
 # point in the future.
