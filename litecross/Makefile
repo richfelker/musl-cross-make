@@ -14,12 +14,14 @@ XGCC = $(XGCC_DIR)/xgcc -B $(XGCC_DIR)
 
 -include config.mak
 
+MAKE += MULTILIB_OSDIRNAMES=
 MAKE += INFO_DEPS= infodir=
 MAKE += ac_cv_prog_lex_root=lex.yy.c
 
 FULL_TOOLCHAIN_CONFIG = $(TOOLCHAIN_CONFIG) \
 	--disable-werror \
 	--target=$(TARGET) --prefix= \
+	--libdir=/lib --disable-multilib \
 	--with-sysroot=$(SYSROOT) \
 	--with-build-sysroot='$$(LC_ROOT)/obj_sysroot' \
 	--enable-tls \
