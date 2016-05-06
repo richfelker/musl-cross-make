@@ -25,7 +25,10 @@ FULL_TOOLCHAIN_CONFIG = $(TOOLCHAIN_CONFIG) \
 	--with-sysroot=$(SYSROOT) \
 	--with-build-sysroot='$$(LC_ROOT)/obj_sysroot' \
 	--enable-tls \
-	--disable-libmudflap --disable-libsanitizer
+	--disable-libmudflap --disable-libsanitizer \
+	--disable-gnu-indirect-function \
+	--disable-libmpx \
+	--enable-libstdcxx-time
 
 FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
 	--prefix= --host=$(TARGET)
