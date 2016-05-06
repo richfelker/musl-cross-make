@@ -11,7 +11,6 @@ TOOLCHAIN_CONFIG = $(GCC_CONFIG)
 
 XGCC_DIR = ../obj_toolchain/gcc
 XGCC = $(XGCC_DIR)/xgcc -B $(XGCC_DIR)
-MUSL_CONFIG = CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" --prefix=
 
 -include config.mak
 
@@ -21,12 +20,25 @@ MAKE += ac_cv_prog_lex_root=lex.yy.c
 FULL_TOOLCHAIN_CONFIG = $(TOOLCHAIN_CONFIG) \
 	--disable-werror \
 	--target=$(TARGET) --prefix= \
-	--with-sysroot=/$(TARGET) \
+	--with-sysroot=$(SYSROOT) \
 	--with-build-sysroot='$$(LC_ROOT)/obj_sysroot' \
 	--enable-tls \
 	--disable-libmudflap --disable-libsanitizer
 
+FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
+	--prefix= --host=$(TARGET)
+
+ifeq ($(NATIVE),)
+SYSROOT = /$(TARGET)
+FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" 
 MUSL_VARS = AR=../obj_toolchain/binutils/ar RANLIB=../obj_toolchain/binutils/ranlib
+obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
+obj_toolchain/.lc_built: | obj_sysroot/.lc_libs
+else
+SYSROOT = /
+FULL_TOOLCHAIN_CONFIG += --host=$(TARGET)
+MUSL_VARS = 
+endif
 
 ifeq ($(TARGET),)
 
@@ -106,7 +118,7 @@ obj_toolchain/gcc/.lc_built: | obj_toolchain/.lc_configured obj_sysroot/usr obj_
 	touch $@
 
 obj_musl/.lc_configured: | obj_toolchain/gcc/.lc_built obj_musl src_musl
-	cd obj_musl && ../src_musl/configure $(MUSL_CONFIG)
+	cd obj_musl && ../src_musl/configure $(FULL_MUSL_CONFIG)
 	touch $@
 
 obj_sysroot/.lc_headers: | obj_musl/.lc_configured obj_sysroot
@@ -120,7 +132,7 @@ obj_toolchain/$(TARGET)/libgcc/.lc_configured: | obj_sysroot/.lc_headers
 obj_toolchain/$(TARGET)/libgcc/libgcc.a: | obj_toolchain/$(TARGET)/libgcc/.lc_configured
 	cd $(dir $@) && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD) libgcc.a
 
-obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
+obj_musl/.lc_built: | obj_musl/.lc_configured
 	cd obj_musl && $(MAKE) $(MUSL_VARS)
 	touch $@
 
@@ -128,12 +140,12 @@ obj_sysroot/.lc_libs: | obj_musl/.lc_built
 	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(PWD)/obj_sysroot install
 	touch $@
 
-obj_toolchain/.lc_built: | obj_toolchain/.lc_configured obj_sysroot/.lc_libs
+obj_toolchain/.lc_built: | obj_toolchain/.lc_configured obj_sysroot/.lc_headers
 	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD)
 	touch $@
 
 install-musl: | obj_musl/.lc_built
-	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(DESTDIR)$(OUTPUT)/$(TARGET) install
+	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(DESTDIR)$(OUTPUT)$(SYSROOT) install
 
 install-toolchain: | obj_toolchain/.lc_built
 	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD) DESTDIR=$(DESTDIR)$(OUTPUT) install
