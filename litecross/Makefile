@@ -164,23 +164,15 @@ LINUX_ARCH = $(firstword $(foreach a,$(LINUX_ARCH_LIST),$(findstring $(a),$(TARG
 ifneq ($(LINUX_ARCH),)
 all: kernel-headers
 install: install-kernel-headers
-kernel-headers: | obj_kernel_headers
+kernel-headers: | obj_kernel_headers/.lc_built
 src_kernel_headers: | $(LINUX_SRCDIR)
-	rm -rf $@.tmp $@
-	mkdir -p $@.tmp/arch/$(LINUX_ARCH)
-	cp -R $(LINUX_SRCDIR)/arch/$(LINUX_ARCH)/include $@.tmp/arch/$(LINUX_ARCH)
-	cp -R $(LINUX_SRCDIR)/arch/$(LINUX_ARCH)/Makefile $@.tmp/arch/$(LINUX_ARCH)
-	cp -R $(LINUX_SRCDIR)/include $@.tmp
-	cp -R $(LINUX_SRCDIR)/scripts $@.tmp
-	cp -R $(LINUX_SRCDIR)/Makefile $@.tmp
-	mv $@.tmp $@
-obj_kernel_headers: | src_kernel_headers
-	rm -rf $@.tmp $@
-	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) INSTALL_HDR_PATH=$(PWD)/$@.tmp headers_install
-	mv $@.tmp $@
-install-kernel-headers: | obj_kernel_headers
+	ln -sf "$(LINUX_SRCDIR)" $@
+obj_kernel_headers/.lc_built: | src_kernel_headers
+	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) O=$(PWD)/obj_kernel_headers INSTALL_HDR_PATH=$(PWD)/obj_kernel_headers/staged headers_install
+	touch $@
+install-kernel-headers: | obj_kernel_headers/.lc_built
 	mkdir -p $(DESTDIR)$(OUTPUT)$(SYSROOT)/include
-	cp -R obj_kernel_headers/include/* $(DESTDIR)$(OUTPUT)$(SYSROOT)/include
+	cp -R obj_kernel_headers/staged/include/* $(DESTDIR)$(OUTPUT)$(SYSROOT)/include
 endif
 endif
 
