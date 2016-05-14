@@ -28,6 +28,8 @@
 # can use "git-refname" (e.g. git-master) instead of a release. Setting a
 # blank version for gmp, mpc, and mpfr will suppress download and in-tree
 # build of these libraries and instead depend on pre-installed libraries.
+# Setting a blank version for linux will suppress installation of kernel
+# headers, which are not needed unless compiling programs that use them.
 
 # BINUTILS_VER = 2.25.1
 # GCC_VER = 5.2.0
@@ -35,6 +37,7 @@
 # GMP_VER =
 # MPC_VER =
 # MPFR_VER =
+# LINUX_VER =
 
 # Something like the following can be used to produce a static-linked
 # toolchain that's deployable to any system with matching arch, using
