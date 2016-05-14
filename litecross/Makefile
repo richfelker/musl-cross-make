@@ -166,6 +166,7 @@ all: kernel-headers
 install: install-kernel-headers
 kernel-headers: | obj_kernel_headers
 src_kernel_headers: | $(LINUX_SRCDIR)
+	rm -rf $@.tmp $@
 	mkdir -p $@.tmp/arch/$(LINUX_ARCH)
 	cp -R $(LINUX_SRCDIR)/arch/$(LINUX_ARCH)/include $@.tmp/arch/$(LINUX_ARCH)
 	cp -R $(LINUX_SRCDIR)/arch/$(LINUX_ARCH)/Makefile $@.tmp/arch/$(LINUX_ARCH)
@@ -174,7 +175,7 @@ src_kernel_headers: | $(LINUX_SRCDIR)
 	cp -R $(LINUX_SRCDIR)/Makefile $@.tmp
 	mv $@.tmp $@
 obj_kernel_headers: | src_kernel_headers
-	rm -rf $@.tmp
+	rm -rf $@.tmp $@
 	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) INSTALL_HDR_PATH=$(PWD)/$@.tmp headers_install
 	mv $@.tmp $@
 install-kernel-headers: | obj_kernel_headers
