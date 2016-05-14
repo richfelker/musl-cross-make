@@ -9,6 +9,7 @@ MUSL_VER = 1.1.14
 GMP_VER = 6.1.0
 MPC_VER = 1.0.3
 MPFR_VER = 3.1.4
+LINUX_VER = 4.4.10
 
 GNU_SITE = https://ftp.gnu.org/pub/gnu
 GCC_SITE = $(GNU_SITE)/gcc
@@ -20,6 +21,8 @@ MPFR_SITE = $(GNU_SITE)/mpfr
 MUSL_SITE = https://www.musl-libc.org/releases
 MUSL_REPO = git://git.musl-libc.org/musl
 
+LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
+
 BUILD_DIR = build-$(TARGET)
 
 -include config.mak
@@ -27,7 +30,8 @@ BUILD_DIR = build-$(TARGET)
 SRC_DIRS = gcc-$(GCC_VER) binutils-$(BINUTILS_VER) musl-$(MUSL_VER) \
 	$(if $(GMP_VER),gmp-$(GMP_VER)) \
 	$(if $(MPC_VER),mpc-$(MPC_VER)) \
-	$(if $(MPFR_VER),mpfr-$(MPFR_VER))
+	$(if $(MPFR_VER),mpfr-$(MPFR_VER)) \
+	$(if $(LINUX_VER),linux-$(LINUX_VER))
 
 all:
 
@@ -49,6 +53,7 @@ $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/mpfr*)): SITE = $(MPFR_S
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/binutils*)): SITE = $(BINUTILS_SITE)
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/gcc*)): SITE = $(GCC_SITE)/$(basename $(basename $(notdir $@)))
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/musl*)): SITE = $(MUSL_SITE)
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux*)): SITE = $(LINUX_SITE)/v$(patsubst linux-%,%,$(basename $(basename $(basename $(basename $(notdir $@)))))).x
 
 $(SOURCES):
 	mkdir -p $@
@@ -102,6 +107,17 @@ musl-git-%:
 	mv $@.tmp/$@ $@
 	rm -rf $@.tmp
 
+%: $(SOURCES)/%.tar.xz | $(SOURCES)/config.sub
+	rm -rf $@.tmp
+	mkdir $@.tmp
+	( cd $@.tmp && tar Jxvf - ) < $<
+	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp/$@ && patch -p1 )
+	test ! -f $@.tmp/$@/config.sub || cp -f $(SOURCES)/config.sub $@.tmp/$@
+	rm -rf $@
+	touch $@.tmp/$@
+	mv $@.tmp/$@ $@
+	rm -rf $@.tmp
+
 
 # Rules for building.
 
@@ -127,6 +143,7 @@ $(BUILD_DIR)/config.mak: | $(BUILD_DIR)
 	$(if $(GMP_VER),"GMP_SRCDIR = ../gmp-$(GMP_VER)") \
 	$(if $(MPC_VER),"MPC_SRCDIR = ../mpc-$(MPC_VER)") \
 	$(if $(MPFR_VER),"MPFR_SRCDIR = ../mpfr-$(MPFR_VER)") \
+	$(if $(LINUX_VER),"LINUX_SRCDIR = ../linux-$(LINUX_VER)") \
 	"-include ../config.mak"
 
 all: | $(SRC_DIRS) $(BUILD_DIR) $(BUILD_DIR)/Makefile $(BUILD_DIR)/config.mak
