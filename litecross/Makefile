@@ -154,6 +154,7 @@ install-musl: | obj_musl/.lc_built
 
 install-toolchain: | obj_toolchain/.lc_built
 	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD) DESTDIR=$(DESTDIR)$(OUTPUT) install
+	ln -sf $(TARGET)-gcc $(DESTDIR)$(OUTPUT)/bin/$(TARGET)-cc
 
 endif
 
