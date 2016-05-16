@@ -1,0 +1,40 @@
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index 3779369..a6d95ca 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -3101,6 +3101,12 @@ case ${target} in
+ 		;;
+ esac
+ 
++case "x${enable_default_pie}" in
++xyes)
++	tm_defines="${tm_defines} ENABLE_DEFAULT_PIE=1"
++	;;
++esac
++
+ t=
+ all_defaults="abi cpu arch tune schedule float mode fpu divide"
+ for option in $all_defaults
+--- gcc-5.2.0.orig/gcc/gcc.c	2015-03-10 09:37:41.000000000 +0000
++++ gcc-5.2.0/gcc/gcc.c	2015-08-25 07:47:12.895060530 +0000
+@@ -1012,10 +1012,19 @@
+ #define CILK_SELF_SPECS "%{fcilkplus: -pthread}"
+ #endif
+ 
++/* Default to PIE */
++#ifndef PIE_SELF_SPECS
++#ifdef ENABLE_DEFAULT_PIE
++#define PIE_SELF_SPECS "%{shared|pie|r|nostdlib|nopie|no-pie:;:-pie} %{fpic|fPIC|fpie|fPIE|fno-pic|fno-PIC|fno-pie|fno-PIE|D__KERNEL__:;:-fPIE}"
++#else
++#define PIE_SELF_SPECS ""
++#endif
++#endif
++
+ static const char *const driver_self_specs[] = {
+   "%{fdump-final-insns:-fdump-final-insns=.} %<fdump-final-insns",
+   DRIVER_SELF_SPECS, CONFIGURE_SPECS, GOMP_SELF_SPECS, GTM_SELF_SPECS,
+-  CILK_SELF_SPECS
++  CILK_SELF_SPECS, PIE_SELF_SPECS
+ };
+ 
+ #ifndef OPTION_DEFAULT_SPECS
