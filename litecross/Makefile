@@ -168,6 +168,7 @@ kernel-headers: | obj_kernel_headers/.lc_built
 src_kernel_headers: | $(LINUX_SRCDIR)
 	ln -sf "$(LINUX_SRCDIR)" $@
 obj_kernel_headers/.lc_built: | src_kernel_headers
+	mkdir -p $(PWD)/obj_kernel_headers/staged
 	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) O=$(PWD)/obj_kernel_headers INSTALL_HDR_PATH=$(PWD)/obj_kernel_headers/staged headers_install
 	touch $@
 install-kernel-headers: | obj_kernel_headers/.lc_built
