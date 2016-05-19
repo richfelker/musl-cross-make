@@ -63,20 +63,3 @@
 # where to look for source files.
 
 # COMMON_CONFIG += --with-debug-prefix-map=$(PWD)=
-
-# The following are options needed to make certain targets work right.
-# They may be moved to main build logic rather than config.mak at some
-# point in the future.
-
-ifeq ($(TARGET),sh2eb-linux-muslfdpic)
-GCC_CONFIG += --with-cpu=mj2
-GCC_CONFIG += --enable-fdpic
-endif
-
-ifeq ($(TARGET),mips64-linux-musl)
-GCC_CONFIG += --with-abi=64
-endif
-
-ifeq ($(TARGET),arm-linux-musleabihf)
-GCC_CONFIG += --with-float=hard
-endif

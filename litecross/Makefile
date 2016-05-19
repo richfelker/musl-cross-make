@@ -12,6 +12,31 @@ TOOLCHAIN_CONFIG = $(GCC_CONFIG)
 XGCC_DIR = ../obj_toolchain/gcc
 XGCC = $(XGCC_DIR)/xgcc -B $(XGCC_DIR)
 
+ifneq ($(findstring fdpic,$(TARGET)),)
+GCC_CONFIG += --enable-fdpic
+endif
+
+ifneq ($(filter x86_64%x32,$(TARGET)),)
+GCC_CONFIG += --with-abi=x32
+endif
+
+ifneq ($(findstring mips64,$(TARGET))$(findstring mipsisa64,$(TARGET)),)
+ifneq ($(findstring n32,$(TARGET)),)
+GCC_CONFIG += --with-abi=n32
+else
+GCC_CONFIG += --with-abi=64
+endif
+endif
+
+ifneq ($(filter %sf,$(TARGET)),)
+GCC_CONFIG += --with-float=soft
+endif
+
+ifneq ($(filter %hf,$(TARGET)),)
+GCC_CONFIG += --with-float=hard
+endif
+
+
 -include config.mak
 
 MAKE += MULTILIB_OSDIRNAMES=
