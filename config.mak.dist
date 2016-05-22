@@ -26,8 +26,9 @@
 # components are used. You can override those here, but the version selected
 # must be supported (under hashes/ and patches/) to work. For musl, you
 # can use "git-refname" (e.g. git-master) instead of a release. Setting a
-# blank version for gmp, mpc, and mpfr will suppress download and in-tree
-# build of these libraries and instead depend on pre-installed libraries.
+# blank version for gmp, mpc, mpfr and isl will suppress download and
+# in-tree build of these libraries and instead depend on pre-installed
+# libraries when available (isl is optional and not set by default).
 # Setting a blank version for linux will suppress installation of kernel
 # headers, which are not needed unless compiling programs that use them.
 
@@ -37,6 +38,7 @@
 # GMP_VER =
 # MPC_VER =
 # MPFR_VER =
+# ISL_VER =
 # LINUX_VER =
 
 # Something like the following can be used to produce a static-linked

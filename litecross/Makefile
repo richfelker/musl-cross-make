@@ -117,6 +117,12 @@ src_mpfr: | $(MPFR_SRCDIR)
 	ln -sf "$(MPFR_SRCDIR)" $@
 endif
 
+ifneq ($(ISL_SRCDIR),)
+src_toolchain: src_isl
+src_isl: | $(ISL_SRCDIR)
+	ln -sf "$(ISL_SRCDIR)" $@
+endif
+
 src_toolchain: src_binutils src_gcc
 	rm -rf $@ $@.tmp
 	mkdir $@.tmp
@@ -125,6 +131,7 @@ src_toolchain: src_binutils src_gcc
 	$(if $(GMP_SRCDIR),cd $@.tmp && ln -sf ../src_gmp gmp)
 	$(if $(MPC_SRCDIR),cd $@.tmp && ln -sf ../src_mpc mpc)
 	$(if $(MPFR_SRCDIR),cd $@.tmp && ln -sf ../src_mpfr mpfr)
+	$(if $(ISL_SRCDIR),cd $@.tmp && ln -sf ../src_isl isl)
 	mv $@.tmp $@
 
 obj_%:

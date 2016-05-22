@@ -17,6 +17,7 @@ BINUTILS_SITE = $(GNU_SITE)/binutils
 GMP_SITE = $(GNU_SITE)/gmp
 MPC_SITE = $(GNU_SITE)/mpc
 MPFR_SITE = $(GNU_SITE)/mpfr
+ISL_SITE = http://isl.gforge.inria.fr/
 
 MUSL_SITE = https://www.musl-libc.org/releases
 MUSL_REPO = git://git.musl-libc.org/musl
@@ -31,12 +32,13 @@ SRC_DIRS = gcc-$(GCC_VER) binutils-$(BINUTILS_VER) musl-$(MUSL_VER) \
 	$(if $(GMP_VER),gmp-$(GMP_VER)) \
 	$(if $(MPC_VER),mpc-$(MPC_VER)) \
 	$(if $(MPFR_VER),mpfr-$(MPFR_VER)) \
+	$(if $(ISL_VER),isl-$(ISL_VER)) \
 	$(if $(LINUX_VER),linux-$(LINUX_VER))
 
 all:
 
 clean:
-	rm -rf gcc-* binutils-* musl-* gmp-* mpc-* mpfr-* build-* linux-*
+	rm -rf gcc-* binutils-* musl-* gmp-* mpc-* mpfr-* isl-* build-* linux-*
 
 distclean: clean
 	rm -rf sources
@@ -50,6 +52,7 @@ ifeq ($(SOURCES),sources)
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/gmp*)): SITE = $(GMP_SITE)
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/mpc*)): SITE = $(MPC_SITE)
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/mpfr*)): SITE = $(MPFR_SITE)
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/isl*)): SITE = $(ISL_SITE)
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/binutils*)): SITE = $(BINUTILS_SITE)
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/gcc*)): SITE = $(GCC_SITE)/$(basename $(basename $(notdir $@)))
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/musl*)): SITE = $(MUSL_SITE)
@@ -145,6 +148,7 @@ $(BUILD_DIR)/config.mak: | $(BUILD_DIR)
 	$(if $(GMP_VER),"GMP_SRCDIR = ../gmp-$(GMP_VER)") \
 	$(if $(MPC_VER),"MPC_SRCDIR = ../mpc-$(MPC_VER)") \
 	$(if $(MPFR_VER),"MPFR_SRCDIR = ../mpfr-$(MPFR_VER)") \
+	$(if $(ISL_VER),"ISL_SRCDIR = ../isl-$(ISL_VER)") \
 	$(if $(LINUX_VER),"LINUX_SRCDIR = ../linux-$(LINUX_VER)") \
 	"-include ../config.mak"
 
