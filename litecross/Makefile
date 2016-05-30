@@ -61,16 +61,22 @@ FULL_TOOLCHAIN_CONFIG = --enable-languages=c,c++ \
 FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
 	--prefix= --host=$(TARGET)
 
-ifeq ($(NATIVE),)
+ifneq ($(NATIVE),)
+SYSROOT = /
+FULL_TOOLCHAIN_CONFIG += --host=$(TARGET)
+MUSL_VARS =
+else ifneq ($(CANADIAN),)
+SYSROOT = /$(TARGET)
+FULL_MUSL_CONFIG += CROSS_COMPILE=$(TARGET)- LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a"
+MUSL_VARS =
+obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
+obj_toolchain/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
+else
 SYSROOT = /$(TARGET)
 FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" 
 MUSL_VARS = AR=../obj_toolchain/binutils/ar RANLIB=../obj_toolchain/binutils/ranlib
 obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
 obj_toolchain/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
-else
-SYSROOT = /
-FULL_TOOLCHAIN_CONFIG += --host=$(TARGET)
-MUSL_VARS = 
 endif
 
 ifeq ($(TARGET),)
