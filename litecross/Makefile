@@ -12,6 +12,8 @@ TOOLCHAIN_CONFIG = $(GCC_CONFIG)
 XGCC_DIR = ../obj_toolchain/gcc
 XGCC = $(XGCC_DIR)/xgcc -B $(XGCC_DIR)
 
+-include config.mak
+
 ifneq ($(findstring fdpic,$(TARGET)),)
 GCC_CONFIG += --enable-fdpic
 endif
@@ -36,8 +38,6 @@ ifneq ($(filter %hf,$(TARGET)),)
 GCC_CONFIG += --with-float=hard
 endif
 
-
--include config.mak
 
 MAKE += MULTILIB_OSDIRNAMES=
 MAKE += INFO_DEPS= infodir=
