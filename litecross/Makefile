@@ -177,7 +177,7 @@ obj_sysroot/.lc_libs: | obj_musl/.lc_built
 	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(PWD)/obj_sysroot install
 	touch $@
 
-obj_toolchain/.lc_built: | obj_toolchain/.lc_configured
+obj_toolchain/.lc_built: | obj_toolchain/.lc_configured obj_toolchain/gcc/.lc_built
 	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD)
 	touch $@
 
