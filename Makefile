@@ -123,6 +123,8 @@ musl-git-%:
 	mv $@.tmp/$@ $@
 	rm -rf $@.tmp
 
+extract_all: | $(SRC_DIRS)
+
 
 # Rules for building.
 
