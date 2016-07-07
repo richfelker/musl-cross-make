@@ -63,7 +63,7 @@ SYSROOT = /$(TARGET)
 FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" 
 MUSL_VARS = AR=../obj_toolchain/binutils/ar RANLIB=../obj_toolchain/binutils/ranlib
 obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
-obj_toolchain/.lc_built: | obj_sysroot/.lc_libs
+obj_toolchain/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
 else
 SYSROOT = /
 FULL_TOOLCHAIN_CONFIG += --host=$(TARGET)
@@ -177,7 +177,7 @@ obj_sysroot/.lc_libs: | obj_musl/.lc_built
 	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(PWD)/obj_sysroot install
 	touch $@
 
-obj_toolchain/.lc_built: | obj_toolchain/.lc_configured obj_sysroot/.lc_headers
+obj_toolchain/.lc_built: | obj_toolchain/.lc_configured
 	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" LC_ROOT=$(PWD)
 	touch $@
 
