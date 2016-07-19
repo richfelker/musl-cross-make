@@ -41,11 +41,11 @@
 # ISL_VER =
 # LINUX_VER =
 
-# Something like the following can be used to produce a static-linked
-# toolchain that's deployable to any system with matching arch, using
-# an existing musl-targeted cross compiler. This only # works if the
-# system you build on can natively (or via binfmt_misc and # qemu) run
-# binaries produced by the existing toolchain (in this example, i486).
+# Something like the following can be used to produce a static-linked toolchain
+# that's deployable to any system with matching arch, using an existing
+# musl-targeted cross compiler. This only works if the system you build on can
+# natively (or via binfmt_misc and qemu) run binaries produced by the existing
+# toolchain (in this example, i486).
 
 # COMMON_CONFIG += CC="i486-linux-musl-gcc -static --static" CXX="i486-linux-musl-g++ -static --static"
 
