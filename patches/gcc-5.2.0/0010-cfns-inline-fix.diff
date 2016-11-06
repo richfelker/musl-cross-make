@@ -1,0 +1,24 @@
+diff --git a/gcc/cp/cfns.h b/gcc/cp/cfns.h
+index 1c6665d..69699c4 100644
+--- a/gcc/cp/cfns.h
++++ b/gcc/cp/cfns.h
+@@ -54,6 +54,7 @@ static unsigned int hash (const char *, unsigned int);
+ #ifdef __GNUC__
+ __inline
+ #endif
++static
+ const char * libc_name_p (const char *, unsigned int);
+ /* maximum key range = 391, duplicates = 0 */
+ 
+@@ -124,10 +125,8 @@ hash (register const char *str, register unsigned int len)
+ 
+ #ifdef __GNUC__
+ __inline
+-#ifdef __GNUC_STDC_INLINE__
+-__attribute__ ((__gnu_inline__))
+-#endif
+ #endif
++static
+ const char *
+ libc_name_p (register const char *str, register unsigned int len)
+ {
