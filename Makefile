@@ -1,5 +1,5 @@
 
-OUTPUT = $(PWD)/output
+OUTPUT = $(CURDIR)/output
 SOURCES = sources
 
 CONFIG_SUB_REV = 3d5db9ebe860
@@ -67,7 +67,7 @@ $(SOURCES)/config.sub: | $(SOURCES)
 	mkdir -p $@.tmp
 	cd $@.tmp && wget -c -O $(notdir $@) "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
 	cd $@.tmp && touch $(notdir $@)
-	cd $@.tmp && sha1sum -c $(PWD)/hashes/$(notdir $@).$(CONFIG_SUB_REV).sha1
+	cd $@.tmp && sha1sum -c $(CURDIR)/hashes/$(notdir $@).$(CONFIG_SUB_REV).sha1
 	mv $@.tmp/$(notdir $@) $@
 	rm -rf $@.tmp
 
@@ -75,7 +75,7 @@ $(SOURCES)/%: hashes/%.sha1 | $(SOURCES)
 	mkdir -p $@.tmp
 	cd $@.tmp && wget -c -O $(notdir $@) $(SITE)/$(notdir $@)
 	cd $@.tmp && touch $(notdir $@)
-	cd $@.tmp && sha1sum -c $(PWD)/hashes/$(notdir $@).sha1
+	cd $@.tmp && sha1sum -c $(CURDIR)/hashes/$(notdir $@).sha1
 	mv $@.tmp/$(notdir $@) $@
 	rm -rf $@.tmp
 

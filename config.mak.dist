@@ -64,4 +64,4 @@
 # target libraries with the following, but then gdb needs to be told
 # where to look for source files.
 
-# COMMON_CONFIG += --with-debug-prefix-map=$(PWD)=
+# COMMON_CONFIG += --with-debug-prefix-map=$(CURDIR)=
