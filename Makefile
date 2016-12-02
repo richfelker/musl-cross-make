@@ -143,7 +143,7 @@ $(BUILD_DIR)/Makefile: | $(BUILD_DIR)
 	ln -sf ../litecross/Makefile $@
 
 $(BUILD_DIR)/config.mak: | $(BUILD_DIR)
-	printf >$@ -- '%s\n' \
+	printf >$@ '%s\n' \
 	"MUSL_SRCDIR = ../musl-$(MUSL_VER)" \
 	"GCC_SRCDIR = ../gcc-$(GCC_VER)" \
 	"BINUTILS_SRCDIR = ../binutils-$(BINUTILS_VER)" \
