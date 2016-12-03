@@ -51,7 +51,6 @@ FULL_TOOLCHAIN_CONFIG = --enable-languages=c,c++ \
 	--target=$(TARGET) --prefix= \
 	--libdir=/lib --disable-multilib \
 	--with-sysroot=$(SYSROOT) \
-	--with-build-sysroot=$(CURDIR)/obj_sysroot \
 	--enable-tls \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-gnu-indirect-function \
@@ -63,6 +62,7 @@ FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
 
 ifeq ($(NATIVE),)
 SYSROOT = /$(TARGET)
+FULL_TOOLCHAIN_CONFIG += --with-build-sysroot=$(CURDIR)/obj_sysroot
 FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" 
 MUSL_VARS = AR=../obj_toolchain/binutils/ar RANLIB=../obj_toolchain/binutils/ranlib
 obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
