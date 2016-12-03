@@ -26,6 +26,8 @@ LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
 
 BUILD_DIR = build-$(TARGET)
 
+HTTP_GET = wget -c -O $(2) $(1)
+
 -include config.mak
 
 SRC_DIRS = gcc-$(GCC_VER) binutils-$(BINUTILS_VER) musl-$(MUSL_VER) \
@@ -65,7 +67,7 @@ $(SOURCES):
 
 $(SOURCES)/config.sub: | $(SOURCES)
 	mkdir -p $@.tmp
-	cd $@.tmp && wget -c -O $(notdir $@) "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
+	cd $@.tmp && $(call HTTP_GET,"http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)",$(notdir $@))
 	cd $@.tmp && touch $(notdir $@)
 	cd $@.tmp && sha1sum -c $(CURDIR)/hashes/$(notdir $@).$(CONFIG_SUB_REV).sha1
 	mv $@.tmp/$(notdir $@) $@
@@ -73,7 +75,7 @@ $(SOURCES)/config.sub: | $(SOURCES)
 
 $(SOURCES)/%: hashes/%.sha1 | $(SOURCES)
 	mkdir -p $@.tmp
-	cd $@.tmp && wget -c -O $(notdir $@) $(SITE)/$(notdir $@)
+	cd $@.tmp && $(call HTTP_GET,$(SITE)/$(notdir $@),$(notdir $@))
 	cd $@.tmp && touch $(notdir $@)
 	cd $@.tmp && sha1sum -c $(CURDIR)/hashes/$(notdir $@).sha1
 	mv $@.tmp/$(notdir $@) $@
