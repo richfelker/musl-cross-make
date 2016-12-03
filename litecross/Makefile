@@ -66,7 +66,9 @@ SYSROOT = /$(TARGET)
 FULL_TOOLCHAIN_CONFIG += --with-build-sysroot=$(CURDIR)/obj_sysroot
 FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" 
 MUSL_VARS = AR=../obj_toolchain/binutils/ar RANLIB=../obj_toolchain/binutils/ranlib
+obj_musl/.lc_configured: | obj_toolchain/gcc/.lc_built
 obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
+obj_toolchain/gcc/.lc_built: | obj_sysroot/usr obj_sysroot/lib64 obj_sysroot/include
 obj_toolchain/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
 else
 SYSROOT = /
@@ -154,11 +156,11 @@ obj_toolchain/.lc_configured: | obj_toolchain src_toolchain
 	cd obj_toolchain && ../src_toolchain/configure $(FULL_TOOLCHAIN_CONFIG)
 	touch $@
 
-obj_toolchain/gcc/.lc_built: | obj_toolchain/.lc_configured obj_sysroot/usr obj_sysroot/lib64 obj_sysroot/include
+obj_toolchain/gcc/.lc_built: | obj_toolchain/.lc_configured
 	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" all-gcc
 	touch $@
 
-obj_musl/.lc_configured: | obj_toolchain/gcc/.lc_built obj_musl src_musl
+obj_musl/.lc_configured: | obj_musl src_musl
 	cd obj_musl && ../src_musl/configure $(FULL_MUSL_CONFIG)
 	touch $@
 
