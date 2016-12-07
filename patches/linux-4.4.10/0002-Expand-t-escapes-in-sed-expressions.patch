@@ -1,0 +1,33 @@
+From 22cbfa6ae94c9a09ee2ea6b6237d9674be3b7e03 Mon Sep 17 00:00:00 2001
+From: Michael Forney <mforney@mforney.org>
+Date: Tue, 6 Dec 2016 21:43:13 -0800
+Subject: [PATCH] Expand \t escapes in sed expressions
+
+---
+ scripts/headers_install.sh | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/scripts/headers_install.sh b/scripts/headers_install.sh
+index fdebd66..a9a9ef2 100755
+--- a/scripts/headers_install.sh
++++ b/scripts/headers_install.sh
+@@ -31,12 +31,12 @@ for i in "$@"
+ do
+ 	FILE="$(basename "$i")"
+ 	sed -r \
+-		-e 's/([ \t(])(__user|__force|__iomem)[ \t]/\1/g' \
+-		-e 's/__attribute_const__([ \t]|$)/\1/g' \
++		-e 's/([ 	(])(__user|__force|__iomem)[ 	]/\1/g' \
++		-e 's/__attribute_const__([ 	]|$)/\1/g' \
+ 		-e 's@^#include <linux/compiler.h>@@' \
+ 		-e 's/(^|[^a-zA-Z0-9])__packed([^a-zA-Z0-9_]|$)/\1__attribute__((packed))\2/g' \
+-		-e 's/(^|[ \t(])(inline|asm|volatile)([ \t(]|$)/\1__\2__\3/g' \
+-		-e 's@#(ifndef|define|endif[ \t]*/[*])[ \t]*_UAPI@#\1 @' \
++		-e 's/(^|[ 	(])(inline|asm|volatile)([ 	(]|$)/\1__\2__\3/g' \
++		-e 's@#(ifndef|define|endif[ 	]*/[*])[ 	]*_UAPI@#\1 @' \
+ 		"$SRCDIR/$i" > "$OUTDIR/$FILE.sed" || exit 1
+ 	scripts/unifdef -U__KERNEL__ -D__EXPORTED_HEADERS__ "$OUTDIR/$FILE.sed" \
+ 		> "$OUTDIR/$FILE"
+-- 
+2.10.2
+
