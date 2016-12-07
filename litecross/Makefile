@@ -1,5 +1,5 @@
 
-OUTPUT = $(PWD)/output
+OUTPUT = $(CURDIR)/output
 
 BINUTILS_SRCDIR = BINUTILS_SRCDIR_not_set
 GCC_SRCDIR = GCC_SRCDIR_not_set
@@ -51,7 +51,7 @@ FULL_TOOLCHAIN_CONFIG = --enable-languages=c,c++ \
 	--target=$(TARGET) --prefix= \
 	--libdir=/lib --disable-multilib \
 	--with-sysroot=$(SYSROOT) \
-	--with-build-sysroot=$(PWD)/obj_sysroot \
+	--with-build-sysroot=$(CURDIR)/obj_sysroot \
 	--enable-tls \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-gnu-indirect-function \
@@ -162,7 +162,7 @@ obj_musl/.lc_configured: | obj_toolchain/gcc/.lc_built obj_musl src_musl
 	touch $@
 
 obj_sysroot/.lc_headers: | obj_musl/.lc_configured obj_sysroot
-	cd obj_musl && $(MAKE) DESTDIR=$(PWD)/obj_sysroot install-headers
+	cd obj_musl && $(MAKE) DESTDIR=$(CURDIR)/obj_sysroot install-headers
 	touch $@
 
 obj_toolchain/$(TARGET)/libgcc/.lc_configured: | obj_sysroot/.lc_headers
@@ -177,7 +177,7 @@ obj_musl/.lc_built: | obj_musl/.lc_configured
 	touch $@
 
 obj_sysroot/.lc_libs: | obj_musl/.lc_built
-	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(PWD)/obj_sysroot install
+	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(CURDIR)/obj_sysroot install
 	touch $@
 
 obj_toolchain/.lc_built: | obj_toolchain/.lc_configured obj_toolchain/gcc/.lc_built
@@ -203,8 +203,8 @@ kernel-headers: | obj_kernel_headers/.lc_built
 src_kernel_headers: | $(LINUX_SRCDIR)
 	ln -sf "$(LINUX_SRCDIR)" $@
 obj_kernel_headers/.lc_built: | src_kernel_headers
-	mkdir -p $(PWD)/obj_kernel_headers/staged
-	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) O=$(PWD)/obj_kernel_headers INSTALL_HDR_PATH=$(PWD)/obj_kernel_headers/staged headers_install
+	mkdir -p $(CURDIR)/obj_kernel_headers/staged
+	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) O=$(CURDIR)/obj_kernel_headers INSTALL_HDR_PATH=$(CURDIR)/obj_kernel_headers/staged headers_install
 	touch $@
 install-kernel-headers: | obj_kernel_headers/.lc_built
 	mkdir -p $(DESTDIR)$(OUTPUT)$(SYSROOT)/include
