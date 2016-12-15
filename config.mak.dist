@@ -41,6 +41,11 @@
 # ISL_VER =
 # LINUX_VER =
 
+# By default source archives are downloaded with wget. curl is also an option.
+
+# DL_CMD = wget -c -O
+# DL_CMD = curl -C - -L -o
+
 # Something like the following can be used to produce a static-linked
 # toolchain that's deployable to any system with matching arch, using
 # an existing musl-targeted cross compiler. This only # works if the
