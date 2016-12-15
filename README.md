@@ -121,4 +121,5 @@ They should also be usable with Gregor's original musl-cross or other
 build systems, if desired.
 
 Some functionality (SH/FDPIC, and support for J2 specific features) is
-presently only available with gcc 5.2.0 and binutils 2.25.1.
+presently only available with gcc 5.2.0 and later, and binutils 2.25.1
+and later.
