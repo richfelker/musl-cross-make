@@ -23,6 +23,10 @@ ifneq ($(filter x86_64%x32,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-abi=x32
 endif
 
+ifneq ($(findstring powerpc64,$(TARGET)),)
+GCC_CONFIG_FOR_TARGET += --with-abi=elfv2
+endif
+
 ifneq ($(findstring mips64,$(TARGET))$(findstring mipsisa64,$(TARGET)),)
 ifneq ($(findstring n32,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-abi=n32
