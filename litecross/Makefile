@@ -172,12 +172,8 @@ obj_sysroot/.lc_headers: | obj_musl/.lc_configured obj_sysroot
 	cd obj_musl && $(MAKE) DESTDIR=$(CURDIR)/obj_sysroot install-headers
 	touch $@
 
-obj_toolchain/$(TARGET)/libgcc/.lc_configured: | obj_sysroot/.lc_headers
-	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" configure-target-libgcc
-	touch $@
-
-obj_toolchain/$(TARGET)/libgcc/libgcc.a: | obj_toolchain/$(TARGET)/libgcc/.lc_configured
-	cd $(dir $@) && $(MAKE) MAKE="$(MAKE)" libgcc.a
+obj_toolchain/$(TARGET)/libgcc/libgcc.a: | obj_sysroot/.lc_headers
+	cd obj_toolchain && $(MAKE) MAKE="$(MAKE) enable_shared=no" all-target-libgcc
 
 obj_musl/.lc_built: | obj_musl/.lc_configured
 	cd obj_musl && $(MAKE) $(MUSL_VARS)
