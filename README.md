@@ -14,7 +14,7 @@ cross compilers. Features include:
 - Ability to build multiple cross compilers for different targets
   using a single set of patched source trees.
 
-- Nothing is installed until running "make install", and the
+- Nothing is installed until running `make install`, and the
   installation location can be chosen at install time.
 
 - Automatic download of source packages, including GCC prerequisites
@@ -28,15 +28,15 @@ cross compilers. Features include:
 Usage
 -----
 
-The build system can be configured by providing a config.mak file in
-the top-level directory. The only mandatory variable is TARGET, which
-should contain a gcc target tuple (such as i486-linux-musl), but many
-more options are available. See the provided config.mak.dist and
-presets/* for examples.
+The build system can be configured by providing a `config.mak` file in
+the top-level directory. The only mandatory variable is `TARGET`, which
+should contain a gcc target tuple (such as `i486-linux-musl`), but many
+more options are available. See the provided `config.mak.dist` and
+`presets/*` for examples.
 
-To compile, run make. To install to $(OUTPUT), run "make install".
+To compile, run `make`. To install to `$(OUTPUT)`, run `make install`.
 
-The default value for $(OUTPUT) is output; after installing here you
+The default value for `$(OUTPUT)` is output; after installing here you
 can move the cross compiler toolchain to another location as desired.
 
 
@@ -75,7 +75,7 @@ The current musl-cross-make is factored into two layers:
 
 Most of the real magic takes place in litecross. It begins by setting
 up symlinks to all the source trees provided to it by the caller, then
-builds a combined "src_toolchain" directory of symlinks that combines
+builds a combined `src_toolchain` directory of symlinks that combines
 the contents of the top-level gcc and binutils source trees and
 symlinks to gmp, mpc, and mpfr. One configured invocation them
 configures all the GNU toolchain components together in a manner that
@@ -84,12 +84,12 @@ to use them.
 
 Rather than building the whole toolchain tree at once, though,
 litecross starts by building just the gcc directory and its
-prerequisites, to get an "xgcc" that can be used to configure musl. It
+prerequisites, to get an `xgcc` that can be used to configure musl. It
 then configures musl, installs musl's headers to a staging "build
-sysroot", and builds libgcc.a using those headers. At this point it
-has all the prerequisites to build musl libc.a and libc.so, which the
+sysroot", and builds `libgcc.a` using those headers. At this point it
+has all the prerequisites to build musl `libc.a` and `libc.so`, which the
 rest of the gcc target-libs depend on; once they are built, the full
-toolchain "make all" can proceed.
+toolchain `make all` can proceed.
 
 Litecross does not actually depend on the musl-cross-make top-level
 build system; it can be used with any pre-extracted, properly patched
@@ -131,7 +131,7 @@ In addition to canonical musl support patches for GCC,
 musl-cross-make's patch set provides:
 
 - Static-linked PIE support
-- Addition of --enable-default-pie
+- Addition of `--enable-default-pie`
 - Fixes for SH-specific bugs and bitrot in GCC
 - Support for J2 Core CPU target in GCC & binutils
 - SH/FDPIC ABI support
