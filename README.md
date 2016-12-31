@@ -41,6 +41,26 @@ can move the cross compiler toolchain to another location as desired.
 
 
 
+Supported `TARGET`s
+-------------------
+
+The following is a non-exhaustive list of `$(TARGET)` tuples that are
+believed to work:
+
+- `aarch64[_be]-linux-musl`
+- `arm[eb]-linux-musleabi[hf]`
+- `i*86-linux-musl`
+- `mips-linux-musl`
+- `mips[el]-linux-musl[sf]`
+- `mips64[el]-linux-musl[n32][sf]`
+- `powerpc-linux-musl[sf]`
+- `powerpc64[le]-linux-musl`
+- `s390x-linux-musl`
+- `sh*[eb]-linux-musl[fdpic][sf]`
+- `x86_64-linux-musl[x32]`
+
+
+
 How it works
 ------------
 
