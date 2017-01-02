@@ -50,6 +50,7 @@ believed to work:
 - `aarch64[_be]-linux-musl`
 - `arm[eb]-linux-musleabi[hf]`
 - `i*86-linux-musl`
+- `microblaze[el]-linux-musl`
 - `mips-linux-musl`
 - `mips[el]-linux-musl[sf]`
 - `mips64[el]-linux-musl[n32][sf]`
