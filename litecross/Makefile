@@ -60,6 +60,7 @@ FULL_TOOLCHAIN_CONFIG = --enable-languages=c,c++ \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-gnu-indirect-function \
 	--disable-libmpx \
+	--enable-deterministic-archives \
 	--enable-libstdcxx-time
 
 FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
