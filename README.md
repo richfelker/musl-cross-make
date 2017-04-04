@@ -1,14 +1,14 @@
 musl-cross-make
 ===============
 
-This is a the second generation of musl-cross-make, a fast, simple,
+This is the second generation of musl-cross-make, a fast, simple,
 but advanced makefile-based approach for producing musl-targeting
 cross compilers. Features include:
 
 - Single-stage GCC build, used to build both musl libc and its own
   shared target libs depending on libc.
 
-- No hard-coded absoluete paths; resulting cross compilers can be
+- No hard-coded absolute paths; resulting cross compilers can be
   copied/moved anywhere.
 
 - Ability to build multiple cross compilers for different targets
