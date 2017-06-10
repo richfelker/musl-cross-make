@@ -66,7 +66,11 @@ FULL_TOOLCHAIN_CONFIG = --enable-languages=c,c++ \
 FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
 	--prefix= --host=$(TARGET)
 
-ifeq ($(NATIVE),)
+ifneq ($(NATIVE),)
+HOST:=$(TARGET)
+endif
+
+ifeq ($(HOST),)
 SYSROOT = /$(TARGET)
 FULL_TOOLCHAIN_CONFIG += --with-build-sysroot=$(CURDIR)/obj_sysroot
 FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" 
@@ -77,7 +81,7 @@ obj_toolchain/gcc/.lc_built: | obj_sysroot/usr obj_sysroot/lib64 obj_sysroot/inc
 obj_toolchain/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
 else
 SYSROOT = /
-FULL_TOOLCHAIN_CONFIG += --host=$(TARGET)
+FULL_TOOLCHAIN_CONFIG += --host=$(HOST)
 MUSL_VARS = 
 endif
 

@@ -1,5 +1,4 @@
 
-OUTPUT = $(CURDIR)/output
 SOURCES = sources
 
 CONFIG_SUB_REV = 3d5db9ebe860
@@ -26,7 +25,19 @@ LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
 
 DL_CMD = wget -c -O
 
-BUILD_DIR = build-$(TARGET)
+ifneq ($(NATIVE),)
+HOST := $(TARGET)
+endif
+
+ifneq ($(HOST),)
+BUILD_DIR = build/$(HOST)/$(TARGET)
+OUTPUT = $(CURDIR)/output-$(HOST)
+else
+BUILD_DIR = build/local/$(TARGET)
+OUTPUT = $(CURDIR)/output
+endif
+
+REL_TOP = ../../..
 
 -include config.mak
 
@@ -142,19 +153,21 @@ $(BUILD_DIR):
 	mkdir -p $@
 
 $(BUILD_DIR)/Makefile: | $(BUILD_DIR)
-	ln -sf ../litecross/Makefile $@
+	ln -sf $(REL_TOP)/litecross/Makefile $@
 
 $(BUILD_DIR)/config.mak: | $(BUILD_DIR)
 	printf >$@ '%s\n' \
-	"MUSL_SRCDIR = ../musl-$(MUSL_VER)" \
-	"GCC_SRCDIR = ../gcc-$(GCC_VER)" \
-	"BINUTILS_SRCDIR = ../binutils-$(BINUTILS_VER)" \
-	$(if $(GMP_VER),"GMP_SRCDIR = ../gmp-$(GMP_VER)") \
-	$(if $(MPC_VER),"MPC_SRCDIR = ../mpc-$(MPC_VER)") \
-	$(if $(MPFR_VER),"MPFR_SRCDIR = ../mpfr-$(MPFR_VER)") \
-	$(if $(ISL_VER),"ISL_SRCDIR = ../isl-$(ISL_VER)") \
-	$(if $(LINUX_VER),"LINUX_SRCDIR = ../linux-$(LINUX_VER)") \
-	"-include ../config.mak"
+	"TARGET = $(TARGET)" \
+	"HOST = $(HOST)" \
+	"MUSL_SRCDIR = $(REL_TOP)/musl-$(MUSL_VER)" \
+	"GCC_SRCDIR = $(REL_TOP)/gcc-$(GCC_VER)" \
+	"BINUTILS_SRCDIR = $(REL_TOP)/binutils-$(BINUTILS_VER)" \
+	$(if $(GMP_VER),"GMP_SRCDIR = $(REL_TOP)/gmp-$(GMP_VER)") \
+	$(if $(MPC_VER),"MPC_SRCDIR = $(REL_TOP)/mpc-$(MPC_VER)") \
+	$(if $(MPFR_VER),"MPFR_SRCDIR = $(REL_TOP)/mpfr-$(MPFR_VER)") \
+	$(if $(ISL_VER),"ISL_SRCDIR = $(REL_TOP)/isl-$(ISL_VER)") \
+	$(if $(LINUX_VER),"LINUX_SRCDIR = $(REL_TOP)/linux-$(LINUX_VER)") \
+	"-include $(REL_TOP)/config.mak"
 
 all: | $(SRC_DIRS) $(BUILD_DIR) $(BUILD_DIR)/Makefile $(BUILD_DIR)/config.mak
 	cd $(BUILD_DIR) && $(MAKE) $@
