@@ -77,7 +77,7 @@ FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc
 MUSL_VARS = AR=../obj_toolchain/binutils/ar RANLIB=../obj_toolchain/binutils/ranlib
 obj_musl/.lc_configured: | obj_toolchain/gcc/.lc_built
 obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
-obj_toolchain/gcc/.lc_built: | obj_sysroot/usr obj_sysroot/lib64 obj_sysroot/include
+obj_toolchain/gcc/.lc_built: | obj_sysroot/usr obj_sysroot/lib32 obj_sysroot/lib64 obj_sysroot/include
 obj_toolchain/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
 else
 SYSROOT = /
@@ -157,6 +157,9 @@ obj_sysroot/include:
 
 obj_sysroot/usr: | obj_sysroot
 	ln -sf . $@
+
+obj_sysroot/lib32: | obj_sysroot
+	ln -sf lib $@
 
 obj_sysroot/lib64: | obj_sysroot
 	ln -sf lib $@
