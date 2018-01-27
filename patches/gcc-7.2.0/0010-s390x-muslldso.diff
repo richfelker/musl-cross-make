@@ -1,8 +1,8 @@
 diff --git a/gcc/config/s390/linux.h b/gcc/config/s390/linux.h
-index 9b00af7..3aacde6 100644
+index 739df00f62d..ccd48ee7b84 100644
 --- a/gcc/config/s390/linux.h
 +++ b/gcc/config/s390/linux.h
-@@ -63,6 +63,9 @@ along with GCC; see the file COPYING3.  If not see
+@@ -76,6 +76,9 @@ along with GCC; see the file COPYING3.  If not see
  #define GLIBC_DYNAMIC_LINKER32 "/lib/ld.so.1"
  #define GLIBC_DYNAMIC_LINKER64 "/lib/ld64.so.1"
  

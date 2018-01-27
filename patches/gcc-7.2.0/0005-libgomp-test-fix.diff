@@ -1,5 +1,5 @@
 diff --git a/libgomp/testsuite/Makefile.am b/libgomp/testsuite/Makefile.am
-index 66a9d94..83d3f67 100644
+index e2a3f460eb0..3309f71e02e 100644
 --- a/libgomp/testsuite/Makefile.am
 +++ b/libgomp/testsuite/Makefile.am
 @@ -12,6 +12,11 @@ _RUNTEST = $(shell if test -f $(top_srcdir)/../dejagnu/runtest; then \
@@ -15,7 +15,7 @@ index 66a9d94..83d3f67 100644
  # Instead of directly in ../testsuite/libgomp-test-support.exp.in, the
  # following variables have to be "routed through" this Makefile, for expansion
 diff --git a/libgomp/testsuite/Makefile.in b/libgomp/testsuite/Makefile.in
-index 4dbb406..001a163 100644
+index 6edb7ae7ade..b3eddbc3e62 100644
 --- a/libgomp/testsuite/Makefile.in
 +++ b/libgomp/testsuite/Makefile.in
 @@ -254,6 +254,7 @@ _RUNTEST = $(shell if test -f $(top_srcdir)/../dejagnu/runtest; then \
@@ -38,7 +38,7 @@ index 4dbb406..001a163 100644
  # following variables have to be "routed through" this Makefile, for expansion
  # of the several (Makefile) variables used therein.
 diff --git a/libgomp/testsuite/lib/libgomp.exp b/libgomp/testsuite/lib/libgomp.exp
-index 1cb4991..398ba1f 100644
+index 5e47872c5c4..b277c93047d 100644
 --- a/libgomp/testsuite/lib/libgomp.exp
 +++ b/libgomp/testsuite/lib/libgomp.exp
 @@ -85,6 +85,7 @@ proc libgomp_init { args } {

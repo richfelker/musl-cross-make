@@ -1,5 +1,5 @@
 diff --git a/gcc/config.gcc b/gcc/config.gcc
-index b8bb4d65825..2c827512533 100644
+index a9196cd26d9..50906fd447f 100644
 --- a/gcc/config.gcc
 +++ b/gcc/config.gcc
 @@ -474,7 +474,7 @@ s390*-*-*)
@@ -11,7 +11,7 @@ index b8bb4d65825..2c827512533 100644
  	cpu_type=sh
  	extra_options="${extra_options} fused-madd.opt"
  	extra_objs="${extra_objs} sh_treg_combine.o sh-mem.o sh_optimize_sett_clrt.o"
-@@ -2646,18 +2646,18 @@ s390x-ibm-tpf*)
+@@ -2651,18 +2651,18 @@ s390x-ibm-tpf*)
  	extra_options="${extra_options} s390/tpf.opt"
  	tmake_file="${tmake_file} s390/t-s390"
  	;;
@@ -24,7 +24,7 @@ index b8bb4d65825..2c827512533 100644
  	if test x${with_endian} = x; then
  		case ${target} in
 -		sh[1234]*be-*-* | sh[1234]*eb-*-*) with_endian=big ;;
-+		sh[j1234]*be-*-* | sh[n1234]*eb-*-*) with_endian=big ;;
++		sh[j1234]*be-*-* | sh[j1234]*eb-*-*) with_endian=big ;;
  		shbe-*-* | sheb-*-*)		   with_endian=big,little ;;
  		sh[1234]l* | sh[34]*-*-linux*)	   with_endian=little ;;
  		shl* | sh*-*-linux* | \
@@ -34,7 +34,7 @@ index b8bb4d65825..2c827512533 100644
  		*)				   with_endian=big,little ;;
  		esac
  	fi
-@@ -2724,6 +2724,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+@@ -2729,6 +2729,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
  	sh2a_nofpu*)		sh_cpu_target=sh2a-nofpu ;;
  	sh2a*)			sh_cpu_target=sh2a ;;
  	sh2e*)			sh_cpu_target=sh2e ;;
@@ -42,7 +42,7 @@ index b8bb4d65825..2c827512533 100644
  	sh2*)			sh_cpu_target=sh2 ;;
  	*)			sh_cpu_target=sh1 ;;
  	esac
-@@ -2745,7 +2746,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+@@ -2750,7 +2751,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
  	  sh2a-single-only | sh2a-single | sh2a-nofpu | sh2a | \
  	  sh4a-single-only | sh4a-single | sh4a-nofpu | sh4a | sh4al | \
  	  sh4-single-only | sh4-single | sh4-nofpu | sh4 | sh4-300 | \
@@ -51,7 +51,7 @@ index b8bb4d65825..2c827512533 100644
  	"")	sh_cpu_default=${sh_cpu_target} ;;
  	*)	echo "with_cpu=$with_cpu not supported"; exit 1 ;;
  	esac
-@@ -2754,9 +2755,9 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+@@ -2759,9 +2760,9 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
  		case ${target} in
  		sh[1234]*)	sh_multilibs=${sh_cpu_target} ;;
  		sh-superh-*)	sh_multilibs=m4,m4-single,m4-single-only,m4-nofpu ;;
@@ -63,7 +63,7 @@ index b8bb4d65825..2c827512533 100644
  		esac
  		if test x$with_fp = xno; then
  			sh_multilibs="`echo $sh_multilibs|sed -e s/m4/sh4-nofpu/ -e s/,m4-[^,]*//g -e s/,m[23]e// -e s/m2a,m2a-single/m2a-nofpu/ -e s/m5-..m....,//g`"
-@@ -2771,7 +2772,8 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+@@ -2776,7 +2777,8 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
  		m1 | m2 | m2e | m3 | m3e | \
  		m4 | m4-single | m4-single-only | m4-nofpu | m4-300 |\
  		m4a | m4a-single | m4a-single-only | m4a-nofpu | m4al | \
@@ -73,7 +73,7 @@ index b8bb4d65825..2c827512533 100644
  			# TM_MULTILIB_CONFIG is used by t-sh for the non-endian multilib definition
  			# It is passed to MULTIILIB_OPTIONS verbatim.
  			TM_MULTILIB_CONFIG="${TM_MULTILIB_CONFIG}/${sh_multilib}"
-@@ -2788,7 +2790,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+@@ -2793,7 +2795,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
  	done
  	TM_MULTILIB_CONFIG=`echo $TM_MULTILIB_CONFIG | sed 's:^/::'`
  	if test x${enable_incomplete_targets} = xyes ; then
@@ -82,7 +82,7 @@ index b8bb4d65825..2c827512533 100644
  	fi
  	tm_file="$tm_file ./sysroot-suffix.h"
  	tmake_file="$tmake_file t-sysroot-suffix"
-@@ -4362,6 +4364,8 @@ case "${target}" in
+@@ -4367,6 +4369,8 @@ case "${target}" in
  			;;
  		m4a | m4a-single | m4a-single-only | m4a-nofpu | m4al)
  		        ;;
@@ -91,7 +91,7 @@ index b8bb4d65825..2c827512533 100644
  		*)
  			echo "Unknown CPU used in --with-cpu=$with_cpu, known values:"  1>&2
  			echo "m1 m2 m2e m3 m3e m4 m4-single m4-single-only m4-nofpu" 1>&2
-@@ -4571,7 +4575,7 @@ case ${target} in
+@@ -4576,7 +4580,7 @@ case ${target} in
  		tmake_file="rs6000/t-rs6000 ${tmake_file}"
  		;;
  
@@ -100,25 +100,11 @@ index b8bb4d65825..2c827512533 100644
  		c_target_objs="${c_target_objs} sh-c.o"
  		cxx_target_objs="${cxx_target_objs} sh-c.o"
  		;;
-diff --git a/gcc/config/sh/sh-protos.h b/gcc/config/sh/sh-protos.h
-index b08120d..63b77fa 100644
---- a/gcc/config/sh/sh-protos.h
-+++ b/gcc/config/sh/sh-protos.h
-@@ -88,6 +89,9 @@ extern const sh_atomic_model& selected_atomic_model (void);
- #define TARGET_ATOMIC_SOFT_IMASK \
-   (selected_atomic_model ().type == sh_atomic_model::soft_imask)
- 
-+#define TARGET_ATOMIC_HARD_CAS \
-+  (selected_atomic_model ().type == sh_atomic_model::hard_cas)
-+
- #ifdef RTX_CODE
- extern rtx sh_fsca_sf2int (void);
- extern rtx sh_fsca_int2sf (void);
 diff --git a/gcc/config/sh/sh.c b/gcc/config/sh/sh.c
-index b18e59b..88520e8 100644
+index ff79b93adc2..5fe3f3bfe69 100644
 --- a/gcc/config/sh/sh.c
 +++ b/gcc/config/sh/sh.c
-@@ -692,6 +692,7 @@ parse_validate_atomic_model_option (const char* str)
+@@ -662,6 +662,7 @@ parse_validate_atomic_model_option (const char* str)
    model_names[sh_atomic_model::hard_llcs] = "hard-llcs";
    model_names[sh_atomic_model::soft_tcb] = "soft-tcb";
    model_names[sh_atomic_model::soft_imask] = "soft-imask";
@@ -126,7 +112,7 @@ index b18e59b..88520e8 100644
  
    const char* model_cdef_names[sh_atomic_model::num_models];
    model_cdef_names[sh_atomic_model::none] = "NONE";
-@@ -699,6 +700,7 @@ parse_validate_atomic_model_option (const char* str)
+@@ -669,6 +670,7 @@ parse_validate_atomic_model_option (const char* str)
    model_cdef_names[sh_atomic_model::hard_llcs] = "HARD_LLCS";
    model_cdef_names[sh_atomic_model::soft_tcb] = "SOFT_TCB";
    model_cdef_names[sh_atomic_model::soft_imask] = "SOFT_IMASK";
@@ -134,7 +120,7 @@ index b18e59b..88520e8 100644
  
    sh_atomic_model ret;
    ret.type = sh_atomic_model::none;
-@@ -780,6 +782,9 @@ got_mode_name:;
+@@ -747,6 +749,9 @@ got_mode_name:;
    if (ret.type == sh_atomic_model::soft_imask && TARGET_USERMODE)
      err_ret ("cannot use atomic model %s in user mode", ret.name);
  
@@ -144,7 +130,7 @@ index b18e59b..88520e8 100644
    return ret;
  
  #undef err_ret
-@@ -845,6 +850,8 @@ sh_option_override (void)
+@@ -803,6 +808,8 @@ sh_option_override (void)
      sh_cpu = PROCESSOR_SH2E;
    if (TARGET_SH2A)
      sh_cpu = PROCESSOR_SH2A;
@@ -154,7 +140,7 @@ index b18e59b..88520e8 100644
      sh_cpu = PROCESSOR_SH3;
    if (TARGET_SH3E)
 diff --git a/gcc/config/sh/sh.h b/gcc/config/sh/sh.h
-index b13d1b3c943..8f483635747 100644
+index b13d1b3c943..9e24649d189 100644
 --- a/gcc/config/sh/sh.h
 +++ b/gcc/config/sh/sh.h
 @@ -83,6 +83,7 @@ extern int code_for_indirect_jump_scratch;
@@ -208,7 +194,17 @@ index b13d1b3c943..8f483635747 100644
  
      num_models
    };
-@@ -1568,7 +1573,7 @@ extern bool current_function_interrupt;
+@@ -388,6 +393,9 @@ extern const sh_atomic_model& selected_atomic_model (void);
+ #define TARGET_ATOMIC_SOFT_IMASK \
+   (selected_atomic_model ().type == sh_atomic_model::soft_imask)
+ 
++#define TARGET_ATOMIC_HARD_CAS \
++  (selected_atomic_model ().type == sh_atomic_model::hard_cas)
++
+ #endif // __cplusplus
+ 
+ #define SUBTARGET_OVERRIDE_OPTIONS (void) 0
+@@ -1568,7 +1576,7 @@ extern bool current_function_interrupt;
  
  /* Nonzero if the target supports dynamic shift instructions
     like shad and shld.  */
@@ -217,7 +213,7 @@ index b13d1b3c943..8f483635747 100644
  
  /* The cost of using the dynamic shift insns (shad, shld) are the same
     if they are available.  If they are not available a library function will
-@@ -1833,6 +1838,7 @@ enum processor_type {
+@@ -1833,6 +1841,7 @@ enum processor_type {
    PROCESSOR_SH2,
    PROCESSOR_SH2E,
    PROCESSOR_SH2A,
@@ -226,10 +222,10 @@ index b13d1b3c943..8f483635747 100644
    PROCESSOR_SH3E,
    PROCESSOR_SH4,
 diff --git a/gcc/config/sh/sh.opt b/gcc/config/sh/sh.opt
-index 1026c73..bac47ed 100644
+index c4f0d964d00..792af395b5d 100644
 --- a/gcc/config/sh/sh.opt
 +++ b/gcc/config/sh/sh.opt
-@@ -71,6 +71,10 @@ m2e
+@@ -65,6 +65,10 @@ m2e
  Target RejectNegative Condition(SUPPORT_SH2E)
  Generate SH2e code.
  
@@ -241,7 +237,7 @@ index 1026c73..bac47ed 100644
  Target RejectNegative Mask(SH3) Condition(SUPPORT_SH3)
  Generate SH3 code.
 diff --git a/gcc/config/sh/sync.md b/gcc/config/sh/sync.md
-index 6f1337b..7cfd9ef 100644
+index b46ac3131a8..72705583f84 100644
 --- a/gcc/config/sh/sync.md
 +++ b/gcc/config/sh/sync.md
 @@ -240,6 +240,9 @@

@@ -1,5 +1,5 @@
 diff --git a/gcc/config/i386/pmm_malloc.h b/gcc/config/i386/pmm_malloc.h
-index a1f98d3..4f6b2dc 100644
+index 73d9e887b4b..33f998702fa 100644
 --- a/gcc/config/i386/pmm_malloc.h
 +++ b/gcc/config/i386/pmm_malloc.h
 @@ -27,12 +27,13 @@
