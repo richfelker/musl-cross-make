@@ -1,0 +1,21 @@
+diff -ur binutils-2.27.orig/bfd/elfxx-mips.c binutils-2.27/bfd/elfxx-mips.c
+--- binutils-2.27.orig/bfd/elfxx-mips.c	2016-08-03 03:36:51.000000000 -0400
++++ binutils-2.27/bfd/elfxx-mips.c	2018-01-31 12:11:22.458824584 -0500
+@@ -3242,7 +3242,7 @@
+       && (!bfd_link_pic (info) || !SYMBOL_REFERENCES_LOCAL (info, h)))
+     indx = h->dynindx;
+ 
+-  if ((bfd_link_pic (info) || indx != 0)
++  if ((bfd_link_dll (info) || indx != 0)
+       && (h == NULL
+ 	  || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+ 	  || h->root.type != bfd_link_hash_undefweak))
+@@ -3354,7 +3354,7 @@
+   if (entry->tls_initialized)
+     return;
+ 
+-  if ((bfd_link_pic (info) || indx != 0)
++  if ((bfd_link_dll (info) || indx != 0)
+       && (h == NULL
+ 	  || ELF_ST_VISIBILITY (h->root.other) == STV_DEFAULT
+ 	  || h->root.type != bfd_link_hash_undefweak))
