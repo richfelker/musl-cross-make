@@ -10,7 +10,7 @@ COMMON_CONFIG =
 GCC_CONFIG = 
 TOOLCHAIN_CONFIG = 
 
-XGCC_DIR = ../obj_toolchain/gcc
+XGCC_DIR = ../obj_gcc/gcc
 XGCC = $(XGCC_DIR)/xgcc -B $(XGCC_DIR)
 
 -include config.mak
@@ -49,7 +49,14 @@ MAKE += INFO_DEPS= infodir=
 MAKE += ac_cv_prog_lex_root=lex.yy.c
 MAKE += MAKEINFO=false
 
-FULL_TOOLCHAIN_CONFIG = --enable-languages=c,c++ \
+FULL_BINUTILS_CONFIG = \
+	$(COMMON_CONFIG) $(BINUTILS_CONFIG) $(TOOLCHAIN_CONFIG) \
+	--disable-werror \
+	--target=$(TARGET) --prefix= \
+	--libdir=/lib --disable-multilib \
+	--with-sysroot=$(SYSROOT)
+
+FULL_GCC_CONFIG = --enable-languages=c,c++ \
 	$(GCC_CONFIG_FOR_TARGET) \
 	$(COMMON_CONFIG) $(GCC_CONFIG) $(TOOLCHAIN_CONFIG) \
 	--disable-werror \
@@ -72,16 +79,28 @@ endif
 
 ifeq ($(HOST),)
 SYSROOT = /$(TARGET)
-FULL_TOOLCHAIN_CONFIG += --with-build-sysroot=$(CURDIR)/obj_sysroot
-FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_toolchain/$(TARGET)/libgcc/libgcc.a" 
-MUSL_VARS = AR=../obj_toolchain/binutils/ar RANLIB=../obj_toolchain/binutils/ranlib
-obj_musl/.lc_configured: | obj_toolchain/gcc/.lc_built
-obj_musl/.lc_built: | obj_toolchain/$(TARGET)/libgcc/libgcc.a
-obj_toolchain/gcc/.lc_built: | obj_sysroot/usr obj_sysroot/lib32 obj_sysroot/lib64 obj_sysroot/include
-obj_toolchain/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
+FULL_GCC_CONFIG += --with-build-sysroot=$(CURDIR)/obj_sysroot \
+	AR_FOR_TARGET=$(PWD)/obj_binutils/binutils/ar \
+	AS_FOR_TARGET=$(PWD)/obj_binutils/gas/as-new \
+	LD_FOR_TARGET=$(PWD)/obj_binutils/ld/ld-new \
+	NM_FOR_TARGET=$(PWD)/obj_binutils/binutils/nm-new \
+	OBJCOPY_FOR_TARGET=$(PWD)/obj_binutils/binutils/objcopy \
+	OBJDUMP_FOR_TARGET=$(PWD)/obj_binutils/binutils/objdump \
+	RANLIB_FOR_TARGET=$(PWD)/obj_binutils/binutils/ranlib \
+	READELF_FOR_TARGET=$(PWD)/obj_binutils/binutils/readelf \
+	STRIP_FOR_TARGET=$(PWD)/obj_binutils/binutils/strip-new \
+	# end
+FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_gcc/$(TARGET)/libgcc/libgcc.a" 
+MUSL_VARS = AR=../obj_binutils/binutils/ar RANLIB=../obj_binutils/binutils/ranlib
+obj_musl/.lc_configured: | obj_gcc/gcc/.lc_built
+obj_musl/.lc_built: | obj_gcc/$(TARGET)/libgcc/libgcc.a
+obj_gcc/gcc/.lc_built: | obj_sysroot/usr obj_sysroot/lib32 obj_sysroot/lib64 obj_sysroot/include
+obj_gcc/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
+obj_gcc/.lc_configured: obj_binutils/.lc_built
 else
 SYSROOT = /
-FULL_TOOLCHAIN_CONFIG += --host=$(HOST)
+FULL_BINUTILS_CONFIG += --host=$(HOST)
+FULL_GCC_CONFIG += --host=$(HOST)
 MUSL_VARS = 
 endif
 
@@ -95,54 +114,59 @@ install: all
 
 else
 
-all: musl toolchain
+all: musl gcc binutils
 
-install: install-musl install-toolchain
+install: install-musl install-gcc install-binutils
 
 musl: obj_musl/.lc_built
 
-toolchain: obj_toolchain/.lc_built
+toolchain: gcc binutils
+
+install-toolchain: install-gcc install-binutils
+
+gcc: obj_gcc/.lc_built
+
+binutils: obj_binutils/.lc_built
 
 .PHONY: all musl toolchain install-musl install-toolchain clean
 
 src_binutils: | $(BINUTILS_SRCDIR)
 	ln -sf $(BINUTILS_SRCDIR) $@
 
-src_gcc: | $(GCC_SRCDIR)
+src_gcc_base: | $(GCC_SRCDIR)
 	ln -sf $(GCC_SRCDIR) $@
 
 src_musl: | $(MUSL_SRCDIR)
 	ln -sf $(MUSL_SRCDIR) $@
 
 ifneq ($(GMP_SRCDIR),)
-src_toolchain: src_gmp
+src_gcc: src_gmp
 src_gmp: | $(GMP_SRCDIR)
 	ln -sf "$(GMP_SRCDIR)" $@
 endif
 
 ifneq ($(MPC_SRCDIR),)
-src_toolchain: src_mpc
+src_gcc: src_mpc
 src_mpc: | $(MPC_SRCDIR)
 	ln -sf "$(MPC_SRCDIR)" $@
 endif
 
 ifneq ($(MPFR_SRCDIR),)
-src_toolchain: src_mpfr
+src_gcc: src_mpfr
 src_mpfr: | $(MPFR_SRCDIR)
 	ln -sf "$(MPFR_SRCDIR)" $@
 endif
 
 ifneq ($(ISL_SRCDIR),)
-src_toolchain: src_isl
+src_gcc: src_isl
 src_isl: | $(ISL_SRCDIR)
 	ln -sf "$(ISL_SRCDIR)" $@
 endif
 
-src_toolchain: src_binutils src_gcc
+src_gcc: src_gcc_base
 	rm -rf $@ $@.tmp
 	mkdir $@.tmp
-	cd $@.tmp && ln -sf ../src_binutils/* .
-	cd $@.tmp && ln -sf ../src_gcc/* .
+	cd $@.tmp && ln -sf ../src_gcc_base/* .
 	$(if $(GMP_SRCDIR),cd $@.tmp && ln -sf ../src_gmp gmp)
 	$(if $(MPC_SRCDIR),cd $@.tmp && ln -sf ../src_mpc mpc)
 	$(if $(MPFR_SRCDIR),cd $@.tmp && ln -sf ../src_mpfr mpfr)
@@ -164,12 +188,20 @@ obj_sysroot/lib32: | obj_sysroot
 obj_sysroot/lib64: | obj_sysroot
 	ln -sf lib $@
 
-obj_toolchain/.lc_configured: | obj_toolchain src_toolchain
-	cd obj_toolchain && ../src_toolchain/configure $(FULL_TOOLCHAIN_CONFIG)
+obj_binutils/.lc_configured: | obj_binutils src_binutils
+	cd obj_binutils && ../src_binutils/configure $(FULL_BINUTILS_CONFIG)
 	touch $@
 
-obj_toolchain/gcc/.lc_built: | obj_toolchain/.lc_configured
-	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" all-gcc
+obj_binutils/.lc_built: | obj_binutils/.lc_configured
+	cd obj_binutils && $(MAKE) MAKE="$(MAKE)" all
+	touch $@
+
+obj_gcc/.lc_configured: | obj_gcc src_gcc
+	cd obj_gcc && ../src_gcc/configure $(FULL_GCC_CONFIG)
+	touch $@
+
+obj_gcc/gcc/.lc_built: | obj_gcc/.lc_configured
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE)" all-gcc
 	touch $@
 
 obj_musl/.lc_configured: | obj_musl src_musl
@@ -180,8 +212,8 @@ obj_sysroot/.lc_headers: | obj_musl/.lc_configured obj_sysroot
 	cd obj_musl && $(MAKE) DESTDIR=$(CURDIR)/obj_sysroot install-headers
 	touch $@
 
-obj_toolchain/$(TARGET)/libgcc/libgcc.a: | obj_sysroot/.lc_headers
-	cd obj_toolchain && $(MAKE) MAKE="$(MAKE) enable_shared=no" all-target-libgcc
+obj_gcc/$(TARGET)/libgcc/libgcc.a: | obj_sysroot/.lc_headers
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE) enable_shared=no" all-target-libgcc
 
 obj_musl/.lc_built: | obj_musl/.lc_configured
 	cd obj_musl && $(MAKE) $(MUSL_VARS)
@@ -191,15 +223,18 @@ obj_sysroot/.lc_libs: | obj_musl/.lc_built
 	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(CURDIR)/obj_sysroot install
 	touch $@
 
-obj_toolchain/.lc_built: | obj_toolchain/.lc_configured obj_toolchain/gcc/.lc_built
-	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)"
+obj_gcc/.lc_built: | obj_gcc/.lc_configured obj_gcc/gcc/.lc_built
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE)"
 	touch $@
 
 install-musl: | obj_musl/.lc_built
 	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(DESTDIR)$(OUTPUT)$(SYSROOT) install
 
-install-toolchain: | obj_toolchain/.lc_built
-	cd obj_toolchain && $(MAKE) MAKE="$(MAKE)" DESTDIR=$(DESTDIR)$(OUTPUT) install
+install-binutils: | obj_binutils/.lc_built
+	cd obj_binutils && $(MAKE) MAKE="$(MAKE)" DESTDIR=$(DESTDIR)$(OUTPUT) install
+
+install-gcc: | obj_gcc/.lc_built
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE)" DESTDIR=$(DESTDIR)$(OUTPUT) install
 	ln -sf $(TARGET)-gcc $(DESTDIR)$(OUTPUT)/bin/$(TARGET)-cc
 
 ifneq ($(LINUX_SRCDIR),)
