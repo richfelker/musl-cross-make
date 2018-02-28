@@ -47,6 +47,16 @@ ifneq ($(filter %hf,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-float=hard
 endif
 
+ifneq ($(LIBTOOL),)
+
+ifeq  ($(LIBTOOL_STATIC),)
+LIBTOOL_STATIC = $(LIBTOOL)-static
+endif
+
+LIBTOOL_ARG        = LIBTOOL=$(LIBTOOL)
+LIBTOOL_STATIC_ARG = LIBTOOL=$(LIBTOOL_STATIC)
+
+endif
 
 MAKE += MULTILIB_OSDIRNAMES=
 MAKE += INFO_DEPS= infodir=
@@ -197,7 +207,7 @@ obj_binutils/.lc_configured: | obj_binutils src_binutils
 	touch $@
 
 obj_binutils/.lc_built: | obj_binutils/.lc_configured
-	cd obj_binutils && $(MAKE) MAKE="$(MAKE)" all
+	cd obj_binutils && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_STATIC_ARG)" all
 	touch $@
 
 obj_gcc/.lc_configured: | obj_gcc src_gcc
@@ -205,7 +215,7 @@ obj_gcc/.lc_configured: | obj_gcc src_gcc
 	touch $@
 
 obj_gcc/gcc/.lc_built: | obj_gcc/.lc_configured
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE)" all-gcc
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-gcc
 	touch $@
 
 obj_musl/.lc_configured: | obj_musl src_musl
@@ -217,7 +227,7 @@ obj_sysroot/.lc_headers: | obj_musl/.lc_configured obj_sysroot
 	touch $@
 
 obj_gcc/$(TARGET)/libgcc/libgcc.a: | obj_sysroot/.lc_headers
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) enable_shared=no" all-target-libgcc
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE) enable_shared=no $(LIBTOOL_ARG)" all-target-libgcc
 
 obj_musl/.lc_built: | obj_musl/.lc_configured
 	cd obj_musl && $(MAKE) $(MUSL_VARS)
@@ -228,17 +238,17 @@ obj_sysroot/.lc_libs: | obj_musl/.lc_built
 	touch $@
 
 obj_gcc/.lc_built: | obj_gcc/.lc_configured obj_gcc/gcc/.lc_built
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE)"
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)"
 	touch $@
 
 install-musl: | obj_musl/.lc_built
 	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(DESTDIR)$(OUTPUT)$(SYSROOT) install
 
 install-binutils: | obj_binutils/.lc_built
-	cd obj_binutils && $(MAKE) MAKE="$(MAKE)" DESTDIR=$(DESTDIR)$(OUTPUT) install
+	cd obj_binutils && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_STATIC_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
 
 install-gcc: | obj_gcc/.lc_built
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE)" DESTDIR=$(DESTDIR)$(OUTPUT) install
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
 	ln -sf $(TARGET)-gcc $(DESTDIR)$(OUTPUT)/bin/$(TARGET)-cc
 
 ifneq ($(LINUX_SRCDIR),)
