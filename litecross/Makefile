@@ -35,6 +35,10 @@ GCC_CONFIG_FOR_TARGET += --with-abi=64
 endif
 endif
 
+ifneq ($(findstring s390x,$(TARGET)),)
+GCC_CONFIG_FOR_TARGET += --with-long-double-128
+endif
+
 ifneq ($(filter %sf,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-float=soft
 endif
