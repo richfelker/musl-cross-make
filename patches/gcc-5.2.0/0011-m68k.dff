@@ -1,0 +1,36 @@
+diff -ur gcc-6.4.0/gcc/config/m68k/linux.h gcc-6.4.0.new/gcc/config/m68k/linux.h
+--- gcc-6.4.0/gcc/config/m68k/linux.h	2016-01-04 09:30:50.000000000 -0500
++++ gcc-6.4.0.new/gcc/config/m68k/linux.h	2018-06-12 20:03:47.047502695 -0400
+@@ -73,6 +73,9 @@
+ 
+ #define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
+ 
++#undef MUSL_DYNAMIC_LINKER
++#define MUSL_DYNAMIC_LINKER "/lib/ld-musl-m68k.so.1"
++
+ #undef LINK_SPEC
+ #define LINK_SPEC "-m m68kelf %{shared} \
+   %{!shared: \
+diff -ur gcc-6.4.0/libgcc/config/m68k/linux-atomic.c gcc-6.4.0.new/libgcc/config/m68k/linux-atomic.c
+--- gcc-6.4.0/libgcc/config/m68k/linux-atomic.c	2016-01-04 09:30:50.000000000 -0500
++++ gcc-6.4.0.new/libgcc/config/m68k/linux-atomic.c	2018-06-07 16:15:11.610163418 -0400
+@@ -33,7 +33,6 @@
+    using the kernel helper defined below.  There is no support for
+    64-bit operations yet.  */
+ 
+-#include <asm/unistd.h>
+ #include <stdbool.h>
+ 
+ #ifndef __NR_atomic_cmpxchg_32
+diff -ur gcc-6.4.0/libgcc/config/m68k/linux-unwind.h gcc-6.4.0.new/libgcc/config/m68k/linux-unwind.h
+--- gcc-6.4.0/libgcc/config/m68k/linux-unwind.h	2016-01-04 09:30:50.000000000 -0500
++++ gcc-6.4.0.new/libgcc/config/m68k/linux-unwind.h	2018-06-07 16:17:16.964591108 -0400
+@@ -37,7 +37,7 @@
+ 	stack_t		  uc_stack;
+ 	mcontext_t	  uc_mcontext;
+ 	unsigned long	  uc_filler[80];
+-	__sigset_t	  uc_sigmask;
++	sigset_t	  uc_sigmask;
+ };
+ 
+ #define MD_FALLBACK_FRAME_STATE_FOR m68k_fallback_frame_state
