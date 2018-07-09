@@ -1,0 +1,59 @@
+diff --git a/gcc/config/gnu-user.h b/gcc/config/gnu-user.h
+index 2787a3d16be..ee7b781319e 100644
+--- a/gcc/config/gnu-user.h
++++ b/gcc/config/gnu-user.h
+@@ -51,10 +51,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ #if defined HAVE_LD_PIE
+ #define GNU_USER_TARGET_STARTFILE_SPEC \
+   "%{!shared: %{pg|p|profile:gcrt1.o%s;: \
+-    %{" PIE_SPEC ":Scrt1.o%s} %{" NO_PIE_SPEC ":crt1.o%s}}} \
+-   crti.o%s %{static:crtbeginT.o%s;: %{shared:crtbeginS.o%s} \
++    %{" PIE_SPEC ":%{static:rcrt1.o%s;:Scrt1.o%s}} %{" NO_PIE_SPEC ":crt1.o%s}}} \
++   crti.o%s %{shared:crtbeginS.o%s;: \
+ 	      %{" PIE_SPEC ":crtbeginS.o%s} \
+-	      %{" NO_PIE_SPEC ":crtbegin.o%s}} \
++	      %{" NO_PIE_SPEC ":%{static:crtbeginT.o%s;:crtbegin.o%s}}} \
+    %{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_start_preinit.o%s; \
+      fvtable-verify=std:vtv_start.o%s} \
+diff --git a/gcc/config/rs6000/sysv4.h b/gcc/config/rs6000/sysv4.h
+index de386291a51..577fddc8a7c 100644
+--- a/gcc/config/rs6000/sysv4.h
++++ b/gcc/config/rs6000/sysv4.h
+@@ -759,9 +759,12 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
+ 
+ #ifdef HAVE_LD_PIE
+ #define	STARTFILE_LINUX_SPEC "\
+-%{!shared: %{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}} \
++%{!shared: %{pg|p|profile:gcrt1.o%s;: \
++  %{" PIE_SPEC ":%{static:rcrt1.o%s;:Scrt1.o%s}} %{" NO_PIE_SPEC ":crt1.o%s}}} \
+ %{mnewlib:ecrti.o%s;:crti.o%s} \
+-%{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s} \
++%{shared:crtbeginS.o%s;: \
++  %{" PIE_SPEC ":crtbeginS.o%s} \
++  %{" NO_PIE_SPEC ":%{static:crtbeginT.o%s;:crtbegin.o%s}}} \
+ " CRTOFFLOADBEGIN
+ #else
+ #define	STARTFILE_LINUX_SPEC "\
+diff --git a/gcc/gcc.c b/gcc/gcc.c
+index 91eb0534722..74a390e6005 100644
+--- a/gcc/gcc.c
++++ b/gcc/gcc.c
+@@ -873,7 +873,7 @@ proper position among the other output files.  */
+ #endif
+ 
+ #ifdef ENABLE_DEFAULT_PIE
+-#define NO_PIE_SPEC		"no-pie|static"
++#define NO_PIE_SPEC		"no-pie"
+ #define PIE_SPEC		NO_PIE_SPEC "|r|shared:;"
+ #define NO_FPIE1_SPEC		"fno-pie"
+ #define FPIE1_SPEC		NO_FPIE1_SPEC ":;"
+@@ -919,7 +919,7 @@ proper position among the other output files.  */
+ #ifndef LINK_PIE_SPEC
+ #ifdef HAVE_LD_PIE
+ #ifndef LD_PIE_SPEC
+-#define LD_PIE_SPEC "-pie"
++#define LD_PIE_SPEC "-pie %{static:--no-dynamic-linker -Bsymbolic}"
+ #endif
+ #else
+ #define LD_PIE_SPEC ""
