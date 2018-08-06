@@ -25,17 +25,9 @@ LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
 
 DL_CMD = wget -c -O
 
-ifneq ($(NATIVE),)
-HOST := $(TARGET)
-endif
-
-ifneq ($(HOST),)
-BUILD_DIR = build/$(HOST)/$(TARGET)
-OUTPUT = $(CURDIR)/output-$(HOST)
-else
-BUILD_DIR = build/local/$(TARGET)
-OUTPUT = $(CURDIR)/output
-endif
+HOST = $(if $(NATIVE),$(TARGET))
+BUILD_DIR = build/$(if $(HOST),$(HOST),local)/$(TARGET)
+OUTPUT = $(CURDIR)/output$(if $(HOST),-$(HOST))
 
 REL_TOP = ../../..
 
