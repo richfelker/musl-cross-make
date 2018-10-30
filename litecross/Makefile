@@ -48,14 +48,7 @@ GCC_CONFIG_FOR_TARGET += --with-float=hard
 endif
 
 ifneq ($(LIBTOOL),)
-
-ifeq  ($(LIBTOOL_STATIC),)
-LIBTOOL_STATIC = $(LIBTOOL)-static
-endif
-
-LIBTOOL_ARG        = LIBTOOL=$(LIBTOOL)
-LIBTOOL_STATIC_ARG = LIBTOOL=$(LIBTOOL_STATIC)
-
+LIBTOOL_ARG = LIBTOOL=$(LIBTOOL)
 endif
 
 MAKE += MULTILIB_OSDIRNAMES=
@@ -207,7 +200,7 @@ obj_binutils/.lc_configured: | obj_binutils src_binutils
 	touch $@
 
 obj_binutils/.lc_built: | obj_binutils/.lc_configured
-	cd obj_binutils && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_STATIC_ARG)" all
+	cd obj_binutils && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all
 	touch $@
 
 obj_gcc/.lc_configured: | obj_gcc src_gcc
@@ -215,15 +208,15 @@ obj_gcc/.lc_configured: | obj_gcc src_gcc
 	touch $@
 
 obj_gcc/.lc_gmp_built: | obj_gcc/.lc_configured
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_STATIC_ARG)" all-gmp
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-gmp
 	touch $@
 
 obj_gcc/.lc_mpfr_built: | obj_gcc/.lc_gmp_built
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_STATIC_ARG)" all-mpfr
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-mpfr
 	touch $@
 
 obj_gcc/.lc_mpc_built: | obj_gcc/.lc_mpfr_built
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_STATIC_ARG)" all-mpc
+	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-mpc
 	touch $@
 
 obj_gcc/gcc/.lc_built: | obj_gcc/.lc_mpc_built
@@ -257,7 +250,7 @@ install-musl: | obj_musl/.lc_built
 	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(DESTDIR)$(OUTPUT)$(SYSROOT) install
 
 install-binutils: | obj_binutils/.lc_built
-	cd obj_binutils && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_STATIC_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
+	cd obj_binutils && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
 
 install-gcc: | obj_gcc/.lc_built
 	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
