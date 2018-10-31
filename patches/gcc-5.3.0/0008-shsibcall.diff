@@ -1,5 +1,5 @@
---- a/gcc/config/sh/sh.md (revision 233324)
-+++ b/gcc/config/sh/sh.md (working copy)
+--- a/gcc/config/sh/sh.md
++++ b/gcc/config/sh/sh.md
 @@ -10476,7 +10476,7 @@
         (call (mem:SI (match_operand:SI 1 "symbol_ref_operand" ""))
               (match_operand 2 "" "")))
