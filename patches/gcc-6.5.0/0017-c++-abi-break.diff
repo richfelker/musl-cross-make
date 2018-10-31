@@ -1,0 +1,43 @@
+From https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87822
+Author: Jonathan Wakely <jwakely@redhat.com>
+Date:   Wed Oct 31 13:03:25 2018 +0000
+
+    PR libstdc++/87822 fix layout change for nested std::pair
+    
+    The introduction of the empty __pair_base base class for PR 86751
+    changed the layout of std::pair<std::pair<...>, ...>. The outer pair and
+    its first member both have a base class of the same type, which cannot
+    exist at the same address. This causes the first member to be at a
+    non-zero offset.
+    
+    The solution is to make the base class depend on the template
+    parameters, so that each pair type has a different base class type,
+    which allows the base classes of the outer pair and its first member to
+    have the same address.
+    
+            PR libstdc++/87822
+            * include/bits/stl_pair.h (__pair_base): Change to class template.
+            (pair): Make base class type depend on template parameters.
+
+diff --git a/libstdc++-v3/include/bits/stl_pair.h b/libstdc++-v3/include/bits/stl_pair.h
+index a30b630b4fd..5a4823ab018 100644
+--- a/libstdc++-v3/include/bits/stl_pair.h
++++ b/libstdc++-v3/include/bits/stl_pair.h
+@@ -183,7 +183,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
+   };
+ #endif // C++11
+ 
+-  class __pair_base
++  template<typename _U1, typename _U2> class __pair_base
+   {
+ #if __cplusplus >= 201103L
+     template<typename _T1, typename _T2> friend struct pair;
+@@ -202,7 +202,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
+    */
+   template<typename _T1, typename _T2>
+     struct pair
+-    : private __pair_base
++    : private __pair_base<_T1, _T2>
+     {
+       typedef _T1 first_type;    /// @c first_type is the first bound type
+       typedef _T2 second_type;   /// @c second_type is the second bound type
