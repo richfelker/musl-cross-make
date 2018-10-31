@@ -207,19 +207,7 @@ obj_gcc/.lc_configured: | obj_gcc src_gcc
 	cd obj_gcc && ../src_gcc/configure $(FULL_GCC_CONFIG)
 	touch $@
 
-obj_gcc/.lc_gmp_built: | obj_gcc/.lc_configured
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-gmp
-	touch $@
-
-obj_gcc/.lc_mpfr_built: | obj_gcc/.lc_gmp_built
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-mpfr
-	touch $@
-
-obj_gcc/.lc_mpc_built: | obj_gcc/.lc_mpfr_built
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-mpc
-	touch $@
-
-obj_gcc/gcc/.lc_built: | obj_gcc/.lc_mpc_built
+obj_gcc/gcc/.lc_built: | obj_gcc/.lc_configured
 	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-gcc
 	touch $@
 
