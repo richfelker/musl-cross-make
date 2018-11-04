@@ -1,0 +1,147 @@
+diff --git a/gcc/config/gnu-user.h b/gcc/config/gnu-user.h
+index de605b0c466..2787a3d16be 100644
+--- a/gcc/config/gnu-user.h
++++ b/gcc/config/gnu-user.h
+@@ -50,28 +50,19 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ 
+ #if defined HAVE_LD_PIE
+ #define GNU_USER_TARGET_STARTFILE_SPEC \
+-  "%{shared:; \
+-     pg|p|profile:gcrt1.o%s; \
+-     static:crt1.o%s; \
+-     " PIE_SPEC ":Scrt1.o%s; \
+-     :crt1.o%s} \
+-   crti.o%s \
+-   %{static:crtbeginT.o%s; \
+-     shared|" PIE_SPEC ":crtbeginS.o%s; \
+-     :crtbegin.o%s} \
++  "%{!shared: %{pg|p|profile:gcrt1.o%s;: \
++    %{" PIE_SPEC ":Scrt1.o%s} %{" NO_PIE_SPEC ":crt1.o%s}}} \
++   crti.o%s %{static:crtbeginT.o%s;: %{shared:crtbeginS.o%s} \
++	      %{" PIE_SPEC ":crtbeginS.o%s} \
++	      %{" NO_PIE_SPEC ":crtbegin.o%s}} \
+    %{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_start_preinit.o%s; \
+      fvtable-verify=std:vtv_start.o%s} \
+    " CRTOFFLOADBEGIN
+ #else
+ #define GNU_USER_TARGET_STARTFILE_SPEC \
+-  "%{shared:; \
+-     pg|p|profile:gcrt1.o%s; \
+-     :crt1.o%s} \
+-   crti.o%s \
+-   %{static:crtbeginT.o%s; \
+-     shared|pie:crtbeginS.o%s; \
+-     :crtbegin.o%s} \
++  "%{!shared: %{pg|p|profile:gcrt1.o%s;:crt1.o%s}} \
++   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s} \
+    %{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_start_preinit.o%s; \
+      fvtable-verify=std:vtv_start.o%s} \
+@@ -91,20 +82,15 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+   "%{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_end_preinit.o%s; \
+      fvtable-verify=std:vtv_end.o%s} \
+-   %{static:crtend.o%s; \
+-     shared|" PIE_SPEC ":crtendS.o%s; \
+-     :crtend.o%s} \
+-   crtn.o%s \
++   %{shared:crtendS.o%s;: %{" PIE_SPEC ":crtendS.o%s} \
++   %{" NO_PIE_SPEC ":crtend.o%s}} crtn.o%s \
+    " CRTOFFLOADEND
+ #else
+ #define GNU_USER_TARGET_ENDFILE_SPEC \
+   "%{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_end_preinit.o%s; \
+      fvtable-verify=std:vtv_end.o%s} \
+-   %{static:crtend.o%s; \
+-     shared|pie:crtendS.o%s; \
+-     :crtend.o%s} \
+-   crtn.o%s \
++   %{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s \
+    " CRTOFFLOADEND
+ #endif
+ #undef  ENDFILE_SPEC
+diff --git a/gcc/config/sol2.h b/gcc/config/sol2.h
+index d522de03f4a..13b27873719 100644
+--- a/gcc/config/sol2.h
++++ b/gcc/config/sol2.h
+@@ -174,9 +174,9 @@ along with GCC; see the file COPYING3.  If not see
+ 			    %{!ansi:values-Xa.o%s}"
+ 
+ #if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
+-#define STARTFILE_CRTBEGIN_SPEC "%{static:crtbegin.o%s; \
+-				   shared|" PIE_SPEC ":crtbeginS.o%s; \
+-				   :crtbegin.o%s}"
++#define STARTFILE_CRTBEGIN_SPEC "%{shared:crtbeginS.o%s} \
++				 %{" PIE_SPEC ":crtbeginS.o%s} \
++				 %{" NO_PIE_SPEC ":crtbegin.o%s}"
+ #else
+ #define STARTFILE_CRTBEGIN_SPEC	"crtbegin.o%s"
+ #endif
+@@ -224,9 +224,9 @@ along with GCC; see the file COPYING3.  If not see
+ #endif
+ 
+ #if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
+-#define ENDFILE_CRTEND_SPEC "%{static:crtend.o%s; \
+-			       shared|" PIE_SPEC ":crtendS.o%s; \
+-			       :crtend.o%s}"
++#define ENDFILE_CRTEND_SPEC "%{shared:crtendS.o%s;: \
++			       %{" PIE_SPEC ":crtendS.o%s} \
++			       %{" NO_PIE_SPEC ":crtend.o%s}}"
+ #else
+ #define ENDFILE_CRTEND_SPEC "crtend.o%s"
+ #endif
+diff --git a/gcc/gcc.c b/gcc/gcc.c
+index e2fae4ef055..91eb0534722 100644
+--- a/gcc/gcc.c
++++ b/gcc/gcc.c
+@@ -873,7 +873,8 @@ proper position among the other output files.  */
+ #endif
+ 
+ #ifdef ENABLE_DEFAULT_PIE
+-#define PIE_SPEC		"!no-pie"
++#define NO_PIE_SPEC		"no-pie|static"
++#define PIE_SPEC		NO_PIE_SPEC "|r|shared:;"
+ #define NO_FPIE1_SPEC		"fno-pie"
+ #define FPIE1_SPEC		NO_FPIE1_SPEC ":;"
+ #define NO_FPIE2_SPEC		"fno-PIE"
+@@ -894,6 +895,7 @@ proper position among the other output files.  */
+ #define FPIE_OR_FPIC_SPEC	NO_FPIE_AND_FPIC_SPEC ":;"
+ #else
+ #define PIE_SPEC		"pie"
++#define NO_PIE_SPEC		PIE_SPEC "|r|shared:;"
+ #define FPIE1_SPEC		"fpie"
+ #define NO_FPIE1_SPEC		FPIE1_SPEC ":;"
+ #define FPIE2_SPEC		"fPIE"
+@@ -922,7 +924,7 @@ proper position among the other output files.  */
+ #else
+ #define LD_PIE_SPEC ""
+ #endif
+-#define LINK_PIE_SPEC "%{static|shared|r:;" PIE_SPEC ":" LD_PIE_SPEC "} "
++#define LINK_PIE_SPEC "%{no-pie:} " "%{" PIE_SPEC ":" LD_PIE_SPEC "} "
+ #endif
+ 
+ #ifndef LINK_BUILDID_SPEC
+@@ -1010,10 +1012,8 @@ proper position among the other output files.  */
+ #endif
+ 
+ /* -u* was put back because both BSD and SysV seem to support it.  */
+-/* %{static|no-pie:} simply prevents an error message:
+-   1. If the target machine doesn't handle -static.
+-   2. If PIE isn't enabled by default.
+- */
++/* %{static:} simply prevents an error message if the target machine
++   doesn't handle -static.  */
+ /* We want %{T*} after %{L*} and %D so that it can be used to specify linker
+    scripts which exist in user specified directories, or in standard
+    directories.  */
+@@ -1030,7 +1030,7 @@ proper position among the other output files.  */
+    "%{fuse-ld=*:-fuse-ld=%*} " LINK_COMPRESS_DEBUG_SPEC \
+    "%X %{o*} %{e*} %{N} %{n} %{r}\
+     %{s} %{t} %{u*} %{z} %{Z} %{!nostdlib:%{!nostartfiles:%S}} \
+-    %{static|no-pie:} %{L*} %(mfwrap) %(link_libgcc) " \
++    %{static:} %{L*} %(mfwrap) %(link_libgcc) " \
+     VTABLE_VERIFICATION_SPEC " " SANITIZER_EARLY_SPEC " %o " CHKP_SPEC " \
+     %{fopenacc|fopenmp|%:gt(%{ftree-parallelize-loops=*:%*} 1):\
+ 	%:include(libgomp.spec)%(link_gomp)}\
