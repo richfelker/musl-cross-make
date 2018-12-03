@@ -120,7 +120,7 @@ musl-git-%:
 %: $(SOURCES)/%.tar.xz | $(SOURCES)/config.sub
 	rm -rf $@.tmp
 	mkdir $@.tmp
-	( cd $@.tmp && tar Jxvf - ) < $<
+	( cd $@.tmp && xz -d | tar xvf - ) < $<
 	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp/$@ && patch -p1 )
 	test ! -f $@.tmp/$@/config.sub || cp -f $(SOURCES)/config.sub $@.tmp/$@
 	rm -rf $@
