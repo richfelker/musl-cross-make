@@ -1,0 +1,21 @@
+[PATCH] fix deterministic output for mips archiver
+
+for historical reasons mips uses a slightly different archive format,
+and when the --enable-deterministic-archives option was implemented,
+it was only done for the generic archive format, but not for the one
+used by mips.
+
+Signed-off-by: John Spencer <maillist-binutils@barfooze.de>
+
+--- binutils-2.24.90.org/bfd/archive64.c
++++ binutils-2.24.90/bfd/archive64.c
+@@ -171,7 +171,8 @@
+   if (!_bfd_ar_sizepad (hdr.ar_size, sizeof (hdr.ar_size), mapsize))
+     return FALSE;
+   _bfd_ar_spacepad (hdr.ar_date, sizeof (hdr.ar_date), "%ld",
+-                    time (NULL));
++                    ((arch->flags & BFD_DETERMINISTIC_OUTPUT) == 0
++                     ? time (NULL) : 0));
+   /* This, at least, is what Intel coff sets the values to.: */
+   _bfd_ar_spacepad (hdr.ar_uid, sizeof (hdr.ar_uid), "%ld", 0);
+   _bfd_ar_spacepad (hdr.ar_gid, sizeof (hdr.ar_gid), "%ld", 0);
