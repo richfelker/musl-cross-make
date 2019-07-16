@@ -57,6 +57,7 @@ MAKE += ac_cv_prog_lex_root=lex.yy.c
 MAKE += MAKEINFO=false
 
 FULL_BINUTILS_CONFIG = \
+	--disable-separate-code \
 	$(COMMON_CONFIG) $(BINUTILS_CONFIG) $(TOOLCHAIN_CONFIG) \
 	--disable-werror \
 	--target=$(TARGET) --prefix= \
