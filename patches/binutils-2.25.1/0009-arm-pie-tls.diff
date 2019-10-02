@@ -1,0 +1,20 @@
+--- binutils-2.25.1/bfd/elf32-arm.c.orig	2019-10-02 10:41:56.188034263 -0400
++++ binutils-2.25.1/bfd/elf32-arm.c	2019-10-02 10:42:45.553394647 -0400
+@@ -9493,7 +9493,7 @@
+ 	  {
+ 	    /* If we don't know the module number, create a relocation
+ 	       for it.  */
+-	    if (info->shared)
++	    if (!info->executable)
+ 	      {
+ 		Elf_Internal_Rela outrel;
+ 
+@@ -9581,7 +9581,7 @@
+ 	       now, and emit any relocations.  If both an IE GOT and a
+ 	       GD GOT are necessary, we emit the GD first.  */
+ 
+-	    if ((info->shared || indx != 0)
++	    if ((!info->executable || indx != 0)
+ 		&& (h == NULL
+ 		    || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+ 		    || h->root.type != bfd_link_hash_undefweak))
