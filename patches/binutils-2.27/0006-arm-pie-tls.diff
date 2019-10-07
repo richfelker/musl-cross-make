@@ -1,6 +1,48 @@
---- binutils-2.32/bfd/elf32-arm.c.orig	2019-10-02 07:47:36.153918869 -0400
-+++ binutils-2.32/bfd/elf32-arm.c	2019-10-02 08:37:09.108263016 -0400
-@@ -11624,7 +11624,7 @@
+From 7d6e280a0f3b9978b0edb20173d067d071531a3d Mon Sep 17 00:00:00 2001
+From: Szabolcs Nagy <szabolcs.nagy@arm.com>
+Date: Wed, 2 Oct 2019 19:46:46 +0100
+Subject: [PATCH] [PR ld/22263][PR ld/25056] arm: Avoid dynamic TLS relocs in
+ PIE
+
+Dynamic relocs are only needed in an executable for TLS symbols if
+those are defined in an external module and even then TLS access
+can be relaxed to use IE model instead of GD.
+
+Several bfd_link_pic checks are turned into bfd_link_dll checks
+to fix TLS handling in PIE, for the same fix some other targets
+used !bfd_link_executable checks, but that includes relocatable
+objects so dll seems safer (in most cases either should work, since
+dynamic relocations are not applied in relocatable objects).
+
+On arm* fixes
+FAIL: Build pr22263-1
+
+bfd/
+2019-10-02  Szabolcs Nagy  <szabolcs.nagy@arm.com>
+	PR ld/22263
+	PR ld/25056
+	* elf32-arm.c (elf32_arm_tls_transition): Use bfd_link_dll instead of
+	bfd_link_pic for TLS checks.
+	(elf32_arm_final_link_relocate): Likewise.
+	(allocate_dynrelocs_for_symbol): Likewise.
+---
+ bfd/elf32-arm.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
+index bb53e039e3..451949d278 100644
+--- a/bfd/elf32-arm.c
++++ b/bfd/elf32-arm.c
+@@ -4914,7 +4914,7 @@ elf32_arm_tls_transition (struct bfd_link_info *info, int r_type,
+ {
+   int is_local = (h == NULL);
+ 
+-  if (bfd_link_pic (info)
++  if (bfd_link_dll (info)
+       || (h && h->root.type == bfd_link_hash_undefweak))
+     return r_type;
+ 
+@@ -11700,7 +11700,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
  	  {
  	    /* If we don't know the module number, create a relocation
  	       for it.  */
@@ -9,7 +51,7 @@
  	      {
  		Elf_Internal_Rela outrel;
  
-@@ -11728,7 +11728,7 @@
+@@ -11804,7 +11804,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
  	       now, and emit any relocations.  If both an IE GOT and a
  	       GD GOT are necessary, we emit the GD first.  */
  
@@ -18,3 +60,24 @@
  		&& (h == NULL
  		    || (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
  			&& !resolved_to_zero)
+@@ -11821,7 +11821,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
+ 		/* We should have relaxed, unless this is an undefined
+ 		   weak symbol.  */
+ 		BFD_ASSERT ((h && (h->root.type == bfd_link_hash_undefweak))
+-			    || bfd_link_pic (info));
++			    || bfd_link_dll (info));
+ 		BFD_ASSERT (globals->sgotplt_jump_table_size + offplt + 8
+ 			    <= globals->root.sgotplt->size);
+ 
+@@ -16494,7 +16494,7 @@ allocate_dynrelocs_for_symbol (struct elf_link_hash_entry *h, void * inf)
+ 	    indx = h->dynindx;
+ 
+ 	  if (tls_type != GOT_NORMAL
+-	      && (bfd_link_pic (info) || indx != 0)
++	      && (bfd_link_dll (info) || indx != 0)
+ 	      && (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+ 		  || h->root.type != bfd_link_hash_undefweak))
+ 	    {
+-- 
+2.17.1
+

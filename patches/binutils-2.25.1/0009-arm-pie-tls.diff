@@ -1,5 +1,14 @@
---- binutils-2.25.1/bfd/elf32-arm.c.orig	2019-10-02 10:41:56.188034263 -0400
-+++ binutils-2.25.1/bfd/elf32-arm.c	2019-10-02 10:42:45.553394647 -0400
+--- binutils-2.25.1/bfd/elf32-arm.c.orig	2019-10-06 20:40:39.213623570 -0400
++++ binutils-2.25.1/bfd/elf32-arm.c	2019-10-06 20:45:09.688207243 -0400
+@@ -4097,7 +4097,7 @@
+ {
+   int is_local = (h == NULL);
+ 
+-  if (info->shared || (h && h->root.type == bfd_link_hash_undefweak))
++  if (!info->executable || (h && h->root.type == bfd_link_hash_undefweak))
+     return r_type;
+ 
+   /* We do not support relaxations for Old TLS models.  */
 @@ -9493,7 +9493,7 @@
  	  {
  	    /* If we don't know the module number, create a relocation
@@ -18,3 +27,21 @@
  		&& (h == NULL
  		    || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
  		    || h->root.type != bfd_link_hash_undefweak))
+@@ -9597,7 +9597,7 @@
+ 		/* We should have relaxed, unless this is an undefined
+ 		   weak symbol.  */
+ 		BFD_ASSERT ((h && (h->root.type == bfd_link_hash_undefweak))
+-			    || info->shared);
++			    || !info->executable);
+ 		BFD_ASSERT (globals->sgotplt_jump_table_size + offplt + 8
+ 			    <= globals->root.sgotplt->size);
+ 
+@@ -13504,7 +13504,7 @@
+ 	    indx = h->dynindx;
+ 
+ 	  if (tls_type != GOT_NORMAL
+-	      && (info->shared || indx != 0)
++	      && (!info->executable || indx != 0)
+ 	      && (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+ 		  || h->root.type != bfd_link_hash_undefweak))
+ 	    {
