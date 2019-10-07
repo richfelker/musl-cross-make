@@ -1,0 +1,16 @@
+diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
+index bb53e039e3..d52c046979 100644
+--- a/bfd/elf32-arm.c
++++ b/bfd/elf32-arm.c
+@@ -12027,9 +12027,9 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
+ 	    unsigned long data, insn;
+ 	    unsigned thumb;
+ 
+-	    data = bfd_get_32 (input_bfd, hit_data);
++	    data = bfd_get_signed_32 (input_bfd, hit_data);
+ 	    thumb = data & 1;
+-	    data &= ~1u;
++	    data &= ~1ul;
+ 
+ 	    if (thumb)
+ 	      {
