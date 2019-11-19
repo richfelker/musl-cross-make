@@ -56,6 +56,7 @@ believed to work:
 - `mips64[el]-linux-musl[n32][sf]`
 - `powerpc-linux-musl[sf]`
 - `powerpc64[le]-linux-musl`
+- `riscv64-linux-musl`
 - `s390x-linux-musl`
 - `sh*[eb]-linux-musl[fdpic][sf]`
 - `x86_64-linux-musl[x32]`
