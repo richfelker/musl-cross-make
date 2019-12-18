@@ -8,7 +8,7 @@ MUSL_VER = 1.1.24
 GMP_VER = 6.1.2
 MPC_VER = 1.1.0
 MPFR_VER = 4.0.2
-LINUX_VER = 4.4.10
+LINUX_VER = headers-4.19.88
 
 GNU_SITE = https://ftp.gnu.org/pub/gnu
 GCC_SITE = $(GNU_SITE)/gcc
