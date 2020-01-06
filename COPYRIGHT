@@ -1,0 +1,16 @@
+Copyright Notes
+===============
+
+The musl-cross-make build tools and documentation are licensed under
+the MIT/Expat license as found in the `LICENSE` file.
+
+Note that this license does not cover the patches (`patches/`) or
+resulting binary artifacts.
+
+Each patch (`patches/`) is distributed under the terms of the license
+of the upstream project to which it is applied.
+
+Similarly, any resulting binary artifacts produced using this build
+tooling retain the original licensing from the upstream projects.  The
+authors of musl-cross-make do not make any additional copyright claims
+to these artifacts.

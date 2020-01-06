@@ -145,3 +145,26 @@ build systems, if desired.
 Some functionality (SH/FDPIC, and support for J2 specific features) is
 presently only available with gcc 5.2.0 and later, and binutils 2.25.1
 and later.
+
+License
+-------
+
+The musl-cross-make build tools and documentation are licensed under
+the MIT/Expat license as found in the `LICENSE` file.
+
+Note that this license does not cover the patches (`patches/`) or
+resulting binary artifacts.
+
+Each patch (`patches/`) is distributed under the terms of the license
+of the upstream project to which it is applied.
+
+Similarly, any resulting binary artifacts produced using this build
+tooling retain the original licensing from the upstream projects.  The
+authors of musl-cross-make do not make any additional copyright claims
+to these artifacts.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution submitted for
+inclusion in musl-cross-make by you shall be licensed as above without
+any additional terms or conditions.
