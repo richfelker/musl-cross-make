@@ -26,6 +26,8 @@ LINUX_HEADERS_SITE = http://ftp.barfooze.de/pub/sabotage/tarballs/
 
 DL_CMD = wget -c -O
 
+COWPATCH = $(PWD)/cowpatch.sh
+
 HOST = $(if $(NATIVE),$(TARGET))
 BUILD_DIR = build/$(if $(HOST),$(HOST),local)/$(TARGET)
 OUTPUT = $(CURDIR)/output$(if $(HOST),-$(HOST))
@@ -97,38 +99,40 @@ musl-git-%:
 	cd $@.tmp && git fsck
 	mv $@.tmp $@
 
-%: $(SOURCES)/%.tar.gz | $(SOURCES)/config.sub
+%.orig: $(SOURCES)/%.tar.gz | $(SOURCES)/config.sub
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar zxvf - ) < $<
-	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp/$@ && patch -p1 )
-	test ! -f $@.tmp/$@/config.sub || cp -f $(SOURCES)/config.sub $@.tmp/$@
 	rm -rf $@
-	touch $@.tmp/$@
-	mv $@.tmp/$@ $@
+	touch $@.tmp/$(patsubst %.orig,%,$@)
+	mv $@.tmp/$(patsubst %.orig,%,$@) $@
 	rm -rf $@.tmp
 
-%: $(SOURCES)/%.tar.bz2 | $(SOURCES)/config.sub
+%.orig: $(SOURCES)/%.tar.bz2 | $(SOURCES)/config.sub
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar jxvf - ) < $<
-	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp/$@ && patch -p1 )
-	test ! -f $@.tmp/$@/config.sub || cp -f $(SOURCES)/config.sub $@.tmp/$@
 	rm -rf $@
-	touch $@.tmp/$@
-	mv $@.tmp/$@ $@
+	touch $@.tmp/$(patsubst %.orig,%,$@)
+	mv $@.tmp/$(patsubst %.orig,%,$@) $@
 	rm -rf $@.tmp
 
-%: $(SOURCES)/%.tar.xz | $(SOURCES)/config.sub
+%.orig: $(SOURCES)/%.tar.xz | $(SOURCES)/config.sub
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar Jxvf - ) < $<
-	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp/$@ && patch -p1 )
-	test ! -f $@.tmp/$@/config.sub || cp -f $(SOURCES)/config.sub $@.tmp/$@
 	rm -rf $@
-	touch $@.tmp/$@
-	mv $@.tmp/$@ $@
+	touch $@.tmp/$(patsubst %.orig,%,$@)
+	mv $@.tmp/$(patsubst %.orig,%,$@) $@
 	rm -rf $@.tmp
+
+%: %.orig
+	rm -rf $@.tmp
+	mkdir $@.tmp
+	( cd $@.tmp && ln -s ../$</* . )
+	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp && $(COWPATCH) -p1 )
+	test ! -f $</config.sub || ( rm -f $@.tmp/config.sub && cp -f $(SOURCES)/config.sub $@.tmp/ )
+	mv $@.tmp $@
 
 extract_all: | $(SRC_DIRS)
 
@@ -170,3 +174,5 @@ install: | $(SRC_DIRS) $(BUILD_DIR) $(BUILD_DIR)/Makefile $(BUILD_DIR)/config.ma
 	cd $(BUILD_DIR) && $(MAKE) OUTPUT=$(OUTPUT) $@
 
 endif
+
+.SECONDARY:
