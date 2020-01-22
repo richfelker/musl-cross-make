@@ -134,6 +134,15 @@ musl-git-%:
 	test ! -f $</config.sub || ( rm -f $@.tmp/config.sub && cp -f $(SOURCES)/config.sub $@.tmp/ )
 	mv $@.tmp $@
 
+binutils-$(BINUTILS_VER): $(wildcard patches/binutils-$(BINUTILS_VER) patches/binutils-$(BINUTILS_VER)/*)
+gcc-$(GCC_VER):           $(wildcard patches/gcc-$(GCC_VER)           patches/gcc-$(GCC_VER)/*)
+musl-$(MUSL_VER):         $(wildcard patches/musl-$(MUSL_VER)         patches/musl-$(MUSL_VER)/*)
+gmp-$(GMP_VER):           $(wildcard patches/gmp-$(GMP_VER)           patches/gmp-$(GMP_VER)/*)
+mpfr-$(MPFR_VER):         $(wildcard patches/mpfr-$(MPFR_VER)         patches/mpfr-$(MPFR_VER)/*)
+mpc-$(MPC_VER):           $(wildcard patches/mpc-$(MPC_VER)           patches/mpc-$(MPC_VER)/*)
+ils-$(ISL_VER):           $(wildcard patches/isl-$(ISL_VER)           patches/isl-$(ISL_VER)/*)
+linux-$(LINUX_VER):       $(wildcard patches/linux-$(LINUX_VER)       patches/linux-$(LINUX_VER)/*)
+
 extract_all: | $(SRC_DIRS)
 
 
