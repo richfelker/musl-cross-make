@@ -1,0 +1,249 @@
+From: Stafford Horne <shorne@gmail.com>
+To: GNU Binutils <binutils@sourceware.org>
+Cc: Openrisc <openrisc@lists.librecores.org>,	dalias@libc.org,	Stafford Horne <shorne@gmail.com>
+Subject: [PATCH 1/2] or1k: Remove 64-bit support, it's not used and it breaks 32-bit hosts
+Date: Wed, 11 Dec 2019 06:49:05 +0900
+
+Reported by Rich Felker when building on 32-bit hosts.  Backwards jump
+negative offsets were not calculated correctly due to improper 32-bit
+to 64-bit zero-extension.  The 64-bit fields are present because we
+are mixing 32-bit and 64-bit architectures in our cpu descriptions.
+
+Removing 64-bit fixes the issue.  We don't use 64-bit, there is an architecture
+spec for 64-bit but no implementations or simulators.  My thought is if
+we need them in the future we should do the proper work to support both
+32-bit and 64-bit implementations co-existing then.
+
+cpu/ChangeLog:
+
+yyyy-mm-dd  Stafford Horne  <shorne@gmail.com>
+
+	PR 25184
+	* or1k.cpu (arch or1k): Remove or64 and or64nd machs.
+	(ORBIS-MACHS, ORFPX32-MACHS): Remove pmacros.
+	(cpu or1k64bf, mach or64, mach or64nd): Remove definitions.
+	* or1kcommon.cpu (h-fdr): Remove hardware.
+	* or1korfpx.cpu (rDDF, rADF, rBDF): Remove operand definitions.
+	(float-regreg-insn): Remove lf- mnemonic -d instruction pattern.
+	(float-setflag-insn-base): Remove lf-sf mnemonic -d pattern.
+	(float-cust-insn): Remove "lf-cust" cust-num "-d" pattern.
+	(lf-rem-d, lf-itof-d, lf-ftoi-d, lf-madd-d): Remove.
+---
+ cpu/or1k.cpu       | 35 +++----------------------
+ cpu/or1kcommon.cpu | 14 ----------
+ cpu/or1korfpx.cpu  | 64 ----------------------------------------------
+ 3 files changed, 3 insertions(+), 110 deletions(-)
+
+diff --git a/cpu/or1k.cpu b/cpu/or1k.cpu
+index b796862d1b..9784f7a0fa 100644
+--- a/cpu/or1k.cpu
++++ b/cpu/or1k.cpu
+@@ -31,7 +31,7 @@
+   (comment "OpenRISC 1000")
+   (default-alignment aligned)
+   (insn-lsb0? #t)
+-  (machs or32 or32nd or64 or64nd)
++  (machs or32 or32nd)
+   (isas openrisc)
+ )
+ 
+@@ -44,10 +44,8 @@
+   )
+ 
+ (define-pmacro OR32-MACHS       or32,or32nd)
+-(define-pmacro OR64-MACHS       or64,or64nd)
+-(define-pmacro ORBIS-MACHS      or32,or32nd,or64,or64nd)
+-(define-pmacro ORFPX32-MACHS    or32,or32nd,or64,or64nd)
+-(define-pmacro ORFPX64-MACHS    or64,or64nd)
++(define-pmacro ORBIS-MACHS      or32,or32nd)
++(define-pmacro ORFPX32-MACHS    or32,or32nd)
+ (define-pmacro ORFPX64A32-MACHS or32,or32nd) ; float64 for 32-bit machs
+ 
+ (define-attr
+@@ -100,33 +98,6 @@
+       )
+     )
+ 
+-(if (keep-mach? (or64 or64nd))
+-    (begin
+-      (define-cpu
+-        (name or1k64bf)
+-        (comment "OpenRISC 1000 64-bit CPU family")
+-        (insn-endian big)
+-        (data-endian big)
+-        (word-bitsize 64)
+-        (file-transform "64")
+-        )
+-
+-      (define-mach
+-        (name or64)
+-        (comment "Generic OpenRISC 1000 64-bit CPU")
+-        (cpu or1k64bf)
+-        (bfd-name "or1k64")
+-        )
+-
+-      (define-mach
+-        (name or64nd)
+-        (comment "Generic OpenRISC 1000 ND 64-bit CPU with no branch delay slot")
+-        (cpu or1k64bf)
+-        (bfd-name "or1k64nd")
+-        )
+-      )
+-    )
+-
+ (include "or1kcommon.cpu")
+ (include "or1korbis.cpu")
+ (include "or1korfpx.cpu")
+diff --git a/cpu/or1kcommon.cpu b/cpu/or1kcommon.cpu
+index 65154407df..9f102c93a1 100644
+--- a/cpu/or1kcommon.cpu
++++ b/cpu/or1kcommon.cpu
+@@ -114,20 +114,6 @@
+   (set (index newval) (set UWI (reg h-gpr index) (zext UWI (subword SI newval 0))))
+   )
+ 
+-;
+-; Hardware: virtual registerts for FPU (double precision)
+-;           mapped to GPRs
+-;
+-(define-hardware
+-  (name h-fdr)
+-  (comment "or64 floating point registers (double, virtual)")
+-  (attrs VIRTUAL (MACH ORFPX64-MACHS))
+-  (type register DF (32))
+-  (indices keyword "" REG-INDICES)
+-  (get (index) (subword DF (trunc DI (reg h-gpr index)) 0))
+-  (set (index newval) (set UDI (reg h-gpr index) (zext UDI (subword DI newval 0))))
+-  )
+-
+ ;
+ ; Register pairs are offset by 2 for registers r16 and above.  This is to
+ ; be able to allow registers to be call saved in GCC across function calls.
+diff --git a/cpu/or1korfpx.cpu b/cpu/or1korfpx.cpu
+index f43522f2e6..0bd469cff5 100644
+--- a/cpu/or1korfpx.cpu
++++ b/cpu/or1korfpx.cpu
+@@ -84,10 +84,6 @@
+ (dnop rASF "source register A (single floating point mode)"    ((MACH ORFPX32-MACHS)) h-fsr f-r2)
+ (dnop rBSF "source register B (single floating point mode)"    ((MACH ORFPX32-MACHS)) h-fsr f-r3)
+ 
+-(dnop rDDF "or64 destination register (double floating point mode)" ((MACH ORFPX64-MACHS)) h-fdr f-r1)
+-(dnop rADF "or64 source register A (double floating point mode)"    ((MACH ORFPX64-MACHS)) h-fdr f-r2)
+-(dnop rBDF "or64 source register B (double floating point mode)"    ((MACH ORFPX64-MACHS)) h-fdr f-r3)
+-
+ (define-pmacro (double-field-and-ops mnemonic reg offbit op-comment)
+   (begin
+     (define-multi-ifield
+@@ -152,14 +148,6 @@
+          (set SF rDSF (mnemonic SF rASF rBSF))
+          ()
+          )
+-    (dni (.sym lf- mnemonic -d)
+-         (.str "lf." mnemonic ".d reg/reg/reg")
+-         ((MACH ORFPX64-MACHS))
+-         (.str "lf." mnemonic ".d $rDDF,$rADF,$rBDF")
+-         (+ OPC_FLOAT rDDF rADF rBDF (f-resv-10-3 0) (.sym OPC_FLOAT_REGREG_ (.upcase mnemonic) _D))
+-         (set DF rDDF (mnemonic DF rADF rBDF))
+-         ()
+-         )
+     (dni (.sym lf- mnemonic -d32)
+          (.str "lf." mnemonic ".d regpair/regpair/regpair")
+          ((MACH ORFPX64A32-MACHS))
+@@ -185,15 +173,6 @@
+      ()
+      )
+ 
+-(dni lf-rem-d
+-     "lf.rem.d reg/reg/reg"
+-     ((MACH ORFPX64-MACHS))
+-     "lf.rem.d $rDDF,$rADF,$rBDF"
+-     (+ OPC_FLOAT rDDF rADF rBDF (f-resv-10-3 0) OPC_FLOAT_REGREG_REM_D)
+-     (set DF rDDF (rem DF rADF rBDF))
+-     ()
+-     )
+-
+ (dni lf-rem-d32
+      "lf.rem.d regpair/regpair/regpair"
+      ((MACH ORFPX64A32-MACHS))
+@@ -221,15 +200,6 @@
+      ()
+      )
+ 
+-(dni lf-itof-d
+-     "lf.itof.d reg/reg"
+-     ((MACH ORFPX64-MACHS))
+-     "lf.itof.d $rDDF,$rA"
+-     (+ OPC_FLOAT rDDF rA (f-r3 0) (f-resv-10-3 0) OPC_FLOAT_REGREG_ITOF_D)
+-     (set DF rDDF (float DF (get-rounding-mode) rA))
+-     ()
+-     )
+-
+ (dni lf-itof-d32
+      "lf.itof.d regpair/regpair"
+      ((MACH ORFPX64A32-MACHS))
+@@ -248,15 +218,6 @@
+      ()
+      )
+ 
+-(dni lf-ftoi-d
+-     "lf.ftoi.d reg/reg"
+-     ((MACH ORFPX64-MACHS))
+-     "lf.ftoi.d $rD,$rADF"
+-     (+ OPC_FLOAT rD rADF (f-r3 0) (f-resv-10-3 0) OPC_FLOAT_REGREG_FTOI_D)
+-     (set WI rD (fix WI (get-rounding-mode) rADF))
+-     ()
+-     )
+-
+ (dni lf-ftoi-d32
+      "lf.ftoi.d regpair/regpair"
+      ((MACH ORFPX64A32-MACHS))
+@@ -276,14 +237,6 @@
+          (symantics rtx-mnemonic SF rASF rBSF)
+          ()
+          )
+-    (dni (.sym lf-sf mnemonic -d)
+-         (.str "lf.sf" mnemonic ".d reg/reg")
+-         ((MACH ORFPX64-MACHS))
+-         (.str "lf.sf" mnemonic ".d $rADF,$rBDF")
+-         (+ OPC_FLOAT (f-r1 0) rADF rBDF (f-resv-10-3 0) (.sym OPC_FLOAT_REGREG_SF (.upcase mnemonic) _D))
+-         (symantics rtx-mnemonic DF rADF rBDF)
+-         ()
+-         )
+     (dni (.sym lf-sf mnemonic -d32)
+          (.str "lf.sf" mnemonic ".d regpair/regpair")
+          ((MACH ORFPX64A32-MACHS))
+@@ -336,15 +289,6 @@
+      ()
+      )
+ 
+-(dni lf-madd-d
+-     "lf.madd.d reg/reg/reg"
+-     ((MACH ORFPX64-MACHS))
+-     "lf.madd.d $rDDF,$rADF,$rBDF"
+-     (+ OPC_FLOAT rDDF rADF rBDF (f-resv-10-3 0) OPC_FLOAT_REGREG_MADD_D)
+-     (set DF rDDF (add DF (mul DF rADF rBDF) rDDF))
+-     ()
+-     )
+-
+ (dni lf-madd-d32
+      "lf.madd.d regpair/regpair/regpair"
+      ((MACH ORFPX64A32-MACHS))
+@@ -364,14 +308,6 @@
+          (nop)
+          ()
+          )
+-    (dni (.sym "lf-cust" cust-num "-d")
+-         (.str "lf.cust" cust-num ".d")
+-         ((MACH ORFPX64-MACHS))
+-         (.str "lf.cust" cust-num ".d")
+-         (+ OPC_FLOAT (f-resv-25-5 0) rADF rBDF (f-resv-10-3 0) (.sym "OPC_FLOAT_REGREG_CUST" cust-num "_D"))
+-         (nop)
+-         ()
+-         )
+     (dni (.sym "lf-cust" cust-num "-d32")
+          (.str "lf.cust" cust-num ".d")
+          ((MACH ORFPX64A32-MACHS))
+-- 
+2.21.0
+
+
