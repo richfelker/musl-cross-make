@@ -99,7 +99,7 @@ musl-git-%:
 	cd $@.tmp && git fsck
 	mv $@.tmp $@
 
-%.orig: $(SOURCES)/%.tar.gz | $(SOURCES)/config.sub
+%.orig: $(SOURCES)/%.tar.gz
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar zxvf - ) < $<
@@ -108,7 +108,7 @@ musl-git-%:
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
 	rm -rf $@.tmp
 
-%.orig: $(SOURCES)/%.tar.bz2 | $(SOURCES)/config.sub
+%.orig: $(SOURCES)/%.tar.bz2
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar jxvf - ) < $<
@@ -117,7 +117,7 @@ musl-git-%:
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
 	rm -rf $@.tmp
 
-%.orig: $(SOURCES)/%.tar.xz | $(SOURCES)/config.sub
+%.orig: $(SOURCES)/%.tar.xz
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar Jxvf - ) < $<
@@ -126,7 +126,7 @@ musl-git-%:
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
 	rm -rf $@.tmp
 
-%: %.orig
+%: %.orig | $(SOURCES)/config.sub
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && find ../$< -path '*/*/*' -prune -exec sh -c 'ln -s "$$@" .' ':' {} + )
