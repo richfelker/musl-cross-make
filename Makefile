@@ -132,6 +132,7 @@ musl-git-%:
 	( cd $@.tmp && find ../$< -path '*/*/*' -prune -exec sh -c 'ln -s "$$@" .' ':' {} + )
 	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp && $(COWPATCH) -p1 )
 	test ! -f $</config.sub || ( rm -f $@.tmp/config.sub && cp -f $(SOURCES)/config.sub $@.tmp/ )
+	rm -rf $@
 	mv $@.tmp $@
 
 binutils-$(BINUTILS_VER): $(wildcard patches/binutils-$(BINUTILS_VER) patches/binutils-$(BINUTILS_VER)/*)
