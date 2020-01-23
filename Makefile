@@ -100,6 +100,7 @@ musl-git-%:
 	mv $@.tmp $@
 
 %.orig: $(SOURCES)/%.tar.gz
+	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar zxvf - ) < $<
@@ -109,6 +110,7 @@ musl-git-%:
 	rm -rf $@.tmp
 
 %.orig: $(SOURCES)/%.tar.bz2
+	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar jxvf - ) < $<
@@ -118,6 +120,7 @@ musl-git-%:
 	rm -rf $@.tmp
 
 %.orig: $(SOURCES)/%.tar.xz
+	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && tar Jxvf - ) < $<
@@ -127,6 +130,7 @@ musl-git-%:
 	rm -rf $@.tmp
 
 %: %.orig | $(SOURCES)/config.sub
+	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && find ../$< -path '*/*/*' -prune -exec sh -c 'ln -s "$$@" .' ':' {} + )
