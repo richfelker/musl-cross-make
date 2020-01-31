@@ -1,0 +1,55 @@
+From: Szabolcs Nagy <szabolcs.nagy@arm.com>
+Date: Thu, 9 Jan 2020 17:20:56 +0000 (+0000)
+Subject: [PR ld/22269] arm: Avoid dynamic relocs for undefweak symbols in static PIE
+X-Git-Url: https://sourceware.org/git/gitweb.cgi?p=binutils-gdb.git;a=commitdiff_plain;h=6fbcfe4762c3732339cffd82426d00d35382b858;hp=c06868784d819a45c43947180c69e168aecaf368
+
+[PR ld/22269] arm: Avoid dynamic relocs for undefweak symbols in static PIE
+
+With static PIE linking undefined weak symbols are resolved to 0, so no
+dynamic relocation is needed for them. The UNDEFWEAK_NO_DYNAMIC_RELOC
+macro was introduced so this case can be handled easily, but it was not
+applied consistently in the first attempt to fix ld/22269 for arm:
+
+  commit 95b03e4ad68e7a90f5096b47df595636344b783a
+  arm: Check UNDEFWEAK_NO_DYNAMIC_RELOC
+
+This patch fixes spurious relative relocs in static PIE binaries against
+GOT entries created for undefined weak symbols on arm*-*, this fixes
+
+FAIL: pr22269-1 (static pie undefined weak)
+
+bfd/ChangeLog:
+
+	Backported from master
+	2020-01-10  Szabolcs Nagy  <szabolcs.nagy@arm.com>
+
+	PR ld/22269
+	* elf32-arm.c (elf32_arm_final_link_relocate): Use
+	UNDEFWEAK_NO_DYNAMIC_RELOC.
+	(allocate_dynrelocs_for_symbol): Likewise.
+---
+
+diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
+index cce796d..21cf4b0 100644
+--- a/bfd/elf32-arm.c
++++ b/bfd/elf32-arm.c
+@@ -11572,8 +11572,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
+ 		  if (dynreloc_st_type == STT_GNU_IFUNC)
+ 		    outrel.r_info = ELF32_R_INFO (0, R_ARM_IRELATIVE);
+ 		  else if (bfd_link_pic (info)
+-			   && (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+-			       || h->root.type != bfd_link_hash_undefweak))
++			   && !UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
+ 		    outrel.r_info = ELF32_R_INFO (0, R_ARM_RELATIVE);
+ 		  else
+ 		    {
+@@ -16527,8 +16526,7 @@ allocate_dynrelocs_for_symbol (struct elf_link_hash_entry *h, void * inf)
+ 	       GOT entry's R_ARM_IRELATIVE relocation.  */
+ 	    elf32_arm_allocate_irelocs (info, htab->root.srelgot, 1);
+ 	  else if (bfd_link_pic (info)
+-		   && (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+-		       || h->root.type != bfd_link_hash_undefweak))
++		   && !UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
+ 	    /* Reserve room for the GOT entry's R_ARM_RELATIVE relocation.  */
+ 	    elf32_arm_allocate_dynrelocs (info, htab->root.srelgot, 1);
+ 	  else if (htab->fdpic_p && tls_type == GOT_NORMAL)
