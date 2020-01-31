@@ -1,0 +1,11 @@
+--- linux-4.19.90.orig/Makefile	2019-12-17 14:36:04.000000000 -0500
++++ linux-4.19.90/Makefile	2020-01-30 22:06:04.216550425 -0500
+@@ -1173,7 +1173,7 @@
+ archscripts:
+ 
+ PHONY += __headers
+-__headers: $(version_h) scripts_basic uapi-asm-generic archheaders archscripts
++__headers: $(version_h) scripts_basic uapi-asm-generic archheaders
+ 	$(Q)$(MAKE) $(build)=scripts build_unifdef
+ 
+ PHONY += headers_install_all
