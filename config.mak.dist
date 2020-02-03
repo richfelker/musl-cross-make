@@ -61,8 +61,14 @@
 # Recommended options for faster/simpler build:
 
 # COMMON_CONFIG += --disable-nls
-# GCC_CONFIG += --enable-languages=c,c++
 # GCC_CONFIG += --disable-libquadmath --disable-decimal-float
+
+# By default C and C++ are the only languages enabled, and these are
+# the only ones tested and known to be supported. You can uncomment the
+# following and add other languages if you want to try getting them to
+# work too.
+
+# GCC_CONFIG += --enable-languages=c,c++
 
 # You can keep the local build path out of your toolchain binaries and
 # target libraries with the following, but then gdb needs to be told
