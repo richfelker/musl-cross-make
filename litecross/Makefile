@@ -69,6 +69,7 @@ FULL_GCC_CONFIG = --enable-languages=c,c++ \
 	$(GCC_CONFIG_FOR_TARGET) \
 	$(COMMON_CONFIG) $(GCC_CONFIG) $(TOOLCHAIN_CONFIG) \
 	--disable-bootstrap \
+	--disable-assembly \
 	--disable-werror \
 	--target=$(TARGET) --prefix= \
 	--libdir=/lib --disable-multilib \
