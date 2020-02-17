@@ -70,9 +70,11 @@ echo "$l"
 ;;
 @@*)
 echo "$l"
-IFS=" ," read -r junk junk i junk j junk <<EOF
+IFS=" " read -r junk i j junk <<EOF
 $l
 EOF
+case "$i" in *,*) i=${i#*,} ;; *) i=1 ;; esac
+case "$j" in *,*) j=${j#*,} ;; *) j=1 ;; esac
 while test $i -gt 0 || test $j -gt 0 ; do
 IFS= read -r l
 echo "$l"
@@ -87,5 +89,14 @@ esac
 done
 
 }
+
+gotcmd=0
+while getopts ":p:i:RNEI:S:" opt ; do
+case "$opt" in
+I) find "$OPTARG" -path "$OPTARG/*" -prune -exec sh -c 'ln -sf "$@" .' sh {} + ; gotcmd=1 ;;
+S) cowp "$OPTARG" ; gotcmd=1 ;;
+esac
+done
+test "$gotcmd" -eq 0 || exit 0
 
 cowpatch "$@" | patch "$@"
