@@ -54,6 +54,7 @@ done
 cowpatch () {
 
 plev=0
+OPTIND=1
 while getopts ":p:i:RNE" opt ; do
 test "$opt" = p && plev="$OPTARG"
 done
