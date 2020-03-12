@@ -1,0 +1,117 @@
+diff --git a/gcc/common.opt b/gcc/common.opt
+index b52ef0b38c8..0ce5857e01d 100644
+--- a/gcc/common.opt
++++ b/gcc/common.opt
+@@ -3197,11 +3197,11 @@ Driver
+ 
+ no-pie
+ Driver RejectNegative Negative(shared)
+-Don't create a dynamically linked position independent executable.
++Don't create a position independent executable.
+ 
+ pie
+ Driver RejectNegative Negative(no-pie)
+-Create a dynamically linked position independent executable.
++Create a position independent executable.
+ 
+ static-pie
+ Driver RejectNegative Negative(pie)
+diff --git a/gcc/config/gnu-user.h b/gcc/config/gnu-user.h
+index 8620de3e42d..235328a2642 100644
+--- a/gcc/config/gnu-user.h
++++ b/gcc/config/gnu-user.h
+@@ -52,13 +52,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ #define GNU_USER_TARGET_STARTFILE_SPEC \
+   "%{shared:; \
+      pg|p|profile:%{static-pie:grcrt1.o%s;:gcrt1.o%s}; \
+-     static:crt1.o%s; \
+-     static-pie:rcrt1.o%s; \
++     static|static-pie:%{" PIE_SPEC ":rcrt1.o%s;:crt1.o%s}; \
+      " PIE_SPEC ":Scrt1.o%s; \
+      :crt1.o%s} \
+    crti.o%s \
+-   %{static:crtbeginT.o%s; \
+-     shared|static-pie|" PIE_SPEC ":crtbeginS.o%s; \
++   %{shared|" PIE_SPEC ":crtbeginS.o%s; \
++     static:crtbeginT.o%s; \
+      :crtbegin.o%s} \
+    %{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_start_preinit.o%s; \
+@@ -92,8 +91,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+   "%{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_end_preinit.o%s; \
+      fvtable-verify=std:vtv_end.o%s} \
+-   %{static:crtend.o%s; \
+-     shared|static-pie|" PIE_SPEC ":crtendS.o%s; \
++   %{shared|" PIE_SPEC ":crtendS.o%s; \
+      :crtend.o%s} \
+    crtn.o%s \
+    " CRTOFFLOADEND
+@@ -133,7 +131,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ #define LIB_SPEC GNU_USER_TARGET_LIB_SPEC
+ 
+ #if defined(HAVE_LD_EH_FRAME_HDR)
+-#define LINK_EH_SPEC "%{!static|static-pie:--eh-frame-hdr} "
++#define LINK_EH_SPEC "%{!static|" PIE_SPEC ":--eh-frame-hdr} "
+ #endif
+ 
+ #undef LINK_GCC_C_SEQUENCE_SPEC
+diff --git a/gcc/config/rs6000/sysv4.h b/gcc/config/rs6000/sysv4.h
+index bb19d0dcd41..bb2a2324eb0 100644
+--- a/gcc/config/rs6000/sysv4.h
++++ b/gcc/config/rs6000/sysv4.h
+@@ -763,12 +763,12 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
+ #define	STARTFILE_LINUX_SPEC \
+   "%{shared:; \
+      pg|p|profile:gcrt1.o%s; \
+-     static:crt1.o%s; \
+-     static-pie|" PIE_SPEC ":Scrt1.o%s; \
++     static|static-pie:%{" PIE_SPEC ":rcrt1.o%s;:crt1.o%s}; \
++     " PIE_SPEC ":Scrt1.o%s; \
+      :crt1.o%s} \
+    %{mnewlib:ecrti.o%s;:crti.o%s} \
+-   %{static:crtbeginT.o%s; \
+-     shared|static-pie|" PIE_SPEC ":crtbeginS.o%s; \
++   %{shared|" PIE_SPEC ":crtbeginS.o%s; \
++     static:crtbeginT.o%s; \
+      :crtbegin.o%s} \
+    %{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_start_preinit.o%s; \
+@@ -781,8 +781,7 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
+   "%{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_end_preinit.o%s; \
+      fvtable-verify=std:vtv_end.o%s} \
+-   %{static:crtend.o%s; \
+-     shared|static-pie|" PIE_SPEC ":crtendS.o%s; \
++   %{shared|" PIE_SPEC ":crtendS.o%s; \
+      :crtend.o%s} \
+    %{mnewlib:ecrtn.o%s;:crtn.o%s} \
+    " CRTOFFLOADEND
+diff --git a/gcc/gcc.c b/gcc/gcc.c
+index eb1610ba8b0..87560afb03c 100644
+--- a/gcc/gcc.c
++++ b/gcc/gcc.c
+@@ -900,7 +900,7 @@ proper position among the other output files.  */
+ #define NO_FPIE_AND_FPIC_SPEC	NO_FPIE_SPEC "|" NO_FPIC_SPEC
+ #define FPIE_OR_FPIC_SPEC	NO_FPIE_AND_FPIC_SPEC ":;"
+ #else
+-#define PIE_SPEC		"pie"
++#define PIE_SPEC		"pie|static-pie"
+ #define FPIE1_SPEC		"fpie"
+ #define NO_FPIE1_SPEC		FPIE1_SPEC ":;"
+ #define FPIE2_SPEC		"fPIE"
+@@ -924,12 +924,12 @@ proper position among the other output files.  */
+ #ifndef LINK_PIE_SPEC
+ #ifdef HAVE_LD_PIE
+ #ifndef LD_PIE_SPEC
+-#define LD_PIE_SPEC "-pie"
++#define LD_PIE_SPEC "-pie %{static-pie:-static} %{static|static-pie:--no-dynamic-linker -z text -Bsymbolic}"
+ #endif
+ #else
+ #define LD_PIE_SPEC ""
+ #endif
+-#define LINK_PIE_SPEC "%{static|shared|r:;" PIE_SPEC ":" LD_PIE_SPEC "} "
++#define LINK_PIE_SPEC "%{shared|r:;" PIE_SPEC ":" LD_PIE_SPEC "} "
+ #endif
+ 
+ #ifndef LINK_BUILDID_SPEC
