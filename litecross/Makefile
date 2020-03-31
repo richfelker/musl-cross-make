@@ -75,9 +75,7 @@ FULL_GCC_CONFIG = --enable-languages=c,c++ \
 	--libdir=/lib --disable-multilib \
 	--with-sysroot=$(SYSROOT) \
 	--enable-tls \
-	--disable-libmudflap --disable-libsanitizer \
-	--disable-gnu-indirect-function \
-	--disable-libmpx \
+	--disable-libsanitizer \
 	--enable-libstdcxx-time=rt
 
 FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
