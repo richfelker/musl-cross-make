@@ -54,7 +54,7 @@ endif
 MAKE += MULTILIB_OSDIRNAMES=
 MAKE += INFO_DEPS= infodir=
 MAKE += ac_cv_prog_lex_root=lex.yy
-MAKE += MAKEINFO=false
+MAKE += MAKEINFO=true
 
 FULL_BINUTILS_CONFIG = \
 	--disable-separate-code \
