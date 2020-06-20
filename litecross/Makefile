@@ -238,7 +238,7 @@ obj_musl/.lc_built: | obj_musl/.lc_configured
 	touch $@
 
 obj_sysroot/.lc_libs: | obj_musl/.lc_built
-	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(CURDIR)/obj_sysroot install
+	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(CURDIR)/obj_sysroot install-libs install-tools
 	touch $@
 
 obj_gcc/.lc_built: | obj_gcc/.lc_configured obj_gcc/gcc/.lc_built
