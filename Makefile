@@ -136,7 +136,7 @@ musl-git-%:
 	mkdir $@.tmp
 	( cd $@.tmp && $(COWPATCH) -I ../$< )
 	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp && $(COWPATCH) -p1 )
-	test ! -f $</config.sub || ( rm -f $@.tmp/config.sub && cp -f $(SOURCES)/config.sub $@.tmp/ && chmod +x $@.tmp/config.sub )
+	if test -f $</configfsf.sub ; then cs=configfsf.sub ; elif test -f $</config.sub ; then cs=config.sub ; else exit 0 ; fi ; rm -f $@.tmp/$$cs && cp -f $(SOURCES)/config.sub $@.tmp/$$cs && chmod +x $@.tmp/$$cs
 	rm -rf $@
 	mv $@.tmp $@
 
