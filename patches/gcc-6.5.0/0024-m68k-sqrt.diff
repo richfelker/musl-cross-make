@@ -1,0 +1,38 @@
+--- gcc-9.2.0.orig/gcc/config/m68k/m68k.md	2019-01-01 07:31:55.000000000 -0500
++++ gcc-9.2.0/gcc/config/m68k/m68k.md	2020-06-30 15:56:20.061868526 -0400
+@@ -4121,35 +4121,6 @@
+   return "f<FP:prec>neg%.<FP:prec> %1,%0";
+ })
+ 
+-;; Sqrt instruction for the 68881
+-
+-(define_expand "sqrt<mode>2"
+-  [(set (match_operand:FP 0 "nonimmediate_operand" "")
+-	(sqrt:FP (match_operand:FP 1 "general_operand" "")))]
+-  "TARGET_HARD_FLOAT"
+-  "")
+-
+-(define_insn "sqrt<mode>2_68881"
+-  [(set (match_operand:FP 0 "nonimmediate_operand" "=f")
+-	(sqrt:FP (match_operand:FP 1 "general_operand" "f<FP:dreg>m")))]
+-  "TARGET_68881"
+-{
+-  if (FP_REG_P (operands[1]))
+-    return "f<FP:round>sqrt%.x %1,%0";
+-  return "f<FP:round>sqrt%.<FP:prec> %1,%0";
+-}
+-  [(set_attr "type" "fsqrt")])
+-
+-(define_insn "sqrt<mode>2_cf"
+-  [(set (match_operand:FP 0 "nonimmediate_operand" "=f")
+-	(sqrt:FP (match_operand:FP 1 "general_operand" "f<FP:dreg><Q>U")))]
+-  "TARGET_COLDFIRE_FPU"
+-{
+-  if (FP_REG_P (operands[1]))
+-    return "f<FP:prec>sqrt%.d %1,%0";
+-  return "f<FP:prec>sqrt%.<FP:prec> %1,%0";
+-}
+-  [(set_attr "type" "fsqrt")])
+ ;; Absolute value instructions
+ ;; If using software floating point, just zero the sign bit.
+ 
