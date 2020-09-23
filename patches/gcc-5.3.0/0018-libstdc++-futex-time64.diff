@@ -4,7 +4,7 @@
  	struct timeval tv;
  	gettimeofday (&tv, NULL);
  	// Convert the absolute timeout value to a relative timeout
-+#if defined(SYS_futex_time64)
++#if defined(SYS_futex_time64) && SYS_futex_time64 != SYS_futex
 +	struct
 +	  {
 +	    long tv_sec;
