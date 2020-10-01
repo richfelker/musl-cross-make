@@ -1,0 +1,14 @@
+diff -ur linux-5.8.5.orig/Makefile linux-5.8.5.tmp/Makefile
+--- linux-5.8.5.orig/Makefile	2020-08-27 03:31:49.000000000 -0400
++++ linux-5.8.5/Makefile	2020-08-28 19:00:50.980172582 -0400
+@@ -1253,7 +1253,7 @@
+ hdr-inst := -f $(srctree)/scripts/Makefile.headersinst obj
+ 
+ PHONY += headers
+-headers: $(version_h) scripts_unifdef uapi-asm-generic archheaders archscripts
++headers: $(version_h) scripts_unifdef uapi-asm-generic archheaders
+ 	$(if $(wildcard $(srctree)/arch/$(SRCARCH)/include/uapi/asm/Kbuild),, \
+ 	  $(error Headers not exportable for the $(SRCARCH) architecture))
+ 	$(Q)$(MAKE) $(hdr-inst)=include/uapi
+Only in linux-5.8.5.tmp/: Makefile.orig
+Only in linux-5.8.5.tmp/: Makefile.rej
