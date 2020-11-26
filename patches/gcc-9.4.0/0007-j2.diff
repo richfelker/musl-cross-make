@@ -1,0 +1,346 @@
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index 09fb9ecd2cd..79ac206d10e 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -536,7 +536,7 @@ s390*-*-*)
+ 	extra_headers="s390intrin.h htmintrin.h htmxlintrin.h vecintrin.h"
+ 	;;
+ # Note the 'l'; we need to be able to match e.g. "shle" or "shl".
+-sh[123456789lbe]*-*-* | sh-*-*)
++sh[123456789lbej]*-*-* | sh-*-*)
+ 	cpu_type=sh
+ 	extra_options="${extra_options} fused-madd.opt"
+ 	extra_objs="${extra_objs} sh_treg_combine.o sh-mem.o sh_optimize_sett_clrt.o"
+@@ -2834,18 +2834,18 @@ s390x-ibm-tpf*)
+ 	extra_options="${extra_options} s390/tpf.opt"
+ 	tmake_file="${tmake_file} s390/t-s390"
+ 	;;
+-sh-*-elf* | sh[12346l]*-*-elf* | \
+-  sh-*-linux* | sh[2346lbe]*-*-linux* | \
++sh-*-elf* | sh[12346lj]*-*-elf* | \
++  sh-*-linux* | sh[2346lbej]*-*-linux* | \
+   sh-*-netbsdelf* | shl*-*-netbsdelf*)
+ 	tmake_file="${tmake_file} sh/t-sh sh/t-elf"
+ 	if test x${with_endian} = x; then
+ 		case ${target} in
+-		sh[1234]*be-*-* | sh[1234]*eb-*-*) with_endian=big ;;
++		sh[j1234]*be-*-* | sh[j1234]*eb-*-*) with_endian=big ;;
+ 		shbe-*-* | sheb-*-*)		   with_endian=big,little ;;
+ 		sh[1234]l* | sh[34]*-*-linux*)	   with_endian=little ;;
+ 		shl* | sh*-*-linux* | \
+ 		  sh-superh-elf)		   with_endian=little,big ;;
+-		sh[1234]*-*-*)			   with_endian=big ;;
++		sh[j1234]*-*-*)			   with_endian=big ;;
+ 		*)				   with_endian=big,little ;;
+ 		esac
+ 	fi
+@@ -2912,6 +2912,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+ 	sh2a_nofpu*)		sh_cpu_target=sh2a-nofpu ;;
+ 	sh2a*)			sh_cpu_target=sh2a ;;
+ 	sh2e*)			sh_cpu_target=sh2e ;;
++	shj2*)			sh_cpu_target=shj2;;
+ 	sh2*)			sh_cpu_target=sh2 ;;
+ 	*)			sh_cpu_target=sh1 ;;
+ 	esac
+@@ -2933,7 +2934,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+ 	  sh2a-single-only | sh2a-single | sh2a-nofpu | sh2a | \
+ 	  sh4a-single-only | sh4a-single | sh4a-nofpu | sh4a | sh4al | \
+ 	  sh4-single-only | sh4-single | sh4-nofpu | sh4 | sh4-300 | \
+-	  sh3e | sh3 | sh2e | sh2 | sh1) ;;
++	  sh3e | sh3 | sh2e | sh2 | sh1 | shj2) ;;
+ 	"")	sh_cpu_default=${sh_cpu_target} ;;
+ 	*)	echo "with_cpu=$with_cpu not supported"; exit 1 ;;
+ 	esac
+@@ -2942,9 +2943,9 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+ 		case ${target} in
+ 		sh[1234]*)	sh_multilibs=${sh_cpu_target} ;;
+ 		sh-superh-*)	sh_multilibs=m4,m4-single,m4-single-only,m4-nofpu ;;
+-		sh*-*-linux*)	sh_multilibs=m1,m2,m2a,m3e,m4 ;;
++		sh*-*-linux*)	sh_multilibs=m1,m2,m2a,m3e,m4,mj2 ;;
+ 		sh*-*-netbsd*)	sh_multilibs=m3,m3e,m4 ;;
+-		*) sh_multilibs=m1,m2,m2e,m4,m4-single,m4-single-only,m2a,m2a-single ;;
++		*) sh_multilibs=m1,m2,m2e,m4,m4-single,m4-single-only,m2a,m2a-single,mj2 ;;
+ 		esac
+ 		if test x$with_fp = xno; then
+ 			sh_multilibs="`echo $sh_multilibs|sed -e s/m4/sh4-nofpu/ -e s/,m4-[^,]*//g -e s/,m[23]e// -e s/m2a,m2a-single/m2a-nofpu/ -e s/m5-..m....,//g`"
+@@ -2959,7 +2960,8 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+ 		m1 | m2 | m2e | m3 | m3e | \
+ 		m4 | m4-single | m4-single-only | m4-nofpu | m4-300 |\
+ 		m4a | m4a-single | m4a-single-only | m4a-nofpu | m4al | \
+-		m2a | m2a-single | m2a-single-only | m2a-nofpu)
++		m2a | m2a-single | m2a-single-only | m2a-nofpu | \
++		mj2)
+ 			# TM_MULTILIB_CONFIG is used by t-sh for the non-endian multilib definition
+ 			# It is passed to MULTIILIB_OPTIONS verbatim.
+ 			TM_MULTILIB_CONFIG="${TM_MULTILIB_CONFIG}/${sh_multilib}"
+@@ -2976,7 +2978,7 @@ sh-*-elf* | sh[12346l]*-*-elf* | \
+ 	done
+ 	TM_MULTILIB_CONFIG=`echo $TM_MULTILIB_CONFIG | sed 's:^/::'`
+ 	if test x${enable_incomplete_targets} = xyes ; then
+-		tm_defines="$tm_defines SUPPORT_SH1=1 SUPPORT_SH2E=1 SUPPORT_SH4=1 SUPPORT_SH4_SINGLE=1 SUPPORT_SH2A=1 SUPPORT_SH2A_SINGLE=1"
++		tm_defines="$tm_defines SUPPORT_SH1=1 SUPPORT_SH2E=1 SUPPORT_SH4=1 SUPPORT_SH4_SINGLE=1 SUPPORT_SH2A=1 SUPPORT_SH2A_SINGLE=1 SUPPORT_SHJ2=1"
+ 	fi
+ 	tm_file="$tm_file ./sysroot-suffix.h"
+ 	tmake_file="$tmake_file t-sysroot-suffix"
+@@ -4760,6 +4762,8 @@ case "${target}" in
+ 			;;
+ 		m4a | m4a-single | m4a-single-only | m4a-nofpu | m4al)
+ 		        ;;
++		mj2)
++			;;
+ 		*)
+ 			echo "Unknown CPU used in --with-cpu=$with_cpu, known values:"  1>&2
+ 			echo "m1 m2 m2e m3 m3e m4 m4-single m4-single-only m4-nofpu" 1>&2
+@@ -4984,7 +4988,7 @@ case ${target} in
+ 		tmake_file="${cpu_type}/t-${cpu_type} ${tmake_file}"
+ 		;;
+ 
+-	sh[123456ble]*-*-* | sh-*-*)
++	sh[123456blej]*-*-* | sh-*-*)
+ 		c_target_objs="${c_target_objs} sh-c.o"
+ 		cxx_target_objs="${cxx_target_objs} sh-c.o"
+ 		;;
+diff --git a/gcc/config/sh/sh.c b/gcc/config/sh/sh.c
+index 8dc79a764df..36683614277 100644
+--- a/gcc/config/sh/sh.c
++++ b/gcc/config/sh/sh.c
+@@ -686,6 +686,7 @@ parse_validate_atomic_model_option (const char* str)
+   model_names[sh_atomic_model::hard_llcs] = "hard-llcs";
+   model_names[sh_atomic_model::soft_tcb] = "soft-tcb";
+   model_names[sh_atomic_model::soft_imask] = "soft-imask";
++  model_names[sh_atomic_model::hard_cas] = "hard-cas";
+ 
+   const char* model_cdef_names[sh_atomic_model::num_models];
+   model_cdef_names[sh_atomic_model::none] = "NONE";
+@@ -693,6 +694,7 @@ parse_validate_atomic_model_option (const char* str)
+   model_cdef_names[sh_atomic_model::hard_llcs] = "HARD_LLCS";
+   model_cdef_names[sh_atomic_model::soft_tcb] = "SOFT_TCB";
+   model_cdef_names[sh_atomic_model::soft_imask] = "SOFT_IMASK";
++  model_cdef_names[sh_atomic_model::hard_cas] = "HARD_CAS";
+ 
+   sh_atomic_model ret;
+   ret.type = sh_atomic_model::none;
+@@ -771,6 +773,9 @@ got_mode_name:;
+   if (ret.type == sh_atomic_model::soft_imask && TARGET_USERMODE)
+     err_ret ("cannot use atomic model %s in user mode", ret.name);
+ 
++  if (ret.type == sh_atomic_model::hard_cas && !TARGET_SHJ2)
++    err_ret ("atomic model %s is only available J2 targets", ret.name);
++
+   return ret;
+ 
+ #undef err_ret
+@@ -827,6 +832,8 @@ sh_option_override (void)
+     sh_cpu = PROCESSOR_SH2E;
+   if (TARGET_SH2A)
+     sh_cpu = PROCESSOR_SH2A;
++  if (TARGET_SHJ2)
++    sh_cpu = PROCESSOR_SHJ2;
+   if (TARGET_SH3)
+     sh_cpu = PROCESSOR_SH3;
+   if (TARGET_SH3E)
+diff --git a/gcc/config/sh/sh.h b/gcc/config/sh/sh.h
+index 0204872eae7..30416a34e30 100644
+--- a/gcc/config/sh/sh.h
++++ b/gcc/config/sh/sh.h
+@@ -83,6 +83,7 @@ extern int code_for_indirect_jump_scratch;
+ #define SUPPORT_SH4_SINGLE 1
+ #define SUPPORT_SH2A 1
+ #define SUPPORT_SH2A_SINGLE 1
++#define SUPPORT_SHJ2 1
+ #endif
+ 
+ #define TARGET_DIVIDE_CALL_DIV1 (sh_div_strategy == SH_DIV_CALL_DIV1)
+@@ -115,6 +116,7 @@ extern int code_for_indirect_jump_scratch;
+ #define SELECT_SH4A_SINGLE_ONLY  (MASK_SH4A | SELECT_SH4_SINGLE_ONLY)
+ #define SELECT_SH4A		 (MASK_SH4A | SELECT_SH4)
+ #define SELECT_SH4A_SINGLE	 (MASK_SH4A | SELECT_SH4_SINGLE)
++#define SELECT_SHJ2		 (MASK_SHJ2 | SELECT_SH2)
+ 
+ #if SUPPORT_SH1
+ #define SUPPORT_SH2 1
+@@ -122,6 +124,7 @@ extern int code_for_indirect_jump_scratch;
+ #if SUPPORT_SH2
+ #define SUPPORT_SH3 1
+ #define SUPPORT_SH2A_NOFPU 1
++#define SUPPORT_SHJ2 1
+ #endif
+ #if SUPPORT_SH3
+ #define SUPPORT_SH4_NOFPU 1
+@@ -154,7 +157,7 @@ extern int code_for_indirect_jump_scratch;
+ #define MASK_ARCH (MASK_SH1 | MASK_SH2 | MASK_SH3 | MASK_SH_E | MASK_SH4 \
+ 		   | MASK_HARD_SH2A | MASK_HARD_SH2A_DOUBLE | MASK_SH4A \
+ 		   | MASK_HARD_SH4 | MASK_FPU_SINGLE \
+-		   | MASK_FPU_SINGLE_ONLY)
++		   | MASK_FPU_SINGLE_ONLY | MASK_SHJ2)
+ 
+ /* This defaults us to big-endian.  */
+ #ifndef TARGET_ENDIAN_DEFAULT
+@@ -229,7 +232,8 @@ extern int code_for_indirect_jump_scratch;
+ %{m2a-single:--isa=sh2a} \
+ %{m2a-single-only:--isa=sh2a} \
+ %{m2a-nofpu:--isa=sh2a-nofpu} \
+-%{m4al:-dsp}"
++%{m4al:-dsp} \
++%{mj2:-isa=j2}"
+ 
+ #define ASM_SPEC SH_ASM_SPEC
+ 
+@@ -345,6 +349,7 @@ struct sh_atomic_model
+     hard_llcs,
+     soft_tcb,
+     soft_imask,
++    hard_cas,
+ 
+     num_models
+   };
+@@ -388,6 +393,9 @@ extern const sh_atomic_model& selected_atomic_model (void);
+ #define TARGET_ATOMIC_SOFT_IMASK \
+   (selected_atomic_model ().type == sh_atomic_model::soft_imask)
+ 
++#define TARGET_ATOMIC_HARD_CAS \
++  (selected_atomic_model ().type == sh_atomic_model::hard_cas)
++
+ #endif // __cplusplus
+ 
+ #define SUBTARGET_OVERRIDE_OPTIONS (void) 0
+@@ -1521,7 +1529,7 @@ extern bool current_function_interrupt;
+ 
+ /* Nonzero if the target supports dynamic shift instructions
+    like shad and shld.  */
+-#define TARGET_DYNSHIFT (TARGET_SH3 || TARGET_SH2A)
++#define TARGET_DYNSHIFT (TARGET_SH3 || TARGET_SH2A || TARGET_SHJ2)
+ 
+ /* The cost of using the dynamic shift insns (shad, shld) are the same
+    if they are available.  If they are not available a library function will
+@@ -1784,6 +1792,7 @@ enum processor_type {
+   PROCESSOR_SH2,
+   PROCESSOR_SH2E,
+   PROCESSOR_SH2A,
++  PROCESSOR_SHJ2,
+   PROCESSOR_SH3,
+   PROCESSOR_SH3E,
+   PROCESSOR_SH4,
+diff --git a/gcc/config/sh/sh.opt b/gcc/config/sh/sh.opt
+index 8eb1a4e121a..9c28ed6b5c0 100644
+--- a/gcc/config/sh/sh.opt
++++ b/gcc/config/sh/sh.opt
+@@ -65,6 +65,10 @@ m2e
+ Target RejectNegative Condition(SUPPORT_SH2E)
+ Generate SH2e code.
+ 
++mj2
++Target RejectNegative Mask(SHJ2) Condition(SUPPORT_SHJ2)
++Generate J2 code.
++
+ m3
+ Target RejectNegative Mask(SH3) Condition(SUPPORT_SH3)
+ Generate SH3 code.
+diff --git a/gcc/config/sh/sync.md b/gcc/config/sh/sync.md
+index 691d9287101..3ffb099195d 100644
+--- a/gcc/config/sh/sync.md
++++ b/gcc/config/sh/sync.md
+@@ -240,6 +240,9 @@
+       || (TARGET_SH4A && <MODE>mode == SImode && !TARGET_ATOMIC_STRICT))
+     atomic_insn = gen_atomic_compare_and_swap<mode>_hard (old_val, mem,
+ 							  exp_val, new_val);
++  else if (TARGET_ATOMIC_HARD_CAS && <MODE>mode == SImode)
++    atomic_insn = gen_atomic_compare_and_swap<mode>_cas (old_val, mem,
++							 exp_val, new_val);
+   else if (TARGET_ATOMIC_SOFT_GUSA)
+     atomic_insn = gen_atomic_compare_and_swap<mode>_soft_gusa (old_val, mem,
+ 		      exp_val, new_val);
+@@ -306,6 +309,57 @@
+ }
+   [(set_attr "length" "14")])
+ 
++(define_expand "atomic_compare_and_swapsi_cas"
++  [(set (match_operand:SI 0 "register_operand" "=r")
++	(unspec_volatile:SI
++	  [(match_operand:SI 1 "atomic_mem_operand_0" "=Sra")
++	   (match_operand:SI 2 "register_operand" "r")
++	   (match_operand:SI 3 "register_operand" "r")]
++	  UNSPECV_CMPXCHG_1))]
++  "TARGET_ATOMIC_HARD_CAS"
++{
++  rtx mem = gen_rtx_REG (SImode, 0);
++  emit_move_insn (mem, force_reg (SImode, XEXP (operands[1], 0)));
++  emit_insn (gen_shj2_cas (operands[0], mem, operands[2], operands[3]));
++  DONE;
++})
++
++(define_insn "shj2_cas"
++  [(set (match_operand:SI 0 "register_operand" "=&r")
++  (unspec_volatile:SI
++   [(match_operand:SI 1 "register_operand" "=r")
++   (match_operand:SI 2 "register_operand" "r")
++   (match_operand:SI 3 "register_operand" "0")]
++   UNSPECV_CMPXCHG_1))
++   (set (reg:SI T_REG)
++	(unspec_volatile:SI [(const_int 0)] UNSPECV_CMPXCHG_3))]
++  "TARGET_ATOMIC_HARD_CAS"
++  "cas.l	%2,%0,@%1"
++  [(set_attr "length" "2")]
++)
++
++(define_expand "atomic_compare_and_swapqi_cas"
++  [(set (match_operand:SI 0 "arith_reg_dest" "=&r")
++	(unspec_volatile:SI
++	  [(match_operand:SI 1 "atomic_mem_operand_0" "=Sra")
++	   (match_operand:SI 2 "arith_operand" "rI08")
++	   (match_operand:SI 3 "arith_operand" "rI08")]
++	  UNSPECV_CMPXCHG_1))]
++  "TARGET_ATOMIC_HARD_CAS"
++{FAIL;}
++)
++
++(define_expand "atomic_compare_and_swaphi_cas"
++  [(set (match_operand:SI 0 "arith_reg_dest" "=&r")
++	(unspec_volatile:SI
++	  [(match_operand:SI 1 "atomic_mem_operand_0" "=Sra")
++	   (match_operand:SI 2 "arith_operand" "rI08")
++	   (match_operand:SI 3 "arith_operand" "rI08")]
++	  UNSPECV_CMPXCHG_1))]
++  "TARGET_ATOMIC_HARD_CAS"
++{FAIL;}
++)
++
+ ;; The QIHImode llcs patterns modify the address register of the memory
+ ;; operand.  In order to express that, we have to open code the memory
+ ;; operand.  Initially the insn is expanded like every other atomic insn
+diff --git a/gcc/config/sh/t-sh b/gcc/config/sh/t-sh
+index e1a398319d5..19a6f3f7ea8 100644
+--- a/gcc/config/sh/t-sh
++++ b/gcc/config/sh/t-sh
+@@ -50,7 +50,8 @@ MULTILIB_MATCHES = $(shell \
+              m2e,m3e,m4-single-only,m4-100-single-only,m4-200-single-only,m4-300-single-only,m4a-single-only \
+              m2a-single,m2a-single-only \
+              m4-single,m4-100-single,m4-200-single,m4-300-single,m4a-single \
+-             m4,m4-100,m4-200,m4-300,m4a; do \
++             m4,m4-100,m4-200,m4-300,m4a \
++             mj2; do \
+     subst= ; \
+     for lib in `echo $$abi|tr , ' '` ; do \
+       if test "`echo $$multilibs|sed s/$$lib//`" != "$$multilibs"; then \
+@@ -63,9 +64,9 @@ MULTILIB_MATCHES = $(shell \
+ 
+ # SH1 and SH2A support big endian only.
+ ifeq ($(DEFAULT_ENDIAN),ml)
+-MULTILIB_EXCEPTIONS = m1 ml/m1 m2a* ml/m2a* $(TM_MULTILIB_EXCEPTIONS_CONFIG)
++MULTILIB_EXCEPTIONS = m1 ml/m1 m2a* ml/m2a* ml/mj2 $(TM_MULTILIB_EXCEPTIONS_CONFIG)
+ else
+-MULTILIB_EXCEPTIONS = ml/m1 ml/m2a* $(TM_MULTILIB_EXCEPTIONS_CONFIG)
++MULTILIB_EXCEPTIONS = ml/m1 ml/m2a* ml/mj2 $(TM_MULTILIB_EXCEPTIONS_CONFIG)
+ endif
+ 
+ MULTILIB_OSDIRNAMES = \
+@@ -87,7 +88,8 @@ MULTILIB_OSDIRNAMES = \
+ 	m4a-single-only=!m4a-single-only $(OTHER_ENDIAN)/m4a-single-only=!$(OTHER_ENDIAN)/m4a-single-only \
+ 	m4a-single=!m4a-single $(OTHER_ENDIAN)/m4a-single=!$(OTHER_ENDIAN)/m4a-single \
+ 	m4a=!m4a $(OTHER_ENDIAN)/m4a=!$(OTHER_ENDIAN)/m4a \
+-	m4al=!m4al $(OTHER_ENDIAN)/m4al=!$(OTHER_ENDIAN)/m4al
++	m4al=!m4al $(OTHER_ENDIAN)/m4al=!$(OTHER_ENDIAN)/m4al \
++	mj2=!j2
+ 
+ $(out_object_file): gt-sh.h
+ gt-sh.h : s-gtype ; @true

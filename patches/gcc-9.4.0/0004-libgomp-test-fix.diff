@@ -1,0 +1,61 @@
+diff --git a/libgomp/testsuite/Makefile.am b/libgomp/testsuite/Makefile.am
+index 2100f49e53b..fa25b3a0604 100644
+--- a/libgomp/testsuite/Makefile.am
++++ b/libgomp/testsuite/Makefile.am
+@@ -12,6 +12,12 @@ _RUNTEST = $(shell if test -f $(top_srcdir)/../dejagnu/runtest; then \
+ 	     echo $(top_srcdir)/../dejagnu/runtest; else echo runtest; fi)
+ RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
+ 
++EXTRA_DEJAGNU_SITE_CONFIG = extra.exp
++
++extra.exp:
++	echo 'set BUILD_CC "$(CC)"' > $@.tmp
++	mv $@.tmp $@
++
+ # Instead of directly in ../testsuite/libgomp-test-support.exp.in, the
+ # following variables have to be "routed through" this Makefile, for expansion
+ # of the several (Makefile) variables used therein.
+diff --git a/libgomp/testsuite/Makefile.in b/libgomp/testsuite/Makefile.in
+index 80315b15a7d..cdbf35695f7 100644
+--- a/libgomp/testsuite/Makefile.in
++++ b/libgomp/testsuite/Makefile.in
+@@ -303,6 +303,7 @@ _RUNTEST = $(shell if test -f $(top_srcdir)/../dejagnu/runtest; then \
+ 	     echo $(top_srcdir)/../dejagnu/runtest; else echo runtest; fi)
+ 
+ RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
++EXTRA_DEJAGNU_SITE_CONFIG = extra.exp
+ all: all-am
+ 
+ .SUFFIXES:
+@@ -464,6 +465,10 @@ uninstall-am:
+ .PRECIOUS: Makefile
+ 
+ 
++extra.exp:
++	echo 'set BUILD_CC "$(CC)"' > $@.tmp
++	mv $@.tmp $@
++
+ # Instead of directly in ../testsuite/libgomp-test-support.exp.in, the
+ # following variables have to be "routed through" this Makefile, for expansion
+ # of the several (Makefile) variables used therein.
+diff --git a/libgomp/testsuite/lib/libgomp.exp b/libgomp/testsuite/lib/libgomp.exp
+index 14d9b5f1305..186b0ba0b57 100644
+--- a/libgomp/testsuite/lib/libgomp.exp
++++ b/libgomp/testsuite/lib/libgomp.exp
+@@ -68,6 +68,7 @@ proc libgomp_init { args } {
+     global ALWAYS_CFLAGS
+     global CFLAGS
+     global TOOL_EXECUTABLE TOOL_OPTIONS
++    global BUILD_CC
+     global GCC_UNDER_TEST
+     global TESTING_IN_BUILD_TREE
+     global target_triplet
+@@ -90,6 +91,8 @@ proc libgomp_init { args } {
+     if ![info exists GCC_UNDER_TEST] then {
+ 	if [info exists TOOL_EXECUTABLE] {
+ 	    set GCC_UNDER_TEST $TOOL_EXECUTABLE
++	} elseif [info exists BUILD_CC] {
++	    set GCC_UNDER_TEST $BUILD_CC
+ 	} else {
+ 	    set GCC_UNDER_TEST "[find_gcc]"
+ 	}

@@ -1,0 +1,86 @@
+diff --git a/gcc/common.opt b/gcc/common.opt
+index d342c4f3749..2aae4a3cefb 100644
+--- a/gcc/common.opt
++++ b/gcc/common.opt
+@@ -3287,11 +3287,11 @@ Driver
+ 
+ no-pie
+ Driver RejectNegative Negative(shared)
+-Don't create a dynamically linked position independent executable.
++Don't create a position independent executable.
+ 
+ pie
+ Driver RejectNegative Negative(no-pie)
+-Create a dynamically linked position independent executable.
++Create a position independent executable.
+ 
+ static-pie
+ Driver RejectNegative Negative(pie)
+diff --git a/gcc/config/gnu-user.h b/gcc/config/gnu-user.h
+index 055a4f0afec..7a671c6a49c 100644
+--- a/gcc/config/gnu-user.h
++++ b/gcc/config/gnu-user.h
+@@ -51,13 +51,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ #define GNU_USER_TARGET_STARTFILE_SPEC \
+   "%{shared:; \
+      pg|p|profile:%{static-pie:grcrt1.o%s;:gcrt1.o%s}; \
+-     static:crt1.o%s; \
+-     static-pie:rcrt1.o%s; \
++     static|static-pie:%{" PIE_SPEC ":rcrt1.o%s;:crt1.o%s}; \
+      " PIE_SPEC ":Scrt1.o%s; \
+      :crt1.o%s} " \
+    GNU_USER_TARGET_CRTI " \
+-   %{static:crtbeginT.o%s; \
+-     shared|static-pie|" PIE_SPEC ":crtbeginS.o%s; \
++   %{shared|" PIE_SPEC ":crtbeginS.o%s; \
++     static:crtbeginT.o%s; \
+      :crtbegin.o%s} \
+    %{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_start_preinit.o%s; \
+@@ -76,8 +75,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+   "%{fvtable-verify=none:%s; \
+      fvtable-verify=preinit:vtv_end_preinit.o%s; \
+      fvtable-verify=std:vtv_end.o%s} \
+-   %{static:crtend.o%s; \
+-     shared|static-pie|" PIE_SPEC ":crtendS.o%s; \
++   %{shared|" PIE_SPEC ":crtendS.o%s; \
+      :crtend.o%s} " \
+    GNU_USER_TARGET_CRTN " " \
+    CRTOFFLOADEND
+@@ -106,7 +104,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ #define LIB_SPEC GNU_USER_TARGET_LIB_SPEC
+ 
+ #if defined(HAVE_LD_EH_FRAME_HDR)
+-#define LINK_EH_SPEC "%{!static|static-pie:--eh-frame-hdr} "
++#define LINK_EH_SPEC "%{!static|" PIE_SPEC ":--eh-frame-hdr} "
+ #endif
+ 
+ #define GNU_USER_TARGET_LINK_GCC_C_SEQUENCE_SPEC \
+diff --git a/gcc/gcc.c b/gcc/gcc.c
+index d185c01b257..5d3f81c5fc5 100644
+--- a/gcc/gcc.c
++++ b/gcc/gcc.c
+@@ -908,7 +908,7 @@ proper position among the other output files.  */
+ #define NO_FPIE_AND_FPIC_SPEC	NO_FPIE_SPEC "|" NO_FPIC_SPEC
+ #define FPIE_OR_FPIC_SPEC	NO_FPIE_AND_FPIC_SPEC ":;"
+ #else
+-#define PIE_SPEC		"pie"
++#define PIE_SPEC		"pie|static-pie"
+ #define FPIE1_SPEC		"fpie"
+ #define NO_FPIE1_SPEC		FPIE1_SPEC ":;"
+ #define FPIE2_SPEC		"fPIE"
+@@ -932,12 +932,12 @@ proper position among the other output files.  */
+ #ifndef LINK_PIE_SPEC
+ #ifdef HAVE_LD_PIE
+ #ifndef LD_PIE_SPEC
+-#define LD_PIE_SPEC "-pie"
++#define LD_PIE_SPEC "-pie %{static-pie:-static} %{static|static-pie:--no-dynamic-linker -z text -Bsymbolic}"
+ #endif
+ #else
+ #define LD_PIE_SPEC ""
+ #endif
+-#define LINK_PIE_SPEC "%{static|shared|r:;" PIE_SPEC ":" LD_PIE_SPEC "} "
++#define LINK_PIE_SPEC "%{shared|r:;" PIE_SPEC ":" LD_PIE_SPEC "} "
+ #endif
+ 
+ #ifndef LINK_BUILDID_SPEC

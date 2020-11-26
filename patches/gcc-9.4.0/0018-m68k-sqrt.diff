@@ -1,0 +1,18 @@
+--- gcc-9.2.0.orig/gcc/config/m68k/m68k.md	2019-01-01 07:31:55.000000000 -0500
++++ gcc-9.2.0/gcc/config/m68k/m68k.md	2020-07-01 15:57:20.528408009 -0400
+@@ -4126,13 +4126,13 @@
+ (define_expand "sqrt<mode>2"
+   [(set (match_operand:FP 0 "nonimmediate_operand" "")
+ 	(sqrt:FP (match_operand:FP 1 "general_operand" "")))]
+-  "TARGET_HARD_FLOAT"
++  "(TARGET_68881 && TARGET_68040) || TARGET_COLDFIRE_FPU"
+   "")
+ 
+ (define_insn "sqrt<mode>2_68881"
+   [(set (match_operand:FP 0 "nonimmediate_operand" "=f")
+ 	(sqrt:FP (match_operand:FP 1 "general_operand" "f<FP:dreg>m")))]
+-  "TARGET_68881"
++  "TARGET_68881 && TARGET_68040"
+ {
+   if (FP_REG_P (operands[1]))
+     return "f<FP:round>sqrt%.x %1,%0";
