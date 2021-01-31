@@ -1,0 +1,44 @@
+
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master ]
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+    
+    matrix:
+      include:
+        - target=aarch64-linux-musl
+        - target=arm-linux-musleabi
+        - target=arm-linux-musleabihf
+        - target=i686-linux-musl
+        - target=riscv64-linux-musl
+        - target=x86_64-linux-musl
+        - target=x86_64-linux-muslx32
+
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build MUSL
+        run: TARGET=${{ matrix.target }} make
+
+      - name: Package outputs
+        run: tar -C build/local musl-${{ matrix.target }}.tgz ${{matrix.target}}/*
+        
+      - name: Upload utility artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: musl-${{ matrix.target }}.tgz
+          path: musl-${{ matrix.target }}.tgz
+
