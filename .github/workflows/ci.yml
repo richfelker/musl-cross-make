@@ -9,24 +9,27 @@ on:
     branches: [ master ]
 
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
+
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - target: aarch64-linux-musl
-          - target: arm-linux-musleabi
-          - target: arm-linux-musleabihf
-          - target: i686-linux-musl
-          - target: riscv64-linux-musl
-          - target: x86_64-linux-musl
-          - target: x86_64-linux-muslx32
-
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        target:
+          - aarch64-linux-musl
+          - arm-linux-musleabi
+          - arm-linux-musleabihf
+          - i686-linux-musl
+          - riscv64-linux-musl
+          - x86_64-linux-musl
+          - x86_64-linux-muslx32
 
     steps:
       - uses: actions/checkout@v2
@@ -35,11 +38,11 @@ jobs:
         run: TARGET=${{ matrix.target }} make
 
       - name: Package outputs
-        run: tar -C build/local musl-${{ matrix.target }}.tgz ${{matrix.target}}/*
+        run: tar -C build/local musl-${{ matrix.os }}-${{ matrix.target }}.tgz ${{matrix.target}}/*
         
-      - name: Upload utility artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v1
         with:
-          name: musl-${{ matrix.target }}.tgz
-          path: musl-${{ matrix.target }}.tgz
+          name: musl-${{ matrix.os }}-${{ matrix.target }}.tgz
+          path: musl-${{ matrix.os }}-${{ matrix.target }}.tgz
 
