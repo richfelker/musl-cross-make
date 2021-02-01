@@ -55,7 +55,7 @@ jobs:
             build/
 
       - name: Build MUSL
-        run: TARGET=${{ matrix.target }} make
+        run: TARGET=${{ matrix.target }} make -j
 
       - name: Package outputs
         run: tar -cf musl-${{ matrix.os }}-${{ matrix.target }}.tgz -C build/local ${{matrix.target}}
