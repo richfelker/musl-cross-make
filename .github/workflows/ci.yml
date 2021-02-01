@@ -33,12 +33,32 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        
+      - name: Configure caching 
+        uses: actions/cache@v2
+        # Caching disabled on macos due to https://github.com/actions/cache/issues/403
+        if: ${{ matrix.os != 'macos-latest' }}
+        with:
+          key: ${{ matrix.os }}-${{ matrix.target }}
+          path: |
+            Sources/
+            output/
+            binutils-*/
+            gcc-*/
+            musl-*/
+            gmp-*/
+            mpc-*/
+            mpfr-*/
+            build-*/
+            linux-*/
+            isl-*/
+            build/
 
       - name: Build MUSL
         run: TARGET=${{ matrix.target }} make
 
       - name: Package outputs
-        run: tar -C build/local musl-${{ matrix.os }}-${{ matrix.target }}.tgz ${{matrix.target}}/*
+        run: tar -cf musl-${{ matrix.os }}-${{ matrix.target }}.tgz -C build/local ${{matrix.target}}
         
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
