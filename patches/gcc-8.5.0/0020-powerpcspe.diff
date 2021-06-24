@@ -1,0 +1,11 @@
+--- gcc-8.3.0/gcc/config.gcc.orig	2021-06-23 21:46:44.400306941 -0400
++++ gcc-8.3.0/gcc/config.gcc	2021-06-23 21:46:55.459427459 -0400
+@@ -2479,7 +2479,7 @@
+ 	extra_options="${extra_options} rs6000/sysv4.opt rs6000/linux64.opt"
+ 	tmake_file="${tmake_file} rs6000/t-fprules rs6000/t-rtems rs6000/t-ppccomm"
+ 	;;
+-powerpc*-*-linux*spe*)
++powerpc*-*-linux*gnu*spe*)
+ 	tm_file="${tm_file} dbxelf.h elfos.h gnu-user.h freebsd-spec.h powerpcspe/sysv4.h"
+ 	extra_options="${extra_options} powerpcspe/sysv4.opt"
+ 	tmake_file="${tmake_file} powerpcspe/t-fprules powerpcspe/t-ppccomm"
