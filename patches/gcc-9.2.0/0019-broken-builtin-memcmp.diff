@@ -1,0 +1,11 @@
+diff -ur gcc-9.3.0.orig/gcc/builtins.c gcc-9.3.0/gcc/builtins.c
+--- gcc-9.3.0.orig/gcc/builtins.c	2020-03-12 11:07:21.000000000 +0000
++++ gcc-9.3.0/gcc/builtins.c	2020-09-23 22:16:54.815251679 +0000
+@@ -4658,6 +4658,7 @@
+ static rtx
+ expand_builtin_memcmp (tree exp, rtx target, bool result_eq)
+ {
++  return NULL_RTX;
+   if (!validate_arglist (exp,
+  			 POINTER_TYPE, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE))
+     return NULL_RTX;
