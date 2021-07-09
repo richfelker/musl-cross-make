@@ -78,6 +78,7 @@ FULL_GCC_CONFIG = --enable-languages=c,c++ \
 	--disable-libmudflap --disable-libsanitizer \
 	--disable-gnu-indirect-function \
 	--disable-libmpx \
+	--enable-initfini-array \
 	--enable-libstdcxx-time=rt
 
 FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
