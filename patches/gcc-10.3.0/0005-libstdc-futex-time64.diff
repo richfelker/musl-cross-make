@@ -1,0 +1,30 @@
+diff --git a/libstdc++-v3/src/c++11/futex.cc b/libstdc++-v3/src/c++11/futex.cc
+index 698737d9b21..230d32574c6 100644
+--- a/libstdc++-v3/src/c++11/futex.cc
++++ b/libstdc++-v3/src/c++11/futex.cc
+@@ -46,13 +46,23 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
+ 
+ namespace
+ {
++#if defined(SYS_futex_time64) && SYS_futex_time64 != SYS_futex
++  typedef struct
++  {
++    long tv_sec;
++    long tv_nsec;
++  } sys_timespec;
++#else
++  typedef struct timespec sys_timespec;
++#endif
++
+   // Return the relative duration from (now_s + now_ns) to (abs_s + abs_ns)
+   // as a timespec.
+-  struct timespec
++  sys_timespec
+   relative_timespec(chrono::seconds abs_s, chrono::nanoseconds abs_ns,
+ 		    time_t now_s, long now_ns)
+   {
+-    struct timespec rt;
++    sys_timespec rt;
+ 
+     // Did we already time out?
+     if (now_s > abs_s.count())
