@@ -19,7 +19,7 @@ MPFR_SITE = $(GNU_SITE)/mpfr
 ISL_SITE = http://isl.gforge.inria.fr/
 
 MUSL_SITE = https://musl.libc.org/releases
-MUSL_REPO = git://git.musl-libc.org/musl
+MUSL_REPO = https://git.musl-libc.org/cgit/musl
 
 LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
 LINUX_HEADERS_SITE = http://ftp.barfooze.de/pub/sabotage/tarballs/
