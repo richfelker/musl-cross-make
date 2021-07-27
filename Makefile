@@ -23,6 +23,8 @@ MUSL_REPO = git://git.musl-libc.org/musl
 
 LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
 LINUX_HEADERS_SITE = http://ftp.barfooze.de/pub/sabotage/tarballs/
+# as barfooze.de has "only" 99% uptime, here's a mirror for your pleasure
+# LINUX_HEADERS_SITE = http://mirrors.2f30.org/sabotage/tarballs/
 
 DL_CMD = wget -c -O
 SHA1_CMD = sha1sum -c
