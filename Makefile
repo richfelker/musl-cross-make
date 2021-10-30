@@ -16,7 +16,7 @@ BINUTILS_SITE = $(GNU_SITE)/binutils
 GMP_SITE = $(GNU_SITE)/gmp
 MPC_SITE = $(GNU_SITE)/mpc
 MPFR_SITE = $(GNU_SITE)/mpfr
-ISL_SITE = http://isl.gforge.inria.fr/
+ISL_SITE = https://libisl.sourceforge.io
 
 MUSL_SITE = https://musl.libc.org/releases
 MUSL_REPO = git://git.musl-libc.org/musl
