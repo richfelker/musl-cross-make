@@ -2,13 +2,13 @@
 SOURCES = sources
 
 CONFIG_SUB_REV = 3d5db9ebe860
-BINUTILS_VER = 2.33.1
-GCC_VER = 9.4.0
-MUSL_VER = 1.2.3
-GMP_VER = 6.1.2
-MPC_VER = 1.1.0
-MPFR_VER = 4.0.2
-LINUX_VER = headers-4.19.88-1
+BINUTILS_VER = 2.40
+GCC_VER = 13.1.0
+MUSL_VER = 1.2.4
+GMP_VER = 6.2.1
+MPC_VER = 1.3.1
+MPFR_VER = 4.2.0
+LINUX_VER = 6.3.3
 
 GNU_SITE = https://ftpmirror.gnu.org/gnu
 GCC_SITE = $(GNU_SITE)/gcc
@@ -21,7 +21,7 @@ ISL_SITE = http://isl.gforge.inria.fr/
 MUSL_SITE = https://musl.libc.org/releases
 MUSL_REPO = git://git.musl-libc.org/musl
 
-LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
+LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel/
 LINUX_HEADERS_SITE = http://ftp.barfooze.de/pub/sabotage/tarballs/
 
 DL_CMD = wget -c -O
@@ -69,7 +69,8 @@ $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-5*)): SITE = $(LIN
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-4*)): SITE = $(LINUX_SITE)/v4.x
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-3*)): SITE = $(LINUX_SITE)/v3.x
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-2.6*)): SITE = $(LINUX_SITE)/v2.6
-$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-headers-*)): SITE = $(LINUX_HEADERS_SITE)
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-6*)): SITE = $(LINUX_SITE)/v6.x
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/kernel-headers-*)): SITE = $(LINUX_HEADERS_SITE)
 
 $(SOURCES):
 	mkdir -p $@
@@ -184,6 +185,9 @@ all: | $(SRC_DIRS) $(BUILD_DIR) $(BUILD_DIR)/Makefile $(BUILD_DIR)/config.mak
 install: | $(SRC_DIRS) $(BUILD_DIR) $(BUILD_DIR)/Makefile $(BUILD_DIR)/config.mak
 	cd $(BUILD_DIR) && $(MAKE) OUTPUT=$(OUTPUT) $@
 
+
 endif
+
+
 
 .SECONDARY:
