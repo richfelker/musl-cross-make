@@ -7,7 +7,7 @@ GCC_CONFIG += --enable-default-pie
 # the above --with-cpu=mj2 in order to try:
 # GCC_VER = 4.2.1
 # BINUTILS_VER = 397a64b3
-# BINUTILS_SITE = http://landley.net/aboriginal/mirror
+# BINUTILS_SITE = https://landley.net/aboriginal/mirror
 
 # Optional to produce a smaller toolchain:
 # COMMON_CONFIG += --disable-nls
