@@ -1,0 +1,260 @@
+#!/bin/sh -e
+
+#===============================================================
+# Filename : macsimum
+# Purpose  : Builds Mac-to-Linux cross-compiler toolchains.
+# Authors  : Zach van Rijn <me@zv.io>
+# License  : MIT
+# Revision : 20200303
+#===============================================================
+
+#---------------------------------------------------------------
+# README
+#
+# overview
+# --------
+#
+# This script builds "musl-cross-make" cross-compiler toolchains
+# that are hosted on macOS and target Linux. For example, your
+# Macintosh machine can use up-to-date versions of GCC to build
+# code (C, C++, Fortran) for your MIPS router. The libc used is
+# called 'musl': https://www.musl-libc.org/faq.html
+#
+# Others have tried and failed to deliver what you're able to do
+# with this tiny script.
+#
+# What does this look like? Modern GCC that does:
+#
+#   * macOS --> ARM, Motorola 68000, MIPS, OpenRISC, PowerPC,
+#               RISC-V, S/390, SuperH, x86-based, more?
+#
+# The goal, of course, is to achieve parity with musl.cc's Linux
+# offerings. A link to pre-built macOS binaries is now public,
+# and this is the script to reproduce them. https://mac.musl.cc/
+#
+#
+# requirements
+# ------------
+#
+# Basically, you need XCode Command Line Tools. I don't know any
+# specific version requirements, but if you encounter problems I
+# would appreciate a heads up.
+#
+# This document may be useful: https://git.zv.io/snippets/34/raw
+#
+# You'll also need a working internet connection.
+#
+# A previous version of this script relied on Homebrew for some
+# of the utilities that we're using. This, contrary to intent,
+# created a Homebrew dependency. No longer! Build products are
+# now fully portable (across compatible macOS / OS X versions).
+
+
+#---------------------------------------------------------------
+# Dependency versions (for bootstrap compiler and tooling)
+
+V_SED=4.7   ;
+V_PAT=2.7.6 ;
+V_GMP=6.1.2 ;
+V_MPF=4.0.2 ;
+V_MPC=1.1.0 ;
+V_ISL=0.21  ;
+V_GCC=9.2.0 ;
+V_BUT=2.34  ;
+
+V_GM4=1.4.18;
+V_BIS=3.4.2 ;
+V_FLX=2.6.4 ;
+V_CUT=8.31  ;
+
+
+#---------------------------------------------------------------
+# Production compiler configuration data (or use heredoc)
+
+tool=musl-cross-make;           # musl-cross-make repository
+conf=$(curl -s https://conf.musl.cc/mac_20200229_9-2-1.txt);
+
+
+#---------------------------------------------------------------
+# Dependency mirrors
+
+M_GNU=https://ftp.gnu.org/gnu;
+M_ISL=http://isl.gforge.inria.fr;
+
+M_FLX=https://github.com/westes/flex/releases/download;
+
+
+#---------------------------------------------------------------
+# Build configuration
+
+##
+# It is possible to build all library and utility dependencies
+# for the building of musl-cross-make production toolchains on a
+# RAM disk. This may improve performance on systems with slow
+# disks, and requires approximately 3GB of space. 4GB is safe:
+#
+#   $ diskutil erasevolume HFS+ "RAMDISK"                      \
+#     `hdiutil attach -nomount ram://$((2048 * 1024 * 4))`
+#
+# The '4' in the above example represents gigabytes.
+
+rdsk=/Volumes/RAMDISK;          # dependency build prefix
+
+##
+# When the production toolchains are built, a significant bit of
+# disk space is required. Do not attempt to build them in RAM if
+# you are not on a server server with several dozen gigabytes of
+# RAM and the assurance that your system won't crash :)
+
+bdsk=/tmp;                      # production build prefix
+
+##
+# This directory will contain dependency build trees. It can be
+# deleted after the toolchains are built.
+
+bdir=${rdsk}/tmp;               # scratch directory location
+
+##
+# Within each dependency build tree, we want to perform an out-
+# of-tree build. This is the (arbitrary) name of that directory.
+
+tdir=x;                         # out-of-tree directory name
+
+##
+# This directory will contain the dependency libraries and tools
+# and can also be deleted after the toolchains are built, but it
+# may be useful to maintain this directory for future builds.
+
+sdir=${rdsk}/sys;               # system installation directory
+
+
+#---------------------------------------------------------------
+# Supporting routines
+
+# prep <URL> <TARFLAG> <STRIP> [<CONFIG> ...]
+prep ()
+{
+    _tar="${1}"; shift;
+    _str="${1}"; shift;
+    _url="${1}"; shift;
+    _cnf="${@}";
+
+    base=$(basename ${_url});   # name of file being downloaded
+    name=${base%-*};            # name of project w/o version
+
+    [ ! -f "${sdir}/._${base}" ] || return 0;
+
+    rm -fr "${bdir}/${name}";
+    mkdir -p "${bdir}/${name}/${tdir}";
+
+    cd "${bdir}/${name}";
+    curl -sL ${_url}                                           \
+        | tar --strip-components=${_str} -x${_tar}f -;
+
+    cd "${tdir}";
+
+    (                           # subshell for isolation
+        export PATH="${sdir}/bin:$PATH";
+
+        export CPPFLAGS="-I${sdir}/include";
+        export CFLAGS="";
+        export CXXFLAGS="";
+        export LDFLAGS="-L${sdir}/lib";
+
+        ../configure --prefix="${sdir}" ${_cnf};
+        make && make install;
+
+        touch "${sdir}/._${base}";
+    )
+}
+
+# (no args) Builds production toolchains for mac.musl.cc
+musl ()
+{
+    cd "${bdsk}";
+
+    if [ ! -d "${tool}" ]; then
+        git clone https://git.zv.io/toolchains/${tool}.git;
+    fi
+
+    cd ${tool};
+
+    printf > config.mak "%s\n" "${conf}";
+
+    PATH="${sdir}/bin:$PATH" ./scripts/buildmac;
+}
+
+
+#---------------------------------------------------------------
+# Stage 1: Bootstrap compiler
+
+prep j 1 ${M_GNU}/sed/sed-${V_SED}.tar.xz                      \
+    ;
+
+prep j 1 ${M_GNU}/patch/patch-${V_PAT}.tar.xz                  \
+    ;
+
+prep j 1 ${M_GNU}/m4/m4-${V_GM4}.tar.xz                        \
+    ;
+
+prep j 1 ${M_GNU}/bison/bison-${V_BIS}.tar.xz                  \
+    ;
+
+prep z 1 ${M_FLX}/v${V_FLX}/flex-${V_FLX}.tar.gz               \
+    --disable-shared                                           \
+    --enable-static                                            \
+    ;
+
+prep j 1 ${M_GNU}/gmp/gmp-${V_GMP}.tar.xz                      \
+    --disable-shared                                           \
+    --enable-static                                            \
+    --enable-cxx                                               \
+    ;
+
+prep j 1 ${M_GNU}/mpfr/mpfr-${V_MPF}.tar.xz                    \
+    --disable-shared                                           \
+    --enable-static                                            \
+    --with-gmp="${sdir}"                                       \
+    ;
+
+prep z 1 ${M_GNU}/mpc/mpc-${V_MPC}.tar.gz                      \
+    --disable-shared                                           \
+    --enable-static                                            \
+    --with-gmp="${sdir}"                                       \
+    ;
+
+prep j 1 ${M_ISL}/isl-${V_ISL}.tar.xz                          \
+    --disable-shared                                           \
+    --enable-static                                            \
+    --with-gmp-prefix="${sdir}"                                \
+    ;
+
+prep j 1 ${M_GNU}/coreutils/coreutils-${V_CUT}.tar.xz          \
+    --disable-shared                                           \
+    --enable-static                                            \
+    FORCE_UNSAFE_CONFIGURE=1                                   \
+    ;
+
+prep j 1 ${M_GNU}/gcc/gcc-${V_GCC}/gcc-${V_GCC}.tar.xz         \
+    --enable-languages=c,c++                                   \
+    --with-gmp="${sdir}"                                       \
+    --with-mpfr="${sdir}"                                      \
+    --with-mpc="${sdir}"                                       \
+    --with-isl="${sdir}"                                       \
+    --enable-multilib                                          \
+    --disable-bootstrap                                        \
+    ;
+
+if false; then
+prep j 1 ${M_GNU}/binutils/binutils-${V_BUT}.tar.xz            \
+    --disable-shared                                           \
+    --enable-static                                            \
+    --disable-multilib                                         \
+    ;
+fi
+
+
+#---------------------------------------------------------------
+# Stage 2: Production toolchains
+
+musl;

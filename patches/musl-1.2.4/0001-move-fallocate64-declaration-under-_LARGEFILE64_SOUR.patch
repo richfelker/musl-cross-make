@@ -1,0 +1,35 @@
+From 718f363bc2067b6487900eddc9180c84e7739f80 Mon Sep 17 00:00:00 2001
+From: Rich Felker <dalias@aerifal.cx>
+Date: Tue, 2 May 2023 11:45:28 -0400
+Subject: [PATCH] move fallocate64 declaration under _LARGEFILE64_SOURCE
+ feature test
+
+overlooked in commit 25e6fee27f4a293728dd15b659170e7b9c7db9bc,
+probably because the fallocate function itself is nonstandard and
+already under _GNU_SOURCE.
+
+diff --git a/include/fcntl.h b/include/fcntl.h
+index 515f255d..53f98a8b 100644
+--- a/include/fcntl.h
++++ b/include/fcntl.h
+@@ -184,7 +184,6 @@ struct f_owner_ex {
+ #define SPLICE_F_MORE 4
+ #define SPLICE_F_GIFT 8
+ int fallocate(int, int, off_t, off_t);
+-#define fallocate64 fallocate
+ int name_to_handle_at(int, const char *, struct file_handle *, int *, int);
+ int open_by_handle_at(int, struct file_handle *, int);
+ ssize_t readahead(int, off_t, size_t);
+@@ -207,6 +206,9 @@ ssize_t tee(int, int, size_t, unsigned);
+ #define posix_fadvise64 posix_fadvise
+ #define posix_fallocate64 posix_fallocate
+ #define off64_t off_t
++#if defined(_GNU_SOURCE)
++#define fallocate64 fallocate
++#endif
+ #endif
+ 
+ #ifdef __cplusplus
+-- 
+2.40.0
+

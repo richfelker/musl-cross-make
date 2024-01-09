@@ -1,0 +1,12 @@
+diff -ur a/Makefile b/Makefile
+--- a/Makefile	2023-05-02 12:02:41.917191831 -0500
++++ b/Makefile	2023-05-02 12:03:10.625929997 -0500
+@@ -1280,7 +1280,7 @@
+ 
+ PHONY += prepare archprepare
+ 
+-archprepare: outputmakefile archheaders archscripts scripts include/config/kernel.release \
++archprepare: outputmakefile archheaders scripts include/config/kernel.release \
+ 	asm-generic $(version_h) $(autoksyms_h) include/generated/utsrelease.h \
+ 	include/generated/compile.h include/generated/autoconf.h remove-stale-files
+ 

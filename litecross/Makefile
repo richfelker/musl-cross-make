@@ -15,6 +15,12 @@ XGCC = $(XGCC_DIR)/xgcc -B $(XGCC_DIR)
 
 -include config.mak
 
+ifeq ($(CPUS),)
+CPUS = $(shell if command -v nproc >/dev/null 2>&1; then nproc; else echo 1; fi)
+endif
+
+MAKE += -j$(CPUS)
+
 ifneq ($(findstring fdpic,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --enable-fdpic
 endif
@@ -23,8 +29,14 @@ ifneq ($(filter x86_64%x32,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-abi=x32
 endif
 
+ifneq ($(findstring microblaze,$(TARGET)),)
+# ICE in GCC; temporarily disable gfortran support.
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87438
+GCC_CONFIG_FOR_TARGET += --enable-languages=c,c++
+endif
+
 ifneq ($(findstring powerpc64,$(TARGET)),)
-GCC_CONFIG_FOR_TARGET += --with-abi=elfv2
+GCC_CONFIG_FOR_TARGET += --with-abi=elfv2 --with-cpu=970
 endif
 
 ifneq ($(findstring mips64,$(TARGET))$(findstring mipsisa64,$(TARGET)),)
@@ -65,7 +77,7 @@ FULL_BINUTILS_CONFIG = \
 	--with-sysroot=$(SYSROOT) \
 	--enable-deterministic-archives
 
-FULL_GCC_CONFIG = --enable-languages=c,c++ \
+FULL_GCC_CONFIG = --enable-languages=c,c++,fortran \
 	$(GCC_CONFIG_FOR_TARGET) \
 	$(COMMON_CONFIG) $(GCC_CONFIG) $(TOOLCHAIN_CONFIG) \
 	--disable-bootstrap \
@@ -79,7 +91,12 @@ FULL_GCC_CONFIG = --enable-languages=c,c++ \
 	--disable-gnu-indirect-function \
 	--disable-libmpx \
 	--enable-initfini-array \
-	--enable-libstdcxx-time=rt
+	--enable-libstdcxx-time=rt \
+	--enable-deterministic-archives \
+	--enable-libstdcxx-time \
+	--enable-libquadmath --enable-libquadmath-support \
+	--disable-decimal-float \
+        $(OVERRIDE)
 
 FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
 	--prefix= --host=$(TARGET)
@@ -258,7 +275,7 @@ install-gcc: | obj_gcc/.lc_built
 
 ifneq ($(LINUX_SRCDIR),)
 TARGET_ARCH = $(firstword $(subst -, ,$(TARGET)))
-TARGET_ARCH_MANGLED = $(patsubst i%86,x86,$(patsubst aarch64%,arm64%,$(TARGET_ARCH)))
+TARGET_ARCH_MANGLED = $(patsubst i%86,x86,$(patsubst aarch64%,arm64%,$(patsubst or1k%,openrisc%,$(TARGET_ARCH))))
 LINUX_ARCH_LIST = $(sort $(notdir $(wildcard $(LINUX_SRCDIR)/arch/*)))
 LINUX_ARCH = $(lastword $(foreach a,$(LINUX_ARCH_LIST),$(if $(filter $(a)%,$(TARGET_ARCH_MANGLED)),$(a))))
 ifneq ($(LINUX_ARCH),)
@@ -269,7 +286,7 @@ src_kernel_headers: | $(LINUX_SRCDIR)
 	ln -sf "$(LINUX_SRCDIR)" $@
 obj_kernel_headers/.lc_built: | src_kernel_headers
 	mkdir -p $(CURDIR)/obj_kernel_headers/staged
-	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) O=$(CURDIR)/obj_kernel_headers INSTALL_HDR_PATH=$(CURDIR)/obj_kernel_headers/staged headers_install
+	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) O=$(CURDIR)/obj_kernel_headers INSTALL_HDR_PATH=$(CURDIR)/obj_kernel_headers/staged headers_install HOSTCC="$(CC) $(STAT)"
 	find obj_kernel_headers/staged/include '(' -name .install -o -name ..install.cmd ')' -exec rm {} +
 	touch $@
 install-kernel-headers: | obj_kernel_headers/.lc_built

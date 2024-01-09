@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# https://stackoverflow.com/a/1116890
+s=$(pwd)
+_=$0
+cd `dirname $0`
+_=`basename $_`
+#while [ -L "$_" ]; do
+#    _=`readlink $_`;
+#    cd `dirname $_`;
+#    _=`basename $_`;
+#done
+HERE=`pwd -P`/$_
+cd $s
+
+LOGS=${HERE}/../logs
+BINS=${HERE}/../output
+OBJS=${HERE}/../build
+
+CSUF=cross
+
+KALE="${PATH}"
+
+mkdir -p ${LOGS} ${BINS}
+
+# CROSS BUILD
+[ -d ${BINS}/${1}-${CSUF} ] || make install \
+    TARGET=${1} OUTPUT=${BINS}/${1}-${CSUF} \
+    2>&1 | tee ${LOGS}/${1}-${CSUF}.log
+
+# CROSS PACKAGE
+[ -h ${BINS}/${1}-${CSUF}/usr ] || (cd ${BINS}/${1}-${CSUF} && ln -s . usr)
+[ -e ${BINS}/${1}-${CSUF}.tgz ] || (cd ${BINS} && tar pczf ${1}-${CSUF}.tgz ${1}-${CSUF})
+
+# CROSS CLEANUP
+rm -fr ${OBJS}/local/${1}
+
+# DIRECTORY CLEANUP
+rm -fr ${BINS}/${1}-${CSUF};

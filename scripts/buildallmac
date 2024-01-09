@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# https://stackoverflow.com/a/1116890
+s=$(pwd)
+_=$0
+cd `dirname $0`
+_=`basename $_`
+#while [ -L "$_" ]; do
+#    _=`readlink $_`;
+#    cd `dirname $_`;
+#    _=`basename $_`;
+#done
+HERE=`pwd -P`/$_
+cd $s
+
+LIST=${HERE}/triples.txt
+CFGS=${HERE}/../sources/config.sub
+
+##
+# WARNING: YOU MUST BE INSANE TO USE A VALUE GREATER THAN 1 HERE.
+# This means: "Run N jobs, each job with M threads" where M is 'nproc'.
+# Why? Useful for bruteforcing toolchain builds and keeping CPU busy.
+# You may destroy an SSD with too high of a value. Use a ramdisk only.
+#
+JOBS=2;
+
+make extract_all;
+grep -v ^# "${LIST}" | parallel --eta --bar --progress --plain -j${JOBS} -a - ${HERE}/buildmac;

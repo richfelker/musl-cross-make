@@ -1,0 +1,34 @@
+#!/bin/sh
+
+HERE=$(dirname $(readlink -f ${0}))
+
+LIST=${HERE}/triples.txt
+CFGS=${HERE}/../sources/config.sub
+
+##
+# When 'MCMTOOLS' is specified, ensure it is valid (at first glance).
+#
+if ! test -z ${MCMTOOLS}; then
+    MCMT="${MCMTOOLS%/}";
+    fail=0;
+    test -d "${MCMT}/sys/bin"  || fail=1;
+    test -d "${MCMT}/host/bin" || fail=1;
+    test -d "${MCMT}/musl/bin" || fail=1;
+    test $fail -eq 1 && printf "Using 'MCMTOOLS=%s' is not valid.\n" "${MCMTOOLS}" && exit 1;
+fi
+
+export MCMTOOLS="${MCMT}";
+
+##
+# WARNING: YOU MUST BE INSANE TO USE A VALUE GREATER THAN 1 HERE.
+# This means: "Run N jobs, each job with M threads" where M is 'nproc'.
+# Why? Useful for bruteforcing toolchain builds and keeping CPU busy.
+# You may destroy an SSD with too high of a value. Use a ramdisk only.
+#
+JOBS=6;
+
+if ! test -z ${MCMTOOLS}; then
+    export PATH="${MCMT}/sys/bin";
+fi
+make extract_all;
+grep -v ^# "${LIST}" | parallel --eta --bar --progress --plain -j${JOBS} -a - "${HERE}/build";

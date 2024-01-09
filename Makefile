@@ -10,13 +10,14 @@ MPC_VER = 1.1.0
 MPFR_VER = 4.0.2
 LINUX_VER = headers-4.19.88-1
 
-GNU_SITE = https://ftpmirror.gnu.org/gnu
+GNU_SITE = https://ftp.gnu.org/gnu
 GCC_SITE = $(GNU_SITE)/gcc
 BINUTILS_SITE = $(GNU_SITE)/binutils
 GMP_SITE = $(GNU_SITE)/gmp
 MPC_SITE = $(GNU_SITE)/mpc
 MPFR_SITE = $(GNU_SITE)/mpfr
-ISL_SITE = http://isl.gforge.inria.fr/
+ISL_SITE = https://downloads.sourceforge.net/project/libisl/
+GCC_SNAP = https://sourceware.org/pub/gcc/snapshots
 
 MUSL_SITE = https://musl.libc.org/releases
 MUSL_REPO = git://git.musl-libc.org/musl
@@ -24,7 +25,7 @@ MUSL_REPO = git://git.musl-libc.org/musl
 LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
 LINUX_HEADERS_SITE = http://ftp.barfooze.de/pub/sabotage/tarballs/
 
-DL_CMD = wget -c -O
+DL_CMD = curl -sLo
 SHA1_CMD = sha1sum -c
 
 COWPATCH = $(CURDIR)/cowpatch.sh
@@ -63,8 +64,10 @@ $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/mpc*)): SITE = $(MPC_SIT
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/mpfr*)): SITE = $(MPFR_SITE)
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/isl*)): SITE = $(ISL_SITE)
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/binutils*)): SITE = $(BINUTILS_SITE)
-$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/gcc*)): SITE = $(GCC_SITE)/$(basename $(basename $(notdir $@)))
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/gcc-*)): SITE = $(GCC_SITE)/$(basename $(basename $(notdir $@)))
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/gcc-*-*)): SITE = $(GCC_SNAP)/$(subst gcc-,,$(basename $(basename $(notdir $@))))
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/musl*)): SITE = $(MUSL_SITE)
+$(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-6*)): SITE = $(LINUX_SITE)/v6.x
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-5*)): SITE = $(LINUX_SITE)/v5.x
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-4*)): SITE = $(LINUX_SITE)/v4.x
 $(patsubst hashes/%.sha1,$(SOURCES)/%,$(wildcard hashes/linux-3*)): SITE = $(LINUX_SITE)/v3.x
@@ -76,7 +79,7 @@ $(SOURCES):
 
 $(SOURCES)/config.sub: | $(SOURCES)
 	mkdir -p $@.tmp
-	cd $@.tmp && $(DL_CMD) $(notdir $@) "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
+	cd $@.tmp && $(DL_CMD) $(notdir $@) "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
 	cd $@.tmp && touch $(notdir $@)
 	cd $@.tmp && $(SHA1_CMD) $(CURDIR)/hashes/$(notdir $@).$(CONFIG_SUB_REV).sha1
 	mv $@.tmp/$(notdir $@) $@
@@ -97,8 +100,9 @@ endif
 
 musl-git-%:
 	rm -rf $@.tmp
-	git clone -b $(patsubst musl-git-%,%,$@) $(MUSL_REPO) $@.tmp
-	cd $@.tmp && git fsck
+	git clone $(MUSL_REPO) $@.tmp
+	cd $@.tmp && git reset --hard $(patsubst musl-git-%,%,$@) && git fsck
+	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp && patch -p1 )
 	mv $@.tmp $@
 
 %.orig: $(SOURCES)/%.tar.gz
@@ -140,6 +144,7 @@ musl-git-%:
 	if test -f $</configfsf.sub ; then cs=configfsf.sub ; elif test -f $</config.sub ; then cs=config.sub ; else exit 0 ; fi ; rm -f $@.tmp/$$cs && cp -f $(SOURCES)/config.sub $@.tmp/$$cs && chmod +x $@.tmp/$$cs
 	rm -rf $@
 	mv $@.tmp $@
+	$(COWPATCH) -S gcc-$(GCC_VER)/libstdc++-v3
 
 
 # Add deps for all patched source dirs on their patchsets

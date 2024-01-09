@@ -1,0 +1,63 @@
+#!/bin/sh
+
+LIST=$(dirname $(which ${0}))/triples.txt
+LOGS=$(dirname $(which ${0}))/../logs
+BINS=$(dirname $(which ${0}))/../output
+
+KALE="${PATH}"
+OVER=""
+
+optics()
+{
+    # flags
+    case ${1} in
+        *microblaze*)
+            # ICE in GCC; temporarily disable gfortran support.
+            # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87438
+            OVER="GCC_CONFIG=\"--enable-languages=c,c++\""
+            ;;
+        *)
+            OVER=""
+            ;;
+    esac
+}
+
+# host toolchains (still static)
+mkdir -p ${LOGS} ${BINS}
+for s in $(cat ${LIST} | grep -v "#"); do
+    # flags
+    optics ${s}
+
+    # host
+    [ -d ${BINS}/${s}-host ] || make ${OVER} install \
+        TARGET=${s} \
+        OUTPUT=${BINS}/${s}-host \
+        2>&1 | tee ${LOGS}/${s}-host.log
+done;
+
+# enter the matrix
+for s in $(cat ${LIST} | grep -v "#"); do
+    #make -C $(dirname $(which ${0}))/../ clean
+    mkdir -p ${BINS}/matrix/${s}
+    for t in $(cat ${LIST} | grep -v "#"); do
+        # flags
+        optics ${t}
+
+        # matrix
+        if [ -d ${BINS}/${s}-host ]; then
+            export PATH="${KALE}:${BINS}/${s}-host/bin"
+            [ -d ${BINS}/matrix/${s}/${t} ] || make ${OVER} install \
+                CROSS_COMPILE=${s}- \
+                HOST=${s} \
+                TARGET=${t} \
+                OUTPUT=${BINS}/matrix/${s}/${t} \
+                2>&1 | tee ${LOGS}/${s}-${t}.log
+            export PATH="${KALE}"
+        fi;
+    done;
+done;
+
+#cd ${BINS}
+#for t in $(find . -mindepth 1 -maxdepth 1 -type d); do
+#    [ -e ${t}.tgz ] || tar pczf ${t}.tgz ${t};
+#done
