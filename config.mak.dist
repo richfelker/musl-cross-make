@@ -80,6 +80,17 @@
 
 # GCC_CONFIG += --enable-languages=c,c++
 
+# Binutils 2.32 and newer (default in mcm since mid-2019) default to emit
+# compressed debug info sections, which are a relatively new feature that
+# breaks older tooling, such as using so built libraries/executables with
+# older binutils or gdb versions.
+# This can be turned off in favor of traditional debug sections by
+# uncommenting the following line.
+# Compressed debug sections can still explicitly be requested by adding
+# -Wl,--compress-debug-sections=zlib or -gz=zlib to C/CXXFLAGS.
+
+# BINUTILS_CONFIG += --enable-compressed-debug-sections=none
+
 # You can keep the local build path out of your toolchain binaries and
 # target libraries with the following, but then gdb needs to be told
 # where to look for source files.

@@ -16,14 +16,17 @@ BINUTILS_SITE = $(GNU_SITE)/binutils
 GMP_SITE = $(GNU_SITE)/gmp
 MPC_SITE = $(GNU_SITE)/mpc
 MPFR_SITE = $(GNU_SITE)/mpfr
+
+# ISL_SITE = https://libisl.sourceforge.io
 ISL_SITE = https://downloads.sourceforge.net/project/libisl/
 GCC_SNAP = https://sourceware.org/pub/gcc/snapshots
 
 MUSL_SITE = https://musl.libc.org/releases
+# MUSL_REPO = https://git.musl-libc.org/git/musl
 MUSL_REPO = git://git.musl-libc.org/musl
 
 LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
-LINUX_HEADERS_SITE = http://ftp.barfooze.de/pub/sabotage/tarballs/
+LINUX_HEADERS_SITE = https://ftp.barfooze.de/pub/sabotage/tarballs/
 
 DL_CMD = curl -sLo
 SHA1_CMD = sha1sum -c

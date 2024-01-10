@@ -19,6 +19,19 @@ ifeq ($(CPUS),)
 CPUS = $(shell if command -v nproc >/dev/null 2>&1; then nproc; else echo 1; fi)
 endif
 
+# https://wiki.musl-libc.org/getting-started.html#Notes_on_ARM_Float_Mode
+ifeq ($(findstring armv5,$(TARGET)),armv5)
+GCC_CONFIG += --with-arch=armv5te --with-fpu=vfp
+endif
+
+ifeq ($(findstring armv6,$(TARGET)),armv6)
+GCC_CONFIG += --with-arch=armv6 --with-fpu=vfp
+endif
+
+ifeq ($(findstring armv7,$(TARGET)),armv7)
+GCC_CONFIG += --with-arch=armv7-a --with-fpu=vfpv3
+endif
+
 ifneq ($(findstring fdpic,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --enable-fdpic
 endif
