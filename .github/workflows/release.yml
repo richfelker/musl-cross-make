@@ -1,0 +1,34 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest]
+    name: Release
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_OUTPUT
+
+      - name: Build
+        run: |
+          bash scripts/build.sh
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "v${{ steps.get_version.outputs.VERSION }}"
+          title: "Version ${{ steps.get_version.outputs.VERSION }}"
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'rc') || contains(steps.get_version.outputs.VERSION, 'beta') || contains(steps.get_version.outputs.VERSION, 'alpha') }}
+          files: |
+            dist/*

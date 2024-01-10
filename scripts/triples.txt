@@ -1,6 +1,3 @@
-# Comment out lines you do not wish to build.
-# Do not leave any blank lines in this file.
-#
 aarch64-linux-musl
 aarch64_be-linux-musl
 arm-linux-musleabi

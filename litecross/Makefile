@@ -19,8 +19,6 @@ ifeq ($(CPUS),)
 CPUS = $(shell if command -v nproc >/dev/null 2>&1; then nproc; else echo 1; fi)
 endif
 
-MAKE += -j$(CPUS)
-
 ifneq ($(findstring fdpic,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --enable-fdpic
 endif
@@ -229,7 +227,7 @@ obj_binutils/.lc_configured: | obj_binutils src_binutils
 	touch $@
 
 obj_binutils/.lc_built: | obj_binutils/.lc_configured
-	cd obj_binutils && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all
+	cd obj_binutils && $(MAKE) -j$(CPUS) MAKE="$(MAKE) $(LIBTOOL_ARG)" all
 	touch $@
 
 obj_gcc/.lc_configured: | obj_gcc src_gcc
@@ -237,7 +235,7 @@ obj_gcc/.lc_configured: | obj_gcc src_gcc
 	touch $@
 
 obj_gcc/gcc/.lc_built: | obj_gcc/.lc_configured
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-gcc
+	cd obj_gcc && $(MAKE) -j$(CPUS) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-gcc
 	touch $@
 
 obj_musl/.lc_configured: | obj_musl src_musl
@@ -245,32 +243,32 @@ obj_musl/.lc_configured: | obj_musl src_musl
 	touch $@
 
 obj_sysroot/.lc_headers: | obj_musl/.lc_configured obj_sysroot
-	cd obj_musl && $(MAKE) DESTDIR=$(CURDIR)/obj_sysroot install-headers
+	cd obj_musl && $(MAKE) -j$(CPUS) DESTDIR=$(CURDIR)/obj_sysroot install-headers
 	touch $@
 
 obj_gcc/$(TARGET)/libgcc/libgcc.a: | obj_sysroot/.lc_headers
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) enable_shared=no $(LIBTOOL_ARG)" all-target-libgcc
+	cd obj_gcc && $(MAKE) -j$(CPUS) MAKE="$(MAKE) enable_shared=no $(LIBTOOL_ARG)" all-target-libgcc
 
 obj_musl/.lc_built: | obj_musl/.lc_configured
-	cd obj_musl && $(MAKE) $(MUSL_VARS)
+	cd obj_musl && $(MAKE) -j$(CPUS) $(MUSL_VARS)
 	touch $@
 
 obj_sysroot/.lc_libs: | obj_musl/.lc_built
-	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(CURDIR)/obj_sysroot install
+	cd obj_musl && $(MAKE) -j$(CPUS) $(MUSL_VARS) DESTDIR=$(CURDIR)/obj_sysroot install
 	touch $@
 
 obj_gcc/.lc_built: | obj_gcc/.lc_configured obj_gcc/gcc/.lc_built
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)"
+	cd obj_gcc && $(MAKE) -j$(CPUS) MAKE="$(MAKE) $(LIBTOOL_ARG)"
 	touch $@
 
 install-musl: | obj_musl/.lc_built
-	cd obj_musl && $(MAKE) $(MUSL_VARS) DESTDIR=$(DESTDIR)$(OUTPUT)$(SYSROOT) install
+	cd obj_musl && $(MAKE) -j$(CPUS) $(MUSL_VARS) DESTDIR=$(DESTDIR)$(OUTPUT)$(SYSROOT) install
 
 install-binutils: | obj_binutils/.lc_built
-	cd obj_binutils && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
+	cd obj_binutils && $(MAKE) -j$(CPUS) MAKE="$(MAKE) $(LIBTOOL_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
 
 install-gcc: | obj_gcc/.lc_built
-	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
+	cd obj_gcc && $(MAKE) -j$(CPUS) MAKE="$(MAKE) $(LIBTOOL_ARG)" DESTDIR=$(DESTDIR)$(OUTPUT) install
 	ln -sf $(TARGET)-gcc $(DESTDIR)$(OUTPUT)/bin/$(TARGET)-cc
 
 ifneq ($(LINUX_SRCDIR),)
@@ -286,7 +284,7 @@ src_kernel_headers: | $(LINUX_SRCDIR)
 	ln -sf "$(LINUX_SRCDIR)" $@
 obj_kernel_headers/.lc_built: | src_kernel_headers
 	mkdir -p $(CURDIR)/obj_kernel_headers/staged
-	cd src_kernel_headers && $(MAKE) ARCH=$(LINUX_ARCH) O=$(CURDIR)/obj_kernel_headers INSTALL_HDR_PATH=$(CURDIR)/obj_kernel_headers/staged headers_install HOSTCC="$(CC) $(STAT)"
+	cd src_kernel_headers && $(MAKE) -j$(CPUS) ARCH=$(LINUX_ARCH) O=$(CURDIR)/obj_kernel_headers INSTALL_HDR_PATH=$(CURDIR)/obj_kernel_headers/staged headers_install HOSTCC="$(CC) $(STAT)"
 	find obj_kernel_headers/staged/include '(' -name .install -o -name ..install.cmd ')' -exec rm {} +
 	touch $@
 install-kernel-headers: | obj_kernel_headers/.lc_built

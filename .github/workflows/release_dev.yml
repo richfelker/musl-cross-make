@@ -1,0 +1,28 @@
+name: release_dev
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release_dev:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest]
+    name: Release
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          bash scripts/build.sh
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "dev"
+          title: "Dev Build"
+          prerelease: true
+          files: |
+            dist/*
