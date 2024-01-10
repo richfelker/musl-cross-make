@@ -56,6 +56,13 @@ clean:
 distclean: clean
 	rm -rf sources
 
+check:
+	@echo "check bzip2"
+	@which bzip2
+	@echo "check gcc"
+	@which gcc
+	@echo "check libtool"
+	@which libtool
 
 # Rules for downloading and verifying sources. Treat an external SOURCES path as
 # immutable and do not try to download anything into it.
@@ -112,7 +119,7 @@ musl-git-%:
 	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
-	( cd $@.tmp && tar zxvf - ) < $<
+	( cd $@.tmp && tar -zxvf - ) < $<
 	rm -rf $@
 	touch $@.tmp/$(patsubst %.orig,%,$@)
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
@@ -122,7 +129,7 @@ musl-git-%:
 	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
-	( cd $@.tmp && tar jxvf - ) < $<
+	( cd $@.tmp && tar -jxvf - ) < $<
 	rm -rf $@
 	touch $@.tmp/$(patsubst %.orig,%,$@)
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
@@ -132,7 +139,7 @@ musl-git-%:
 	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
-	( cd $@.tmp && tar Jxvf - ) < $<
+	( cd $@.tmp && tar -Jxvf - ) < $<
 	rm -rf $@
 	touch $@.tmp/$(patsubst %.orig,%,$@)
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@

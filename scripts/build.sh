@@ -59,7 +59,6 @@ function Build() {
         exit 1
     fi
     if [ ! "$TEST_BUILD_ONLY" ]; then
-        rm -rf output/${TARGET}
         tar -zcvf ${DIST}/${TARGET}.tgz output/*
         if [ $? -ne 0 ]; then
             echo "package ${TARGET} error"
