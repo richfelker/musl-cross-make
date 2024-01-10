@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
   pull_request:
-    branches: ["main"]
+    branches: ["master"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -23,4 +23,4 @@ jobs:
 
       - name: Build
         run: |
-          bash scripts/build.sh
+          bash scripts/build.sh -h

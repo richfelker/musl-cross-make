@@ -18,6 +18,29 @@ function Init() {
     fi
 }
 
+function Help() {
+    echo "-h: help"
+    echo "-t: test build only"
+}
+
+function ParseArgs() {
+    while getopts "ht" arg; do
+        case $arg in
+        h)
+            Help
+            exit 0
+            ;;
+        t)
+            TEST_BUILD_ONLY="1"
+            ;;
+        ?)
+            echo "unkonw argument"
+            exit 1
+            ;;
+        esac
+    done
+}
+
 function Build() {
     TARGET="$1"
     make TARGET=${TARGET} GCC_VER="11.4.0" \
@@ -35,13 +58,16 @@ function Build() {
         echo "build ${TARGET} error"
         exit 1
     fi
-    rm -rf output/${TARGET}
-    tar -zcvf ${DIST}/${TARGET}.tgz output/*
-    if [ $? -ne 0 ]; then
-        echo "package ${TARGET} error"
-        exit 1
+    if [ ! "$TEST_BUILD_ONLY" ]; then
+        rm -rf output/${TARGET}
+        tar -zcvf ${DIST}/${TARGET}.tgz output/*
+        if [ $? -ne 0 ]; then
+            echo "package ${TARGET} error"
+            exit 1
+        fi
     fi
     rm -rf output/*
+    rm -rf build/*
 }
 
 ALL_TARGETS='aarch64-linux-musl
@@ -98,4 +124,5 @@ function BuildAll() {
 
 ChToScriptFileDir
 Init
+ParseArgs "$@"
 BuildAll
