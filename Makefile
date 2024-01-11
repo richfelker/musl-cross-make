@@ -1,6 +1,6 @@
 SOURCES = sources
 
-CONFIG_SUB_REV = 3d5db9ebe860
+CONFIG_SUB_REV = 28ea239c53a2
 GCC_VER = 11.4.0
 MUSL_VER = 1.2.4
 BINUTILS_VER = 2.41
@@ -11,29 +11,37 @@ ISL_VER =
 LINUX_VER = 
 MINGW_VER = v11.0.1
 
+ifeq ($(CHINA),)
 GNU_SITE = https://ftp.gnu.org/gnu
+
+SOURCEFORGE_MIRROT = https://downloads.sourceforge.net
+
+GCC_SNAP = https://sourceware.org/pub/gcc/snapshots
+
+LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
+else
+GNU_SITE = https://mirrors.ustc.edu.cn/gnu
+
+SOURCEFORGE_MIRROT = https://jaist.dl.sourceforge.net
+
+GCC_SNAP = https://mirrors.tuna.tsinghua.edu.cn/sourceware/gcc/snapshots
+
+LINUX_SITE = https://mirrors.ustc.edu.cn/kernel.org/linux/kernel
+endif
+
+MUSL_SITE = https://musl.libc.org/releases
+MUSL_REPO = https://git.musl-libc.org/git/musl
 GCC_SITE = $(GNU_SITE)/gcc
 BINUTILS_SITE = $(GNU_SITE)/binutils
 GMP_SITE = $(GNU_SITE)/gmp
 MPC_SITE = $(GNU_SITE)/mpc
 MPFR_SITE = $(GNU_SITE)/mpfr
-
-# SOURCEFORGE_MIRROT = https://downloads.sourceforge.net
-SOURCEFORGE_MIRROT = https://jaist.dl.sourceforge.net
-
 ISL_SITE = $(SOURCEFORGE_MIRROT)/project/libisl
-GCC_SNAP = https://sourceware.org/pub/gcc/snapshots
-
-MUSL_SITE = https://musl.libc.org/releases
-# MUSL_REPO = https://git.musl-libc.org/git/musl
-MUSL_REPO = git://git.musl-libc.org/musl
-
-LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
+MINGW_SITE = $(SOURCEFORGE_MIRROT)/project/mingw-w64/mingw-w64/mingw-w64-release
 LINUX_HEADERS_SITE = https://ftp.barfooze.de/pub/sabotage/tarballs
 
-MINGW_SITE = $(SOURCEFORGE_MIRROT)/project/mingw-w64/mingw-w64/mingw-w64-release
-
-DL_CMD = curl -sLo
+# curl --progress-bar -Lo <file> <url>
+DL_CMD = curl --progress-bar -Lo
 SHA1_CMD = sha1sum -c
 
 COWPATCH = $(CURDIR)/cowpatch.sh
@@ -68,6 +76,8 @@ check:
 	@which bzip2
 	@echo "check gcc"
 	@which gcc
+	@echo "check g++"
+	@which g++
 	@echo "check libtool"
 	@which libtool
 

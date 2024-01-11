@@ -22,10 +22,11 @@ function Help() {
     echo "-h: help"
     echo "-t: test build only"
     echo "-T: targets file path or targets string"
+    echo "-C: use china mirror"
 }
 
 function ParseArgs() {
-    while getopts "htT:" arg; do
+    while getopts "htT:C" arg; do
         case $arg in
         h)
             Help
@@ -37,6 +38,9 @@ function ParseArgs() {
         T)
             TARGETS_FILE="$OPTARG"
             ;;
+        C)
+            USE_CHINA_MIRROR="1"
+            ;;
         ?)
             echo "unkonw argument"
             exit 1
@@ -47,7 +51,8 @@ function ParseArgs() {
 
 function Build() {
     TARGET="$1"
-    make TARGET=${TARGET} \
+    make TARGET="${TARGET}" \
+        CONFIG_SUB_REV="28ea239c53a2" \
         GCC_VER="11.4.0" \
         MUSL_VER="1.2.4" \
         BINUTILS_VER="2.41" \
@@ -57,7 +62,10 @@ function Build() {
         ISL_VER="" \
         LINUX_VER="" \
         MINGW_VER="v11.0.1" \
+        CHINA="${USE_CHINA_MIRROR}" \
         'COMMON_CONFIG+=CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"' \
+        'COMMON_CONFIG+=CC="gcc -static --static" CXX="g++ -static --static"' \
+        'GCC_CONFIG+=--enable-languages=c,c++' \
         'BINUTILS_CONFIG+=--enable-compressed-debug-sections=none' \
         install
     if [ $? -ne 0 ]; then

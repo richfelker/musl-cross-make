@@ -26,8 +26,6 @@ ifeq ($(CPUS),)
 CPUS = $(shell if command -v nproc >/dev/null 2>&1; then nproc; else echo 1; fi)
 endif
 
-
-
 ifneq ($(findstring mingw,$(TARGET)),)
 MUSL_SRCDIR = 
 LINUX_SRCDIR = 
@@ -87,6 +85,23 @@ ifneq ($(filter %hf,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-float=hard
 endif
 
+ifneq ($(findstring mingw,$(TARGET)),)
+ifneq ($(findstring x86_64,$(TARGET)),)
+MINGW_CRT_CONFIG += --disable-lib32 --enable-lib64
+endif
+endif
+
+ifneq ($(findstring musl,$(TARGET)),)
+ifneq ($(findstring 64,$(TARGET)),)
+ifeq ($(findstring 32,$(TARGET)),)
+MINGW_CRT_CONFIG += --disable-lib32 --enable-lib64
+endif
+endif
+ifneq ($(findstring aarch,$(TARGET)),)
+MINGW_CRT_CONFIG += --disable-libarm32 --enable-libarm64
+endif
+endif
+
 ifneq ($(LIBTOOL),)
 LIBTOOL_ARG = LIBTOOL=$(LIBTOOL)
 endif
@@ -123,7 +138,6 @@ FULL_GCC_CONFIG = --enable-languages=c,c++,fortran \
 	--disable-multilib \
 	--with-dwarf2 \
 	--enable-deterministic-archives \
-	--enable-libstdcxx-time \
 	--enable-libquadmath --enable-libquadmath-support \
 	--disable-decimal-float \
         $(OVERRIDE)
