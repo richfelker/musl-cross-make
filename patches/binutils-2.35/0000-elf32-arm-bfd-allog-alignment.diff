@@ -1,0 +1,59 @@
+diff -ur a/bfd/elf32-arm.c b/bfd/elf32-arm.c
+--- a/bfd/elf32-arm.c	2020-04-15 17:46:10.564727832 -0500
++++ b/bfd/elf32-arm.c	2020-04-16 15:26:30.908073105 -0500
+@@ -3607,6 +3607,18 @@
+ /* Ensure that we have allocated bookkeeping structures for ABFD's local
+    symbols.  */
+ 
++static char *
++elf32_arm_bfd_align (char *base, char *x, bfd_size_type align)
++{
++  bfd_size_type offset = x - base;
++  bfd_size_type mod = offset % align;
++  if (mod > 0)
++    {
++      offset += align - mod;
++    }
++  return base + offset;
++}
++
+ static bfd_boolean
+ elf32_arm_allocate_local_sym_info (bfd *abfd)
+ {
+@@ -3615,9 +3627,10 @@
+       bfd_size_type num_syms;
+       bfd_size_type size;
+       char *data;
++      char *data_start;
+ 
+       num_syms = elf_tdata (abfd)->symtab_hdr.sh_info;
+-      size = num_syms * (sizeof (bfd_signed_vma)
++      size = (num_syms + 1) * (sizeof (bfd_signed_vma)
+ 			 + sizeof (struct arm_local_iplt_info *)
+ 			 + sizeof (bfd_vma)
+ 			 + sizeof (char)
+@@ -3625,19 +3638,24 @@
+       data = bfd_zalloc (abfd, size);
+       if (data == NULL)
+ 	return FALSE;
++      data_start = data;
+ 
+       elf32_arm_local_fdpic_cnts (abfd) = (struct fdpic_local *) data;
+       data += num_syms * sizeof (struct fdpic_local);
+ 
++      data = elf32_arm_bfd_align(data_start, data, sizeof (bfd_signed_vma));
+       elf_local_got_refcounts (abfd) = (bfd_signed_vma *) data;
+       data += num_syms * sizeof (bfd_signed_vma);
+ 
++      data = elf32_arm_bfd_align(data_start, data, sizeof (struct arm_local_iplt_info *));
+       elf32_arm_local_iplt (abfd) = (struct arm_local_iplt_info **) data;
+       data += num_syms * sizeof (struct arm_local_iplt_info *);
+ 
++      data = elf32_arm_bfd_align(data_start, data, sizeof (bfd_vma));
+       elf32_arm_local_tlsdesc_gotent (abfd) = (bfd_vma *) data;
+       data += num_syms * sizeof (bfd_vma);
+ 
++      data = elf32_arm_bfd_align(data_start, data, sizeof (char));
+       elf32_arm_local_got_tls_type (abfd) = data;
+     }
+   return TRUE;

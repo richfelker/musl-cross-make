@@ -1,0 +1,32 @@
+diff -ru binutils-2.32-orig/ld/scripttempl/pep.sc binutils-2.32/ld/scripttempl/pep.sc
+--- binutils-2.32-orig/ld/scripttempl/pep.sc	2019-01-19 17:01:33.000000000 +0100
++++ binutils-2.32/ld/scripttempl/pep.sc	2019-06-02 12:26:01.212943752 +0200
+@@ -124,10 +124,8 @@
+        LONG (0); LONG (0);
+      }
+     ${CONSTRUCTING+
+-       /* See comment about __CTOR_LIST__ above.  The same reasoning
+-    	  applies here too.  */
+-       ___DTOR_LIST__ = .;
+-       __DTOR_LIST__ = .;
++       PROVIDE(___DTOR_LIST__ = .);
++       PROVIDE(__DTOR_LIST__ = .);
+        LONG (-1); LONG (-1);
+        KEEP (*(.dtors));
+        KEEP (*(.dtor));
+diff -ru binutils-2.32-orig/ld/scripttempl/pe.sc binutils-2.32/ld/scripttempl/pe.sc
+--- binutils-2.32-orig/ld/scripttempl/pe.sc	2019-01-19 17:01:33.000000000 +0100
++++ binutils-2.32/ld/scripttempl/pe.sc	2019-06-02 12:27:03.104562647 +0200
+@@ -123,10 +123,8 @@
+        LONG (0);
+      }
+     ${CONSTRUCTING+
+-       /* See comment about __CTOR_LIST__ above.  The same reasoning
+-          applies here too.  */
+-       ___DTOR_LIST__ = .;
+-       __DTOR_LIST__ = .;
++       PROVIDE(___DTOR_LIST__ = .);
++       PROVIDE(__DTOR_LIST__ = .);
+        LONG (-1);
+        KEEP(*(.dtors));
+        KEEP(*(.dtor));

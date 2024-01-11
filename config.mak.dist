@@ -80,6 +80,14 @@
 
 # GCC_CONFIG += --enable-languages=c,c++
 
+# recommend: disable building lib32 crt when building 64-bit compiler
+# MINGW_CRT_CONFIG += --disable-lib32 --enable-lib64 --disable-libarm32
+
+# if you'd like your toolchain to target the Universal CRT instead of MSVCRT,
+# uncomment the following lines
+# MINGW_CRT_CONFIG += --with-default-msvcrt=ucrt
+# MINGW_HEADERS_CONFIG += --with-default-msvcrt=ucrt
+
 # Binutils 2.32 and newer (default in mcm since mid-2019) default to emit
 # compressed debug info sections, which are a relatively new feature that
 # breaks older tooling, such as using so built libraries/executables with

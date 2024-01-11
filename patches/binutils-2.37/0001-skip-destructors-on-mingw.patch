@@ -1,0 +1,32 @@
+diff -ur a/ld/scripttempl/pep.sc b/ld/scripttempl/pep.sc
+--- a/ld/scripttempl/pep.sc	2021-07-08 06:37:20.000000000 -0500
++++ b/ld/scripttempl/pep.sc	2021-08-28 13:05:42.673576567 -0500
+@@ -127,10 +127,8 @@
+        LONG (0); LONG (0);
+      }
+     ${CONSTRUCTING+
+-       /* See comment about __CTOR_LIST__ above.  The same reasoning
+-    	  applies here too.  */
+-       ___DTOR_LIST__ = .;
+-       __DTOR_LIST__ = .;
++       PROVIDE(___DTOR_LIST__ = .);
++       PROVIDE(__DTOR_LIST__ = .);
+        LONG (-1); LONG (-1);
+        KEEP (*(.dtors));
+        KEEP (*(.dtor));
+diff -ur a/ld/scripttempl/pe.sc b/ld/scripttempl/pe.sc
+--- a/ld/scripttempl/pe.sc	2021-07-08 06:37:20.000000000 -0500
++++ b/ld/scripttempl/pe.sc	2021-08-28 13:05:42.673576567 -0500
+@@ -126,10 +126,8 @@
+        LONG (0);
+      }
+     ${CONSTRUCTING+
+-       /* See comment about __CTOR_LIST__ above.  The same reasoning
+-          applies here too.  */
+-       ___DTOR_LIST__ = .;
+-       __DTOR_LIST__ = .;
++       PROVIDE(___DTOR_LIST__ = .);
++       PROVIDE(__DTOR_LIST__ = .);
+        LONG (-1);
+        KEEP(*(.dtors));
+        KEEP(*(.dtor));

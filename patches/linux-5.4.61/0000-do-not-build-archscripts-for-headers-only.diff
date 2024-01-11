@@ -1,0 +1,11 @@
+--- a/Makefile	2020-04-19 10:30:53.176029776 +0000
++++ b/Makefile	2020-04-19 10:32:15.981722937 +0000
+@@ -1189,7 +1189,7 @@
+ hdr-inst := -f $(srctree)/scripts/Makefile.headersinst obj
+ 
+ PHONY += headers
+-headers: $(version_h) scripts_unifdef uapi-asm-generic archheaders archscripts
++headers: $(version_h) scripts_unifdef uapi-asm-generic archheaders
+ 	$(if $(wildcard $(srctree)/arch/$(SRCARCH)/include/uapi/asm/Kbuild),, \
+ 	  $(error Headers not exportable for the $(SRCARCH) architecture))
+ 	$(Q)$(MAKE) $(hdr-inst)=include/uapi
