@@ -1,4 +1,3 @@
-
 SOURCES = sources
 
 CONFIG_SUB_REV = 3d5db9ebe860
@@ -19,8 +18,10 @@ GMP_SITE = $(GNU_SITE)/gmp
 MPC_SITE = $(GNU_SITE)/mpc
 MPFR_SITE = $(GNU_SITE)/mpfr
 
-# ISL_SITE = https://libisl.sourceforge.io
-ISL_SITE = https://downloads.sourceforge.net/project/libisl/
+# SOURCEFORGE_MIRROT = https://downloads.sourceforge.net
+SOURCEFORGE_MIRROT = https://jaist.dl.sourceforge.net
+
+ISL_SITE = $(SOURCEFORGE_MIRROT)/project/libisl
 GCC_SNAP = https://sourceware.org/pub/gcc/snapshots
 
 MUSL_SITE = https://musl.libc.org/releases
@@ -28,9 +29,9 @@ MUSL_SITE = https://musl.libc.org/releases
 MUSL_REPO = git://git.musl-libc.org/musl
 
 LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
-LINUX_HEADERS_SITE = https://ftp.barfooze.de/pub/sabotage/tarballs/
+LINUX_HEADERS_SITE = https://ftp.barfooze.de/pub/sabotage/tarballs
 
-MINGW_SITE = https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/
+MINGW_SITE = $(SOURCEFORGE_MIRROT)/project/mingw-w64/mingw-w64/mingw-w64-release
 
 DL_CMD = curl -sLo
 SHA1_CMD = sha1sum -c

@@ -56,6 +56,7 @@ function Build() {
         MPFR_VER="4.2.1" \
         ISL_VER="" \
         LINUX_VER="" \
+        MINGW_VER="v11.0.1" \
         'COMMON_CONFIG+=CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"' \
         'BINUTILS_CONFIG+=--enable-compressed-debug-sections=none' \
         install
@@ -107,7 +108,10 @@ powerpcle-linux-muslsf
 riscv64-linux-musl
 s390x-linux-musl
 x86_64-linux-musl
-x86_64-linux-muslx32'
+x86_64-linux-muslx32
+i486-w64-mingw32
+i686-w64-mingw32
+x86_64-w64-mingw32'
 
 function BuildAll() {
     if [ "$TARGETS_FILE" ]; then

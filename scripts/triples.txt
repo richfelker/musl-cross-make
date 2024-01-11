@@ -48,3 +48,6 @@ sh4-linux-musl
 sh4eb-linux-musl
 x86_64-linux-musl
 x86_64-linux-muslx32
+i486-w64-mingw32
+i686-w64-mingw32
+x86_64-w64-mingw32

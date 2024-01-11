@@ -105,6 +105,31 @@ FULL_BINUTILS_CONFIG = \
 	--with-sysroot=$(SYSROOT) \
 	--enable-deterministic-archives
 
+ifneq ($(findstring mingw,$(TARGET)),)
+FULL_GCC_CONFIG = --enable-languages=c,c++,fortran \
+	$(GCC_CONFIG_FOR_TARGET) \
+	$(COMMON_CONFIG) $(GCC_CONFIG) $(TOOLCHAIN_CONFIG) \
+	--disable-bootstrap \
+	--disable-assembly \
+	--disable-werror \
+	--target=$(TARGET) --prefix= \
+	--libdir=/lib --disable-multilib \
+	--with-sysroot=$(SYSROOT) \
+	--enable-fully-dynamic-string \
+	--enable-libstdcxx-time=yes \
+	--enable-libstdcxx-filesystem-ts=yes \
+	--enable-cloog-backend=isl \
+	--disable-sjlj-exceptions \
+	--disable-multilib \
+	--with-dwarf2 \
+	--enable-deterministic-archives \
+	--enable-libstdcxx-time \
+	--enable-libquadmath --enable-libquadmath-support \
+	--disable-decimal-float \
+        $(OVERRIDE)
+endif
+
+ifneq ($(findstring musl,$(TARGET)),)
 FULL_GCC_CONFIG = --enable-languages=c,c++,fortran \
 	$(GCC_CONFIG_FOR_TARGET) \
 	$(COMMON_CONFIG) $(GCC_CONFIG) $(TOOLCHAIN_CONFIG) \
@@ -125,28 +150,7 @@ FULL_GCC_CONFIG = --enable-languages=c,c++,fortran \
 	--enable-libquadmath --enable-libquadmath-support \
 	--disable-decimal-float \
         $(OVERRIDE)
-
-# FULL_GCC_CONFIG = --enable-languages=c,c++,fortran \
-# 	$(GCC_CONFIG_FOR_TARGET) \
-# 	$(COMMON_CONFIG) $(GCC_CONFIG) $(TOOLCHAIN_CONFIG) \
-# 	--disable-bootstrap \
-# 	--disable-assembly \
-# 	--disable-werror \
-# 	--target=$(TARGET) --prefix= \
-# 	--libdir=/lib --disable-multilib \
-# 	--with-sysroot=$(SYSROOT) \
-# 	--enable-fully-dynamic-string \
-# 	--enable-libstdcxx-time=yes \
-# 	--enable-libstdcxx-filesystem-ts=yes \
-# 	--enable-cloog-backend=isl \
-# 	--disable-sjlj-exceptions \
-# 	--disable-multilib \
-# 	--with-dwarf2 \
-# 	--enable-deterministic-archives \
-# 	--enable-libstdcxx-time \
-# 	--enable-libquadmath --enable-libquadmath-support \
-# 	--disable-decimal-float \
-#         $(OVERRIDE)
+endif
 
 FULL_MUSL_CONFIG = $(MUSL_CONFIG) \
 	--prefix= --host=$(TARGET)
