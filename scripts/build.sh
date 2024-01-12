@@ -20,17 +20,27 @@ function Init() {
 
 function Help() {
     echo "-h: help"
+    echo "-a: enable archive"
     echo "-t: test build only"
     echo "-T: targets file path or targets string"
     echo "-C: use china mirror"
+    echo "-c: set CC"
+    echo "-x: set CXX"
+    echo "-f: set FC"
+    echo "-s: static build"
+    echo "-n: native build"
+    echo "-e: skip error (-Wno-error)"
 }
 
 function ParseArgs() {
-    while getopts "htT:C" arg; do
+    while getopts "hatT:Cc:x:f:sne" arg; do
         case $arg in
         h)
             Help
             exit 0
+            ;;
+        a)
+            ENABLE_ARCHIVE="1"
             ;;
         t)
             TEST_BUILD_ONLY="1"
@@ -41,12 +51,36 @@ function ParseArgs() {
         C)
             USE_CHINA_MIRROR="1"
             ;;
+        c)
+            CC="$OPTARG"
+            ;;
+        x)
+            CXX="$OPTARG"
+            ;;
+        f)
+            FC="$OPTARG"
+            ;;
+        s)
+            STATIC_BUILD="1"
+            ;;
+        n)
+            NATIVE_BUILD="1"
+            ;;
+        e)
+            SKIP_ERROR="1"
+            ;;
         ?)
             echo "unkonw argument"
             exit 1
             ;;
         esac
     done
+}
+
+function FixArgs() {
+    if [ "$SKIP_ERROR" ]; then
+        FLAG="${FLAG} -Wno-error"
+    fi
 }
 
 function Build() {
@@ -62,25 +96,40 @@ function Build() {
         ISL_VER="" \
         LINUX_VER="" \
         MINGW_VER="v11.0.1" \
+        CC_COMPILER="${CC}" \
+        CXX_COMPILER="${CXX}" \
+        FC_COMPILER="${FC}" \
         CHINA="${USE_CHINA_MIRROR}" \
-        'COMMON_CONFIG+=CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"' \
-        'COMMON_CONFIG+=CC="gcc -static --static" CXX="g++ -static --static"' \
-        'GCC_CONFIG+=--enable-languages=c,c++' \
-        'BINUTILS_CONFIG+=--enable-compressed-debug-sections=none' \
+        STATIC="${STATIC_BUILD}" \
+        NATIVE="${NATIVE_BUILD}" \
         install
     if [ $? -ne 0 ]; then
         echo "build ${TARGET} error"
         exit 1
     fi
+    if [ "$NATIVE_BUILD" ]; then
+        DIST_NAME="${DIST}/${TARGET}-native"
+    else
+        DIST_NAME="${DIST}/${TARGET}"
+    fi
     if [ ! "$TEST_BUILD_ONLY" ]; then
-        tar -zcvf ${DIST}/${TARGET}.tgz output/*
-        if [ $? -ne 0 ]; then
-            echo "package ${TARGET} error"
-            exit 1
+        if [ "$ENABLE_ARCHIVE" ]; then
+            tar -zcvf "${DIST_NAME}.tgz" -C output/ .
+            if [ $? -ne 0 ]; then
+                echo "package ${TARGET} error"
+                exit 1
+            fi
+        else
+            mv output "${DIST_NAME}"
+            if [ $? -ne 0 ]; then
+                echo "move ${TARGET} to ${DIST_NAME} error"
+                exit 1
+            fi
         fi
     fi
     rm -rf output/*
-    rm -rf build/*
+    # rm -rf build/*
+    make clean
 }
 
 ALL_TARGETS='aarch64-linux-musl
@@ -121,7 +170,19 @@ i486-w64-mingw32
 i686-w64-mingw32
 x86_64-w64-mingw32'
 
+FLAG="-g0 -O2 -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels"
+
 function BuildAll() {
+    cat >config.mak <<EOF
+COMMON_CONFIG += CFLAGS="${FLAG}" CXXFLAGS="${FLAG}" FFLAGS="${FLAG}" LDFLAGS="-s -static --static"
+GCC_CONFIG += --enable-languages=c,c++
+BINUTILS_CONFIG += --enable-compressed-debug-sections=none
+COMMON_CONFIG += --disable-nls
+GCC_CONFIG += --disable-libquadmath --disable-decimal-float
+GCC_CONFIG += --disable-libitm
+GCC_CONFIG += --disable-fixed-point
+GCC_CONFIG += --disable-lto
+EOF
     if [ "$TARGETS_FILE" ]; then
         if [ -f "$TARGETS_FILE" ]; then
             while read line; do
@@ -151,4 +212,5 @@ function BuildAll() {
 ChToScriptFileDir
 Init
 ParseArgs "$@"
+FixArgs
 BuildAll
