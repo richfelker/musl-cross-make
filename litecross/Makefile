@@ -29,30 +29,6 @@ ifeq ($(CPUS),)
 CPUS = $(shell if command -v nproc >/dev/null 2>&1; then nproc; else echo 1; fi)
 endif
 
-ifeq ($(CC_COMPILER),)
-FULL_CC = gcc
-else
-FULL_CC = $(CC_COMPILER)
-endif
-
-ifeq ($(CXX_COMPILER),)
-FULL_CXX = g++
-else
-FULL_CXX = $(CXX_COMPILER)
-endif
-
-ifeq ($(FC_COMPILER),)
-FULL_FC = gfortran
-else
-FULL_FC = $(FC_COMPILER)
-endif
-
-ifeq ($(STATIC),)
-COMMON_CONFIG += CC="$(FULL_CC)" CXX="$(FULL_CXX)" FC="$(FULL_FC)
-else
-COMMON_CONFIG += CC="$(FULL_CC) -static --static" CXX="$(FULL_CXX) -static --static" FC="$(FULL_FC) -static --static"
-endif
-
 ifneq ($(findstring musl,$(TARGET)),)
 MINGW_SRCDIR = 
 # # https://wiki.musl-libc.org/getting-started.html#Notes_on_ARM_Float_Mode
@@ -182,19 +158,42 @@ FULL_MINGW_CRT_CONFIG = $(MINGW_CONFIG) $(MINGW_CRT_CONFIG) \
 FULL_MINGW_PTHREADS_CONFIG = $(MINGW_CONFIG) \
 	--prefix= --host=$(TARGET) --with-sysroot=$(SYSROOT)
 
-ifneq ($(NATIVE),)
-HOST := $(TARGET)
-endif
-
 ifeq ($(BUILD),)
 GUESS = $(shell cd $(GCC_SRCDIR) && ./config.guess)
 TARGET_CANON = $(shell cd $(GCC_SRCDIR) && ./config.sub $(TARGET))
 BUILD = $(GUESS)$(if $(subst $(TARGET_CANON),,$(GUESS)),,xx)
 endif
 
-ifeq ($(HOST),)
+ifeq ($(NATIVE),)
 SYSROOT = /$(TARGET)
-FULL_BINUTILS_CONFIG += --build=$(BUILD) --host=$(BUILD)
+ifeq ($(CC_COMPILER),)
+CC_PATH = $(shell which gcc)
+else
+CC_PATH = $(shell which $(CC_COMPILER))
+endif
+
+ifeq ($(CXX_COMPILER),)
+CXX_PATH = $(shell which g++)
+else
+CXX_PATH = $(shell which $(CXX_COMPILER))
+endif
+
+ifeq ($(FC_COMPILER),)
+FC_PATH = $(shell which gfortran)
+else
+FC_PATH = $(shell which $(FC_COMPILER))
+endif
+
+ifneq ($(STATIC),)
+FULL_CC = $(CC_PATH) -static --static
+FULL_CXX = $(CXX_PATH) -static --static
+FULL_FC = $(FC_PATH) -static --static
+endif
+
+COMMON_CONFIG += CC="$(FULL_CC)" CXX="$(FULL_CXX)" FC="$(FULL_FC)"
+
+FULL_BINUTILS_CONFIG += --build=$(BUILD) --host=$(BUILD) \
+	CC="$(FULL_CC)" CXX="$(FULL_CXX)" FC="$(FULL_FC)"
 FULL_GCC_CONFIG += --with-build-sysroot=$(CURDIR)/obj_sysroot \
 	AR_FOR_TARGET=$(PWD)/obj_binutils/binutils/ar \
 	AS_FOR_TARGET=$(PWD)/obj_binutils/gas/as-new \
@@ -205,8 +204,9 @@ FULL_GCC_CONFIG += --with-build-sysroot=$(CURDIR)/obj_sysroot \
 	RANLIB_FOR_TARGET=$(PWD)/obj_binutils/binutils/ranlib \
 	READELF_FOR_TARGET=$(PWD)/obj_binutils/binutils/readelf \
 	STRIP_FOR_TARGET=$(PWD)/obj_binutils/binutils/strip-new \
-	--build=$(BUILD) --host=$(BUILD) \
-	# end
+	CC="$(FULL_CC)" CXX="$(FULL_CXX)" FC="$(FULL_FC)" \
+	--build=$(BUILD) --host=$(BUILD)
+
 FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_gcc/$(TARGET)/libgcc/libgcc.a" 
 MUSL_VARS = AR=../obj_binutils/binutils/ar RANLIB=../obj_binutils/binutils/ranlib
 MINGW_VARS = AS="$(XAS)" AR="$(XAR)" CC="$(XGCC)" RANLIB="$(XRANLIB)"
@@ -225,9 +225,67 @@ obj_gcc/.lc_built: | obj_sysroot/.lc_libs_crt obj_sysroot/.lc_headers
 endif
 obj_gcc/.lc_configured: obj_binutils/.lc_built
 else
+# native build
 SYSROOT = /
-FULL_BINUTILS_CONFIG += --build=$(BUILD) --host=$(HOST)
-FULL_GCC_CONFIG += --build=$(BUILD) --host=$(HOST)
+
+check-target-musl:
+	@if ! command -v $(TARGET)-gcc >/dev/null; then \
+		echo "$(TARGET)-gcc not found in the environment"; \
+		exit 1; \
+	fi
+	@if ! command -v $(TARGET)-ar >/dev/null; then \
+		echo "$(TARGET)-ar not found in the environment"; \
+		exit 1; \
+	fi
+check-target-mingw:
+	@if ! command -v $(TARGET)-gcc >/dev/null; then \
+		echo "$(TARGET)-gcc not found in the environment"; \
+		exit 1; \
+	fi
+	@if ! command -v $(TARGET)-ar >/dev/null; then \
+		echo "$(TARGET)-ar not found in the environment"; \
+		exit 1; \
+	fi
+
+obj_mingw_headers/.lc_configured: | check-target-mingw
+obj_mingw_crt/.lc_configured: | check-target-mingw
+obj_mingw_pthreads/.lc_configured: | check-target-mingw
+obj_musl/.lc_configured: | check-target-musl
+obj_musl/.lc_built: | check-target-musl
+obj_gcc/gcc/.lc_built: | check-target-musl
+obj_gcc/.lc_built: | check-target-musl
+obj_gcc/.lc_configured: | check-target-musl
+
+ifeq ($(CC_COMPILER),)
+CC_PATH = $(shell which $(TARGET)-gcc)
+else
+CC_PATH = $(shell which $(CC_COMPILER))
+endif
+
+ifeq ($(CXX_COMPILER),)
+CXX_PATH = $(shell which $(TARGET)-g++)
+else
+CXX_PATH = $(shell which $(CXX_COMPILER))
+endif
+
+ifeq ($(FC_COMPILER),)
+FC_PATH = $(shell which $(TARGET)-gfortran)
+else
+FC_PATH = $(shell which $(FC_COMPILER))
+endif
+
+ifneq ($(STATIC),)
+FULL_CC = $(CC_PATH) -static --static
+FULL_CXX = $(CXX_PATH) -static --static
+FULL_FC = $(FC_PATH) -static --static
+endif
+
+FULL_BINUTILS_CONFIG += --build=$(BUILD) --host=$(TARGET) \
+	CC="$(FULL_CC)" CXX="$(FULL_CXX)" FC="$(FULL_FC)"
+FULL_GCC_CONFIG += --build=$(BUILD) --host=$(TARGET) \
+	CC="$(FULL_CC)" CXX="$(FULL_CXX)" FC="$(FULL_FC)"
+FULL_MUSL_CONFIG += --enable-static \
+	--disable-shared
 MUSL_VARS = 
 endif
 

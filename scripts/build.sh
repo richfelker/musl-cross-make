@@ -28,7 +28,7 @@ function Help() {
     echo "-x: set CXX"
     echo "-f: set FC"
     echo "-s: static build"
-    echo "-n: native build"
+    echo "-n: with native build"
     echo "-e: skip error (-Wno-error)"
 }
 
@@ -81,54 +81,60 @@ function FixArgs() {
     if [ "$SKIP_ERROR" ]; then
         FLAG="${FLAG} -Wno-error"
     fi
+    mkdir -p "${DIST}"
+    if [ $? -ne 0 ]; then
+        echo "mkdir dist dir ${DIST} error"
+        exit 1
+    fi
+    DIST="$(cd "$DIST" && pwd)"
+    if [ $? -ne 0 ]; then
+        echo "cd dist dir ${DIST} error"
+        exit 1
+    fi
 }
 
 function Build() {
     TARGET="$1"
-    make TARGET="${TARGET}" \
-        CONFIG_SUB_REV="28ea239c53a2" \
-        GCC_VER="11.4.0" \
-        MUSL_VER="1.2.4" \
-        BINUTILS_VER="2.41" \
-        GMP_VER="6.3.0" \
-        MPC_VER="1.3.1" \
-        MPFR_VER="4.2.1" \
-        ISL_VER="" \
-        LINUX_VER="" \
-        MINGW_VER="v11.0.1" \
-        CC_COMPILER="${CC}" \
-        CXX_COMPILER="${CXX}" \
-        FC_COMPILER="${FC}" \
-        CHINA="${USE_CHINA_MIRROR}" \
-        STATIC="${STATIC_BUILD}" \
-        NATIVE="${NATIVE_BUILD}" \
+    DIST_NAME="${DIST}/${TARGET}"
+    NATIVE_DIST_NAME="${DIST_NAME}-native"
+
+    make \
+        TARGET="${TARGET}" \
+        OUTPUT="${DIST_NAME}" \
         install
     if [ $? -ne 0 ]; then
         echo "build ${TARGET} error"
         exit 1
     fi
+
     if [ "$NATIVE_BUILD" ]; then
-        DIST_NAME="${DIST}/${TARGET}-native"
-    else
-        DIST_NAME="${DIST}/${TARGET}"
+        PATH="${DIST_NAME}/bin:${PATH}" \
+            make \
+            TARGET="${TARGET}" \
+            OUTPUT="${NATIVE_DIST_NAME}" \
+            NATIVE=true \
+            install
     fi
-    if [ ! "$TEST_BUILD_ONLY" ]; then
+    if [ "$TEST_BUILD_ONLY" ]; then
+        rm -rf "${DIST_NAME}" "${NATIVE_DIST_NAME}"
+    else
         if [ "$ENABLE_ARCHIVE" ]; then
-            tar -zcvf "${DIST_NAME}.tgz" -C output/ .
+            tar -zcvf "${DIST_NAME}.tgz" -C "${DIST_NAME}" .
             if [ $? -ne 0 ]; then
-                echo "package ${TARGET} error"
+                echo "package ${DIST_NAME} error"
                 exit 1
             fi
-        else
-            mv output "${DIST_NAME}"
-            if [ $? -ne 0 ]; then
-                echo "move ${TARGET} to ${DIST_NAME} error"
-                exit 1
+
+            if [ "$NATIVE_BUILD" ]; then
+                tar -zcvf "${NATIVE_DIST_NAME}.tgz" -C "${NATIVE_DIST_NAME}" .
+                if [ $? -ne 0 ]; then
+                    echo "package ${NATIVE_DIST_NAME} error"
+                    exit 1
+                fi
             fi
+            rm -rf "${DIST_NAME}" "${NATIVE_DIST_NAME}"
         fi
     fi
-    rm -rf output/*
-    # rm -rf build/*
     make clean
 }
 
@@ -170,11 +176,28 @@ i486-w64-mingw32
 i686-w64-mingw32
 x86_64-w64-mingw32'
 
-FLAG="-g0 -O2 -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels"
+FLAG="-g0 -O2"
 
 function BuildAll() {
     cat >config.mak <<EOF
-COMMON_CONFIG += CFLAGS="${FLAG}" CXXFLAGS="${FLAG}" FFLAGS="${FLAG}" LDFLAGS="-s -static --static"
+CONFIG_SUB_REV = 28ea239c53a2
+GCC_VER = 11.4.0
+MUSL_VER = 1.2.4
+BINUTILS_VER = 2.41
+GMP_VER = 6.3.0
+MPC_VER = 1.3.1
+MPFR_VER = 4.2.1
+ISL_VER = 
+LINUX_VER = 5.15.2
+MINGW_VER = v11.0.1
+
+CC_COMPILER = ${CC}
+CXX_COMPILER = ${CXX}
+FC_COMPILER = ${FC}
+CHINA = ${USE_CHINA_MIRROR}
+STATIC = ${STATIC_BUILD}
+
+COMMON_CONFIG += CFLAGS="-g0 -O2" CXXFLAGS="-g0 -O2"
 GCC_CONFIG += --enable-languages=c,c++
 BINUTILS_CONFIG += --enable-compressed-debug-sections=none
 COMMON_CONFIG += --disable-nls
@@ -182,7 +205,13 @@ GCC_CONFIG += --disable-libquadmath --disable-decimal-float
 GCC_CONFIG += --disable-libitm
 GCC_CONFIG += --disable-fixed-point
 GCC_CONFIG += --disable-lto
+
 EOF
+    if [ "$STATIC_BUILD" ]; then
+        echo 'COMMON_CONFIG += LDFLAGS="-s -static --static"' >>config.mak
+    else
+        echo 'COMMON_CONFIG += LDFLAGS="-s"' >>config.mak
+    fi
     if [ "$TARGETS_FILE" ]; then
         if [ -f "$TARGETS_FILE" ]; then
             while read line; do
