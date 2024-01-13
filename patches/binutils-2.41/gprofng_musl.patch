@@ -1,0 +1,317 @@
+From 576d2c97d8de26d1ab5a2058e8ba4ffd00b8096d Mon Sep 17 00:00:00 2001
+From: Vladimir Mezentsev <vladimir.mezentsev@oracle.com>
+Date: Thu, 21 Dec 2023 21:33:58 -0800
+Subject: [PATCH] gprofng: fix build problems on linux-musl
+
+ino64_t, off64_t, fpos64_t, stat64, __u64 are not defined on linux-musl.
+Fixed by declaring these types for linux-musl.
+
+2023-12-21  Vladimir Mezentsev  <vladimir.mezentsev@oracle.com>
+
+	PR gprofng/30779
+	PR gprofng/29593
+	* common/gp-defs.h: Define ino64_t, off64_t, fpos64_t for linux-musl.
+	* libcollector/unwind.c: Define __u64 for linux-musl.
+	* src/util.h: Define dbe_stat_t.
+	* src/ClassFile.cc: Use dbe_stat_t instead of "struct stat64".
+	* src/Dbe.cc: Likewise.
+	* src/DbeFile.cc: Likewise.
+	* src/DbeFile.h: Likewise.
+	* src/DbeSession.cc: Likewise.
+	* src/Experiment.cc: Likewise.
+	* src/checks.cc: Likewise.
+	* src/util.cc: Likewise.
+---
+ gprofng/common/gp-defs.h      |  6 ++++++
+ gprofng/libcollector/unwind.c |  4 ++++
+ gprofng/src/ClassFile.cc      |  2 +-
+ gprofng/src/Dbe.cc            |  2 +-
+ gprofng/src/DbeFile.cc        |  6 +++---
+ gprofng/src/DbeFile.h         |  4 ++--
+ gprofng/src/DbeSession.cc     |  2 +-
+ gprofng/src/Experiment.cc     | 12 ++++++------
+ gprofng/src/checks.cc         |  2 +-
+ gprofng/src/util.cc           | 14 +++++++-------
+ gprofng/src/util.h            | 12 +++++++++---
+ 11 files changed, 41 insertions(+), 25 deletions(-)
+
+diff --git a/gprofng/common/gp-defs.h b/gprofng/common/gp-defs.h
+index 7cef5550696..ee4f545e13d 100644
+--- a/gprofng/common/gp-defs.h
++++ b/gprofng/common/gp-defs.h
+@@ -63,4 +63,10 @@
+ # endif
+ #endif
+ 
++#if defined(__MUSL_LIBC)
++#define ino64_t ino_t
++#define off64_t off_t
++#define fpos64_t fpos_t
++#endif
++
+ #endif
+diff --git a/gprofng/libcollector/unwind.c b/gprofng/libcollector/unwind.c
+index ff2f7aa9a7e..c2c5aafbc7b 100644
+--- a/gprofng/libcollector/unwind.c
++++ b/gprofng/libcollector/unwind.c
+@@ -231,6 +231,10 @@ memory_error_func (int status ATTRIBUTE_UNUSED, bfd_vma addr ATTRIBUTE_UNUSED,
+ 	}
+ 
+ #elif ARCH(Aarch64)
++#if defined(__MUSL_LIBC)
++typedef uint64_t __u64;
++#endif
++
+ #define FILL_CONTEXT(context) \
+     { CALL_UTIL (getcontext) (context);  \
+       context->uc_mcontext.sp = (__u64) __builtin_frame_address(0); \
+diff --git a/gprofng/src/ClassFile.cc b/gprofng/src/ClassFile.cc
+index d59c9630ef1..f35661c4a0a 100644
+--- a/gprofng/src/ClassFile.cc
++++ b/gprofng/src/ClassFile.cc
+@@ -1006,7 +1006,7 @@ ClassFile::openFile (const char *fname)
+       append_msg (CMSG_ERROR, GTXT ("Cannot open file %s"), fname);
+       return;
+     }
+-  struct stat64 stat_buf;
++  dbe_stat_t stat_buf;
+   if ((fstat64 (fd, &stat_buf) == -1) || (stat_buf.st_size == 0))
+     {
+       close (fd);
+diff --git a/gprofng/src/Dbe.cc b/gprofng/src/Dbe.cc
+index 145ea70cd50..f5d7f33ff7a 100644
+--- a/gprofng/src/Dbe.cc
++++ b/gprofng/src/Dbe.cc
+@@ -271,7 +271,7 @@ dbeGetFileAttributes (const char *filename, const char *format)
+       if (!strcmp (format, NTXT ("/bin/ls -dl ")))
+ 	{
+ 	  // A kind of "/bin/ls -dl " simulation
+-	  struct stat64 sbuf;
++	  dbe_stat_t sbuf;
+ 	  sbuf.st_mode = 0;
+ 	  dbe_stat (filename, &sbuf);
+ 	  if (S_IREAD & sbuf.st_mode)
+diff --git a/gprofng/src/DbeFile.cc b/gprofng/src/DbeFile.cc
+index 9f08b3c9f1f..bae5888fa78 100644
+--- a/gprofng/src/DbeFile.cc
++++ b/gprofng/src/DbeFile.cc
+@@ -512,7 +512,7 @@ DbeFile::find_in_classpath (char *filename, Vector<DbeFile*> *classPath)
+     }
+ }
+ 
+-struct stat64 *
++dbe_stat_t *
+ DbeFile::get_stat ()
+ {
+   if (sbuf.st_atim.tv_sec == 0)
+@@ -529,8 +529,8 @@ DbeFile::compare (DbeFile *df)
+ {
+   if (df == NULL)
+     return false;
+-  struct stat64 *st1 = get_stat ();
+-  struct stat64 *st2 = df->get_stat ();
++  dbe_stat_t *st1 = get_stat ();
++  dbe_stat_t *st2 = df->get_stat ();
+   if (st1 == NULL || st2 == NULL)
+     return false;
+   if (st1->st_size != st2->st_size)
+diff --git a/gprofng/src/DbeFile.h b/gprofng/src/DbeFile.h
+index baee8a2ebe1..fa437c88cb1 100644
+--- a/gprofng/src/DbeFile.h
++++ b/gprofng/src/DbeFile.h
+@@ -67,7 +67,7 @@ public:
+   char *get_location (bool find_needed = true);
+   char *getResolvedPath ();
+   char *get_location_info ();
+-  struct stat64 *get_stat ();
++  dbe_stat_t *get_stat ();
+   bool compare (DbeFile *df);
+   void set_need_refind (bool val);
+   void set_location (const char *filename);
+@@ -79,7 +79,7 @@ public:
+ 
+   bool inArchive;
+   int filetype;
+-  struct stat64 sbuf;
++  dbe_stat_t sbuf;
+   DbeFile *container;
+   char *orig_location;
+   Experiment *experiment;
+diff --git a/gprofng/src/DbeSession.cc b/gprofng/src/DbeSession.cc
+index 86541d97f2e..43812e43074 100644
+--- a/gprofng/src/DbeSession.cc
++++ b/gprofng/src/DbeSession.cc
+@@ -1169,7 +1169,7 @@ DbeSession::open_experiment (Experiment *exp, char *path)
+       t_exp_list[j] = NULL;
+ 
+       char *lineage_name = exp_names->fetch (j);
+-      struct stat64 sbuf;
++      dbe_stat_t sbuf;
+       char *dpath = dbe_sprintf (NTXT ("%s/%s"), path, lineage_name);
+ 
+       // look for experiments with no profile collected
+diff --git a/gprofng/src/Experiment.cc b/gprofng/src/Experiment.cc
+index 1378ad5ce07..16941a7dfca 100644
+--- a/gprofng/src/Experiment.cc
++++ b/gprofng/src/Experiment.cc
+@@ -1631,7 +1631,7 @@ Experiment::open (char *path)
+     return status;
+ 
+   // Get creation time for experiment
+-  struct stat64 st;
++  dbe_stat_t st;
+   if (dbe_stat (path, &st) == 0)
+     mtime = st.st_mtime;
+ 
+@@ -5594,7 +5594,7 @@ Experiment::find_expdir (char *path)
+ {
+   // This function checks that the experiment directory
+   // is of the proper form, and accessible
+-  struct stat64 sbuf;
++  dbe_stat_t sbuf;
+ 
+   // Save the name
+   expt_name = dbe_strdup (path);
+@@ -5703,7 +5703,7 @@ Experiment::get_descendants_names ()
+       if (entry->d_name[0] == '_' || strncmp (entry->d_name, "M_r", 3) == 0)
+ 	{
+ 	  char *dpath = dbe_sprintf (NTXT ("%s/%s"), dir_name, entry->d_name);
+-	  struct stat64 sbuf;
++	  dbe_stat_t sbuf;
+ 	  if (dbe_stat (dpath, &sbuf) == 0 && S_ISDIR (sbuf.st_mode))
+ 	    exp_names->append (dpath);
+ 	  else
+@@ -5727,7 +5727,7 @@ Experiment::create_dir (char *dname)
+     {
+       return true;
+     }
+-  struct stat64 sbuf;
++  dbe_stat_t sbuf;
+   if (dbe_stat (dname, &sbuf) != 0 || S_ISDIR (sbuf.st_mode) == 0)
+     {
+       char *buf = dbe_sprintf (GTXT ("Unable to create directory `%s'\n"),
+@@ -6515,7 +6515,7 @@ Experiment::copy_file_to_archive (const char *name, const char *aname, int hide_
+     }
+   close (fd_w);
+ 
+-  struct stat64 s_buf;
++  dbe_stat_t s_buf;
+   if (fstat64 (fd_r, &s_buf) == 0)
+     {
+       struct utimbuf u_buf;
+@@ -6703,7 +6703,7 @@ Experiment::copy_file_to_common_archive (const char *name, const char *aname,
+ 	  return 1;
+ 	}
+       // Set read-only permissions
+-      struct stat64 statbuf;
++      dbe_stat_t statbuf;
+       if (0 == dbe_stat_file (name, &statbuf))
+ 	{
+ 	  mode_t mask = S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+diff --git a/gprofng/src/checks.cc b/gprofng/src/checks.cc
+index 094c3bbc60a..f48276b685d 100644
+--- a/gprofng/src/checks.cc
++++ b/gprofng/src/checks.cc
+@@ -223,7 +223,7 @@ collect::Exec_status
+ collect::check_executable (char *target_name)
+ {
+   char target_path[MAXPATHLEN];
+-  struct stat64 statbuf;
++  dbe_stat_t statbuf;
+   if (target_name == NULL) // not set, but assume caller knows what it's doing
+     return EXEC_OK;
+   if (getenv ("GPROFNG_SKIP_VALIDATION")) // don't check target
+diff --git a/gprofng/src/util.cc b/gprofng/src/util.cc
+index b942fa057a7..ba83e7266d4 100644
+--- a/gprofng/src/util.cc
++++ b/gprofng/src/util.cc
+@@ -880,7 +880,7 @@ struct worker_thread_info
+   int thread_num;           /* Application-defined thread # */
+   volatile int control;     /* Thread state */
+   volatile int result;      /* Return status */
+-  struct stat64 statbuf;    /* File info from stat64() */
++  dbe_stat_t statbuf;       /* File info from stat64() */
+   const char *path;         /* File */
+ };
+ 
+@@ -1058,9 +1058,9 @@ extract_and_save_dirname (const char *path, int status)
+ 
+ // get status for specified file
+ static int
+-dbe_stat_internal (const char *path, struct stat64 *sbuf, bool file_only)
++dbe_stat_internal (const char *path, dbe_stat_t *sbuf, bool file_only)
+ {
+-  struct stat64 statbuf;
++  dbe_stat_t statbuf;
+   int dir_status = check_dirname (path);
+   if (dir_status == DIR_STATUS_UNKNOWN)
+     {
+@@ -1116,7 +1116,7 @@ dbe_stat_internal (const char *path, struct stat64 *sbuf, bool file_only)
+ // get status for the regular file
+ 
+ int
+-dbe_stat_file (const char *path, struct stat64 *sbuf)
++dbe_stat_file (const char *path, dbe_stat_t *sbuf)
+ {
+   int res = dbe_stat_internal (path, sbuf, true);
+   return res;
+@@ -1125,7 +1125,7 @@ dbe_stat_file (const char *path, struct stat64 *sbuf)
+ // get status for specified file
+ 
+ int
+-dbe_stat (const char *path, struct stat64 *sbuf)
++dbe_stat (const char *path, dbe_stat_t *sbuf)
+ {
+   int res = dbe_stat_internal (path, sbuf, false);
+   return res;
+@@ -1159,7 +1159,7 @@ dbe_read_dir (const char *path, const char *format)
+ 	  if (format_aF)
+ 	    {
+ 	      const char *attr = NTXT ("@"); // Link
+-	      struct stat64 sbuf;
++	      dbe_stat_t sbuf;
+ 	      sbuf.st_mode = 0;
+ 	      char filename[MAXPATHLEN + 1];
+ 	      snprintf (filename, sizeof (filename), NTXT ("%s/%s"), path, entry->d_name);
+@@ -1253,7 +1253,7 @@ dbe_delete_file (const char *pathname)
+ {
+   StringBuilder sb;
+   char *cmd = NULL;
+-  struct stat64 sbuf;
++  dbe_stat_t sbuf;
+   sbuf.st_mode = 0;
+   int st = dbe_stat (pathname, &sbuf);
+   if (st == 0)
+diff --git a/gprofng/src/util.h b/gprofng/src/util.h
+index 5c01b1882c3..9227833b6e2 100644
+--- a/gprofng/src/util.h
++++ b/gprofng/src/util.h
+@@ -136,7 +136,13 @@ timestruc2hr (timestruc_t *s)
+   return (hrtime_t) s->tv_sec * NANOSEC + (hrtime_t) s->tv_nsec;
+ }
+ 
+-struct stat64;
++#if defined(__MUSL_LIBC)
++typedef struct stat dbe_stat_t;
++#define fstat64 fstat
++#define open64 open
++#else
++typedef struct stat64 dbe_stat_t;
++#endif
+ 
+ #if defined(__cplusplus)
+ extern "C"
+@@ -162,8 +168,8 @@ extern "C"
+   char *get_relative_link (const char *path_to, const char *path_from);
+   char *get_prog_name (int basename);
+   char *dbe_strndup (const char *str, size_t len);
+-  int dbe_stat (const char *path, struct stat64 *sbuf);
+-  int dbe_stat_file (const char *path, struct stat64 *sbuf);
++  int dbe_stat (const char *path, dbe_stat_t *sbuf);
++  int dbe_stat_file (const char *path, dbe_stat_t *sbuf);
+   char *dbe_read_dir (const char *path, const char *format);
+   char *dbe_get_processes (const char *format);
+   char *dbe_create_directories (const char *pathname);
+-- 
+2.39.3
+

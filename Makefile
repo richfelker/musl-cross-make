@@ -1,16 +1,15 @@
-
 SOURCES = sources
 
 CONFIG_SUB_REV = 3d5db9ebe860
-BINUTILS_VER = 2.40
-GCC_VER = 13.1.0
+BINUTILS_VER = 2.41
+GCC_VER = 13.2.0
 MUSL_VER = 1.2.4
 GMP_VER = 6.2.1
 MPC_VER = 1.3.1
-MPFR_VER = 4.2.0
+MPFR_VER = 4.2.1
 LINUX_VER = 6.3.3
 
-GNU_SITE = https://ftpmirror.gnu.org/gnu
+GNU_SITE = https://mirror.aarnet.edu.au/pub/gnu/
 GCC_SITE = $(GNU_SITE)/gcc
 BINUTILS_SITE = $(GNU_SITE)/binutils
 GMP_SITE = $(GNU_SITE)/gmp
@@ -106,7 +105,7 @@ musl-git-%:
 	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
-	( cd $@.tmp && tar zxvf - ) < $<
+	( cd $@.tmp && tar zxf - ) < $<
 	rm -rf $@
 	touch $@.tmp/$(patsubst %.orig,%,$@)
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
@@ -116,7 +115,7 @@ musl-git-%:
 	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
-	( cd $@.tmp && tar jxvf - ) < $<
+	( cd $@.tmp && tar jxf - ) < $<
 	rm -rf $@
 	touch $@.tmp/$(patsubst %.orig,%,$@)
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
@@ -126,7 +125,7 @@ musl-git-%:
 	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
-	( cd $@.tmp && tar Jxvf - ) < $<
+	( cd $@.tmp && tar Jxf - ) < $<
 	rm -rf $@
 	touch $@.tmp/$(patsubst %.orig,%,$@)
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
