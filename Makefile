@@ -9,7 +9,7 @@ MPC_VER = 1.3.1
 MPFR_VER = 4.2.1
 LINUX_VER = 6.3.3
 
-GNU_SITE = https://mirror.aarnet.edu.au/pub/gnu/
+GNU_SITE = https://ftpmirror.gnu.org/gnu
 GCC_SITE = $(GNU_SITE)/gcc
 BINUTILS_SITE = $(GNU_SITE)/binutils
 GMP_SITE = $(GNU_SITE)/gmp
