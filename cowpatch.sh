@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 #
 # cowpatch.sh, by Rich Felker
 #

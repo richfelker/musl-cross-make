@@ -63,7 +63,7 @@ FULL_BINUTILS_CONFIG = \
 	--target=$(TARGET) --prefix= \
 	--libdir=/lib --disable-multilib \
 	--with-sysroot=$(SYSROOT) \
-	--enable-deterministic-archives
+	--enable-deterministic-archives --disable-gprofng
 
 FULL_GCC_CONFIG = --enable-languages=c,c++ \
 	$(GCC_CONFIG_FOR_TARGET) \
