@@ -8,7 +8,7 @@ MUSL_VER = 1.2.5
 GMP_VER = 6.1.2
 MPC_VER = 1.1.0
 MPFR_VER = 4.0.2
-LINUX_VER = headers-4.19.88-1
+LINUX_VER = headers-4.19.88-2
 
 GNU_SITE = https://ftpmirror.gnu.org/gnu
 GCC_SITE = $(GNU_SITE)/gcc
