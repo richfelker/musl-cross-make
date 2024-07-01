@@ -1,0 +1,118 @@
+diff --git a/gcc/ada/Makefile.rtl b/gcc/ada/Makefile.rtl
+index 775ab9857..3a36a954b 100644
+--- a/gcc/ada/Makefile.rtl
++++ b/gcc/ada/Makefile.rtl
+@@ -1521,7 +1521,7 @@ ifeq ($(strip $(filter-out %86 linux%,$(target_cpu) $(target_os))),)
+   s-tpopsp.adb<libgnarl/s-tpopsp__tls.adb \
+   $(TRASYM_DWARF_UNIX_PAIRS) \
+   g-sercom.adb<libgnat/g-sercom__linux.adb \
+-  s-tsmona.adb<libgnat/s-tsmona__linux.adb \
++  s-tsmona.adb<libgnat/s-tsmona.adb \
+   a-exetim.adb<libgnarl/a-exetim__posix.adb \
+   a-exetim.ads<libgnarl/a-exetim__default.ads \
+   s-linux.ads<libgnarl/s-linux.ads \
+@@ -2073,7 +2073,7 @@ ifeq ($(strip $(filter-out powerpc% linux%,$(target_cpu) $(target_os))),)
+   s-tpopsp.adb<libgnarl/s-tpopsp__tls.adb \
+   g-sercom.adb<libgnat/g-sercom__linux.adb \
+   $(TRASYM_DWARF_UNIX_PAIRS) \
+-  s-tsmona.adb<libgnat/s-tsmona__linux.adb \
++  s-tsmona.adb<libgnat/s-tsmona.adb \
+   $(ATOMICS_TARGET_PAIRS) \
+   $(ATOMICS_BUILTINS_TARGET_PAIRS) \
+   system.ads<libgnat/system-linux-ppc.ads
+@@ -2297,7 +2297,7 @@ ifeq ($(strip $(filter-out %ia64 linux%,$(target_cpu) $(target_os))),)
+   s-taspri.ads<libgnarl/s-taspri__posix-noaltstack.ads \
+   g-sercom.adb<libgnat/g-sercom__linux.adb \
+   $(TRASYM_DWARF_UNIX_PAIRS) \
+-  s-tsmona.adb<libgnat/s-tsmona__linux.adb \
++  s-tsmona.adb<libgnat/s-tsmona.adb \
+   $(ATOMICS_TARGET_PAIRS) \
+   $(ATOMICS_BUILTINS_TARGET_PAIRS) \
+   system.ads<libgnat/system-linux-ia64.ads
+@@ -2394,7 +2394,7 @@ ifeq ($(strip $(filter-out %x86_64 linux%,$(target_cpu) $(target_os))),)
+   s-taspri.ads<libgnarl/s-taspri__posix.ads \
+   g-sercom.adb<libgnat/g-sercom__linux.adb \
+   $(TRASYM_DWARF_UNIX_PAIRS) \
+-  s-tsmona.adb<libgnat/s-tsmona__linux.adb \
++  s-tsmona.adb<libgnat/s-tsmona.adb \
+   $(ATOMICS_TARGET_PAIRS) \
+   $(X86_64_TARGET_PAIRS) \
+   system.ads<libgnat/system-linux-x86.ads
+diff --git a/gcc/ada/libgnarl/s-osinte__linux.ads b/gcc/ada/libgnarl/s-osinte__linux.ads
+index 9d5cd0525..865de4dfb 100644
+--- a/gcc/ada/libgnarl/s-osinte__linux.ads
++++ b/gcc/ada/libgnarl/s-osinte__linux.ads
+@@ -398,12 +398,6 @@ package System.OS_Interface is
+    PTHREAD_RWLOCK_PREFER_WRITER_NP              : constant := 1;
+    PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP : constant := 2;
+ 
+-   function pthread_rwlockattr_setkind_np
+-     (attr : access pthread_rwlockattr_t;
+-      pref : int) return int;
+-   pragma Import
+-     (C, pthread_rwlockattr_setkind_np, "pthread_rwlockattr_setkind_np");
+-
+    function pthread_rwlock_init
+      (mutex : access pthread_rwlock_t;
+       attr  : access pthread_rwlockattr_t) return int;
+@@ -465,11 +459,6 @@ package System.OS_Interface is
+       protocol : int) return int;
+    pragma Import (C, pthread_mutexattr_setprotocol);
+ 
+-   function pthread_mutexattr_setprioceiling
+-     (attr        : access pthread_mutexattr_t;
+-      prioceiling : int) return int;
+-   pragma Import (C, pthread_mutexattr_setprioceiling);
+-
+    type struct_sched_param is record
+       sched_priority : int;  --  scheduling priority
+    end record;
+diff --git a/gcc/ada/libgnarl/s-taprop__linux.adb b/gcc/ada/libgnarl/s-taprop__linux.adb
+index c45559e5b..f5b41c943 100644
+--- a/gcc/ada/libgnarl/s-taprop__linux.adb
++++ b/gcc/ada/libgnarl/s-taprop__linux.adb
+@@ -349,6 +349,8 @@ package body System.Task_Primitives.Operations is
+    ----------------
+ 
+    function Init_Mutex (L : RTS_Lock_Ptr; Prio : Any_Priority) return C.int is
++      pragma Unreferenced (Prio);
++
+       Mutex_Attr : aliased pthread_mutexattr_t;
+       Result, Result_2 : C.int;
+ 
+@@ -365,10 +367,6 @@ package body System.Task_Primitives.Operations is
+            (Mutex_Attr'Access, PTHREAD_PRIO_PROTECT);
+          pragma Assert (Result = 0);
+ 
+-         Result := pthread_mutexattr_setprioceiling
+-           (Mutex_Attr'Access, Prio_To_Linux_Prio (Prio));
+-         pragma Assert (Result = 0);
+-
+       elsif Locking_Policy = 'I' then
+          Result := pthread_mutexattr_setprotocol
+            (Mutex_Attr'Access, PTHREAD_PRIO_INHERIT);
+@@ -409,11 +407,6 @@ package body System.Task_Primitives.Operations is
+             Result := pthread_rwlockattr_init (RWlock_Attr'Access);
+             pragma Assert (Result = 0);
+ 
+-            Result := pthread_rwlockattr_setkind_np
+-              (RWlock_Attr'Access,
+-               PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+-            pragma Assert (Result = 0);
+-
+             Result := pthread_rwlock_init (L.RW'Access, RWlock_Attr'Access);
+ 
+             pragma Assert (Result in 0 | ENOMEM);
+diff --git a/gcc/system.h b/gcc/system.h
+index d04f8fd33..5505eeb74 100644
+--- a/gcc/system.h
++++ b/gcc/system.h
+@@ -864,7 +864,7 @@ extern void fancy_abort (const char *, int, const char *)
+ #undef calloc
+ #undef strdup
+ #undef strndup
+- #pragma GCC poison calloc strdup strndup
++ #pragma GCC poison strdup strndup
+ #endif
+ 
+ #if !defined(FLEX_SCANNER) && !defined(YYBISON)
