@@ -1,0 +1,11 @@
+--- gcc-6.5.0.orig/gcc/config/i386/i386.c
++++ gcc-6.5.0/gcc/config/i386/i386.c
+@@ -8747,7 +8747,7 @@
+ 			 HOST_WIDE_INT words)
+ {
+   int res = 0;
+-  bool error_p = NULL;
++  bool error_p = 0;
+ 
+   if (TARGET_IAMCU)
+     {
