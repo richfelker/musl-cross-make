@@ -32,9 +32,10 @@ The build system can be configured by providing a `config.mak` file in
 the top-level directory. The only mandatory variable is `TARGET`, which
 should contain a gcc target tuple (such as `i486-linux-musl`), but many
 more options are available. See the provided `config.mak.dist` and
-`presets/*` for examples.
+`presets/*` for examples. These options could also be provided by `make`
+arguments like `make TARGET=i486-linux-musl`.
 
-To compile, run `make`. To install to `$(OUTPUT)`, run `make install`.
+To compile, install `gcc` and `g++`, then run `make`. To install to `$(OUTPUT)`, run `make install`.
 
 The default value for `$(OUTPUT)` is output; after installing here you
 can move the cross compiler toolchain to another location as desired.
@@ -51,7 +52,6 @@ believed to work:
 - `arm[eb]-linux-musleabi[hf]`
 - `i*86-linux-musl`
 - `microblaze[el]-linux-musl`
-- `mips-linux-musl`
 - `mips[el]-linux-musl[sf]`
 - `mips64[el]-linux-musl[n32][sf]`
 - `powerpc-linux-musl[sf]`
