@@ -35,7 +35,8 @@ more options are available. See the provided `config.mak.dist` and
 `presets/*` for examples. These options could also be provided by `make`
 arguments like `make TARGET=i486-linux-musl`.
 
-To compile, install `gcc` and `g++`, then run `make`. To install to `$(OUTPUT)`, run `make install`.
+To compile, install `gcc` and `g++`, then run `make`.
+To install to `$(OUTPUT)`, run `make install`.
 
 The default value for `$(OUTPUT)` is output; after installing here you
 can move the cross compiler toolchain to another location as desired.
