@@ -1,0 +1,7 @@
+--- gcc-5.3.0.orig/libcc1/ChangeLog
++++ gcc-5.3.0/libcc1/ChangeLog
+@@ -98,3 +98,4 @@
+ 	* plugin.cc: New file.
+ 	* rpc.hh: New file.
+ 	* status.hh: New file.
++ 
