@@ -1,0 +1,26 @@
+From bb1f45f53fc26714b30a14bcee55319d7c4cb1f7 Mon Sep 17 00:00:00 2001
+From: Said Musaev <cpu808694@gmail.com>
+Date: Thu, 1 Oct 2020 14:32:12 +0200
+Subject: [PATCH 01/14] ssp_non_shared
+
+---
+ gcc/gcc.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/gcc/gcc.c b/gcc/gcc.c
+index 9f790db0daf..e6887590ae2 100644
+--- a/gcc/gcc.c
++++ b/gcc/gcc.c
+@@ -877,7 +877,8 @@ proper position among the other output files.  */
+ #ifndef LINK_SSP_SPEC
+ #ifdef TARGET_LIBC_PROVIDES_SSP
+ #define LINK_SSP_SPEC "%{fstack-protector|fstack-protector-all" \
+-		       "|fstack-protector-strong|fstack-protector-explicit:}"
++		       "|fstack-protector-strong|fstack-protector-explicit" \
++		       ":-lssp_nonshared}"
+ #else
+ #define LINK_SSP_SPEC "%{fstack-protector|fstack-protector-all" \
+ 		       "|fstack-protector-strong|fstack-protector-explicit" \
+-- 
+2.28.0
+
