@@ -1,0 +1,110 @@
+From de6f402a54f7e6a3f8a79d723a25724e6274cc3e Mon Sep 17 00:00:00 2001
+From: Sergei Trofimovich <siarheit@google.com>
+Date: Mon, 27 Jun 2022 13:27:24 +0100
+Subject: [PATCH] c++: avoid <memory> poisoning on musl [PR106102]
+
+On musl <pthread.h> uses calloc() (via <sched.h>). <memory> includes
+it indirectly and exposes use of poisoned calloc() when module code
+is built:
+
+    /build/build/./prev-gcc/xg++ ... ../../gcc-13-20220626/gcc/cp/mapper-resolver.cc
+        In file included from /<<NIX>>/musl-1.2.3-dev/include/pthread.h:30,
+                 from /build/build/prev-x86_64-unknown-linux-musl/libstdc++-v3/include/x86_64-unknown-linux-musl/bits/gthr-default.h:35,
+                 ....
+                 from /build/build/prev-x86_64-unknown-linux-musl/libstdc++-v3/include/memory:77,
+                 from ../../gcc-13-20220626/gcc/../libcody/cody.hh:24,
+                 from ../../gcc-13-20220626/gcc/cp/../../c++tools/resolver.h:25,
+                 from ../../gcc-13-20220626/gcc/cp/../../c++tools/resolver.cc:23,
+                 from ../../gcc-13-20220626/gcc/cp/mapper-resolver.cc:32:
+    /<<NIX>>/musl-1.2.3-dev/include/sched.h:84:7: error: attempt to use poisoned "calloc"
+       84 | void *calloc(size_t, size_t);
+          |       ^
+    /<<NIX>>/musl-1.2.3-dev/include/sched.h:124:36: error: attempt to use poisoned "calloc"
+      124 | #define CPU_ALLOC(n) ((cpu_set_t *)calloc(1,CPU_ALLOC_SIZE(n)))
+          |                                    ^
+
+gcc/cp/
+
+	PR c++/106102
+	* mapper-client.cc: Include <memory> via "system.h".
+	* mapper-resolver.cc: Ditto.
+	* module.cc: Ditto.
+
+libcc1/
+
+	PR c++/106102
+	* libcc1plugin.cc: Include <memory> via "system.h".
+	* libcp1plugin.cc: Ditto.
+
+(cherry picked from commit 3b21c21f3f5726823e19728fdd1571a14aae0fb3)
+---
+ gcc/cp/mapper-client.cc   | 1 +
+ gcc/cp/mapper-resolver.cc | 1 +
+ gcc/cp/module.cc          | 1 +
+ libcc1/libcc1plugin.cc    | 1 +
+ libcc1/libcp1plugin.cc    | 1 +
+ 5 files changed, 5 insertions(+)
+
+diff --git a/gcc/cp/mapper-client.cc b/gcc/cp/mapper-client.cc
+index 8603a886a09..fe9544b5ba4 100644
+--- a/gcc/cp/mapper-client.cc
++++ b/gcc/cp/mapper-client.cc
+@@ -27,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
+ #define INCLUDE_STRING
+ #define INCLUDE_VECTOR
+ #define INCLUDE_MAP
++#define INCLUDE_UNIQUE_PTR
+ #include "system.h"
+ 
+ #include "line-map.h"
+diff --git a/gcc/cp/mapper-resolver.cc b/gcc/cp/mapper-resolver.cc
+index e3d29fb5ada..e70d1b4ae2c 100644
+--- a/gcc/cp/mapper-resolver.cc
++++ b/gcc/cp/mapper-resolver.cc
+@@ -25,6 +25,7 @@ along with GCC; see the file COPYING3.  If not see
+ #define INCLUDE_VECTOR
+ #define INCLUDE_ALGORITHM
+ #define INCLUDE_MAP
++#define INCLUDE_UNIQUE_PTR
+ #include "system.h"
+ 
+ // We don't want or need to be aware of networking
+diff --git a/gcc/cp/module.cc b/gcc/cp/module.cc
+index cebf9c35c1d..5c5d02bb523 100644
+--- a/gcc/cp/module.cc
++++ b/gcc/cp/module.cc
+@@ -202,6 +202,7 @@ Classes used:
+ 
+ #define _DEFAULT_SOURCE 1 /* To get TZ field of struct tm, if available.  */
+ #include "config.h"
++#define INCLUDE_UNIQUE_PTR
+ #define INCLUDE_STRING
+ #define INCLUDE_VECTOR
+ #include "system.h"
+diff --git a/libcc1/libcc1plugin.cc b/libcc1/libcc1plugin.cc
+index 12ab5a57c8d..bdd0bdabe77 100644
+--- a/libcc1/libcc1plugin.cc
++++ b/libcc1/libcc1plugin.cc
+@@ -31,6 +31,7 @@
+ #undef PACKAGE_TARNAME
+ #undef PACKAGE_VERSION
+ 
++#define INCLUDE_UNIQUE_PTR
+ #include "gcc-plugin.h"
+ #include "system.h"
+ #include "coretypes.h"
+diff --git a/libcc1/libcp1plugin.cc b/libcc1/libcp1plugin.cc
+index 83dab7f58b1..e2d5039a0a1 100644
+--- a/libcc1/libcp1plugin.cc
++++ b/libcc1/libcp1plugin.cc
+@@ -32,6 +32,7 @@
+ #undef PACKAGE_TARNAME
+ #undef PACKAGE_VERSION
+ 
++#define INCLUDE_UNIQUE_PTR
+ #include "gcc-plugin.h"
+ #include "system.h"
+ #include "coretypes.h"
+-- 
+2.42.0
+
