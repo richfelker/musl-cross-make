@@ -1,0 +1,12 @@
+--- a/config.guess	2019-01-03 12:28:27.000000000 +0100
++++ b/config.guess	2021-12-20 01:23:00.000000000 +0100
+@@ -1309,6 +1309,9 @@
+     *:Rhapsody:*:*)
+ 	echo "$UNAME_MACHINE"-apple-rhapsody"$UNAME_RELEASE"
+ 	exit ;;
++    arm64:Darwin:*:*)
++	echo aarch64-apple-darwin"$UNAME_RELEASE"
++	exit ;;
+     *:Darwin:*:*)
+ 	UNAME_PROCESSOR=`uname -p` || UNAME_PROCESSOR=unknown
+ 	set_cc_for_build
