@@ -24,6 +24,8 @@ MUSL_REPO = https://git.musl-libc.org/git/musl
 LINUX_SITE = https://cdn.kernel.org/pub/linux/kernel
 LINUX_HEADERS_SITE = https://ftp.barfooze.de/pub/sabotage/tarballs/
 
+CONFIG_SUB_URL = "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
+
 DL_CMD = wget -c -O
 SHA1_CMD = sha1sum -c
 
@@ -76,7 +78,7 @@ $(SOURCES):
 
 $(SOURCES)/config.sub: | $(SOURCES)
 	mkdir -p $@.tmp
-	cd $@.tmp && $(DL_CMD) $(notdir $@) "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=$(CONFIG_SUB_REV)"
+	cd $@.tmp && $(DL_CMD) $(notdir $@) $(CONFIG_SUB_URL)
 	cd $@.tmp && touch $(notdir $@)
 	cd $@.tmp && $(SHA1_CMD) $(CURDIR)/hashes/$(notdir $@).$(CONFIG_SUB_REV).sha1
 	mv $@.tmp/$(notdir $@) $@
