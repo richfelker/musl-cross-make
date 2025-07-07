@@ -63,11 +63,11 @@ GCC_VER = 14.2.0
 
 # Recommended options for smaller build for deploying binaries:
 
-# COMMON_CONFIG += CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"
+COMMON_CONFIG += CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"
 
 # Options you can add for faster/simpler build at the expense of features:
 
-# COMMON_CONFIG += --disable-nls
+COMMON_CONFIG += --disable-nls
 # GCC_CONFIG += --disable-libquadmath --disable-decimal-float
 # GCC_CONFIG += --disable-libitm
 # GCC_CONFIG += --disable-fixed-point
