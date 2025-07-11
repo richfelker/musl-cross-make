@@ -1,0 +1,130 @@
+name: musl-dyne
+on:
+  push:
+    paths-ignore:
+      - '*.md'
+    branches:
+      - master
+  pull_request:
+    paths-ignore:
+      - '*.md'
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  semantic-release:
+    name: 🤖 Semantic release
+    runs-on: ubuntu-latest
+    outputs:
+      new_release_published: ${{ steps.semantic-release.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic-release.outputs.new_release_version }}
+    if: ${{ github.ref_name == 'master' && github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semantic Release
+        uses: cycjimmy/semantic-release-action@v4
+        id: semantic-release
+        with:
+          extra_plugins: |
+            @semantic-release/changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload release docs artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: documentation
+      #     path: |
+      #       build/release-intro.md
+
+  linux-release:
+    name: 🐧 Binary builds on Ubuntu
+    runs-on: ubuntu-latest
+    needs: [semantic-release]
+    if: ${{ needs.semantic-release.outputs.new_release_published == 'true' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # - name: Upload release docs artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: documentation
+      #     path: |
+      #       build/release-intro.md
+      - name: Install build deps
+        run: |
+          sudo apt install -qy tree cmake make autoconf automake libtool gcc g++ ccache
+      - name: Downoad sources from files.dyne.org
+        run: |
+          cd sources && sh download_from_dyne.sh
+      - name: Build x86_64
+        env:
+          XZ_OPT: -9e -T0
+        run: |
+          make -j`nproc` TARGET="x86_64-linux-musl"
+          make install   TARGET="x86_64-linux-musl"
+          cd /opt && tar -cJf musl-dyne_x86-64.tar.xz musl-dyne
+          rm -rf /opt/musl-dyne && make clean
+      - name: Build arm-hf
+        env:
+          XZ_OPT: -9e -T0
+        run: |
+          make -j`nproc` TARGET="arm-linux-musleabihf"
+          make install   TARGET="arm-linux-musleabihf"
+          cd /opt && tar -cJf musl-dyne_arm-hf.tar.xz musl-dyne
+          rm -rf /opt/musl-dyne && make clean
+      - name: Upload artifact linux-amd64
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-x86_64
+          path: |
+            /opt/musl-dyne_x86-64.tar.xz
+            /opt/musl-dyne_arm-hf.tar.xz
+
+  draft-binary-release:
+    name: 📦 Pack release
+    needs: [semantic-release, linux-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: download binary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: |
+            musl-dyne
+      - name: show directory structure
+        run: tree -dL 3
+      - name: relase all binary artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            musl-dyne/*
+          tag_name: ${{ needs.semantic-release.outputs.version }}
+          #body_path: musl-dyne/documentation/release-intro.md
+          #append_body: true
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+
+  remove-tag-on-fail:
+    name: 🧻 Remove tag on fail
+    needs: [semantic-release, linux-release]
+    runs-on: ubuntu-latest
+    if: ${{ (failure() || cancelled()) && needs.semantic-release.outputs.release == 'True' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove tag
+        uses: dev-drprasad/delete-tag-and-release@v1.0
+        with:
+          tag_name: ${{ needs.semantic-release.outputs.version }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          delete_release: false
+          repo: dyne/musl-dyne

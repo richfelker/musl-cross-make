@@ -1,0 +1,8 @@
+{
+  "repositoryUrl": "git@github.com:dyne/musl-dyne.git",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog"
+  ]
+}

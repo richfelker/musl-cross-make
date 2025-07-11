@@ -8,7 +8,7 @@
 # command line. Some examples:
 
 # TARGET = i486-linux-musl
-TARGET = x86_64-linux-musl
+TARGET ?= x86_64-linux-musl
 # TARGET = arm-linux-musleabi
 # TARGET = arm-linux-musleabihf
 # TARGET = sh2eb-linux-muslfdpic
@@ -60,10 +60,9 @@ GCC_VER = 14.2.0
 # binaries produced by the existing toolchain (in this example, i486).
 
 # COMMON_CONFIG += CC="x86_64-linux-musl-gcc -static --static" CXX="x86_64-linux-musl-g++ -static --static"
-
 # Recommended options for smaller build for deploying binaries:
 
-COMMON_CONFIG += CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"
+COMMON_CONFIG += CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s" CC="ccache gcc" CXX="ccache g++"
 
 # Options you can add for faster/simpler build at the expense of features:
 
