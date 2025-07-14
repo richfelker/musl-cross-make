@@ -77,7 +77,23 @@ jobs:
           make -s -j`nproc` TARGET="arm-linux-musleabihf"
           make -s install   TARGET="arm-linux-musleabihf"
           cd /opt && tar -cJf musl-dyne-arm_hf.tar.xz musl-dyne
-          rm -rf /opt/musl-dyne && make clean
+          rm -rf /opt/musl-dyne && cd - && make clean
+      - name: Build riscv64
+        env:
+          XZ_OPT: -9e -T0
+        run: |
+          make -s -j`nproc` TARGET="riscv64-linux-musl"
+          make -s install   TARGET="riscv64-linux-musl"
+          cd /opt && tar -cJf musl-dyne-riscv_64.tar.xz musl-dyne
+          rm -rf /opt/musl-dyne && cd - && make clean
+      - name: Build arm64
+        env:
+          XZ_OPT: -9e -T0
+        run: |
+          make -s -j`nproc` TARGET="aarch64-linux-musl"
+          make -s install   TARGET="aarch64-linux-musl"
+          cd /opt && tar -cJf musl-dyne-arm_64.tar.xz musl-dyne
+          rm -rf /opt/musl-dyne && cd - && make clean
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -85,6 +101,8 @@ jobs:
           path: |
             /opt/musl-dyne-x86_64.tar.xz
             /opt/musl-dyne-arm_hf.tar.xz
+            /opt/musl-dyne-riscv_64.tar.xz
+            /opt/musl-dyne-arm_64.tar.xz
 
   draft-binary-release:
     name: 📦 Pack release
