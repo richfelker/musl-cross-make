@@ -66,16 +66,16 @@ jobs:
         env:
           XZ_OPT: -9e -T0
         run: |
-          make -j`nproc` TARGET="x86_64-linux-musl"
-          make install   TARGET="x86_64-linux-musl"
+          make -s -j`nproc` TARGET="x86_64-linux-musl"
+          make -s install   TARGET="x86_64-linux-musl"
           cd /opt && tar -cJf musl-dyne_x86-64.tar.xz musl-dyne
           rm -rf /opt/musl-dyne && make clean
       - name: Build arm-hf
         env:
           XZ_OPT: -9e -T0
         run: |
-          make -j`nproc` TARGET="arm-linux-musleabihf"
-          make install   TARGET="arm-linux-musleabihf"
+          make -s -j`nproc` TARGET="arm-linux-musleabihf"
+          make -s install   TARGET="arm-linux-musleabihf"
           cd /opt && tar -cJf musl-dyne_arm-hf.tar.xz musl-dyne
           rm -rf /opt/musl-dyne && make clean
       - name: Upload artifact linux-amd64
