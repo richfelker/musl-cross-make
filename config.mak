@@ -32,8 +32,8 @@ OUTPUT = /opt/musl-dyne
 # Setting a blank version for linux will suppress installation of kernel
 # headers, which are not needed unless compiling programs that use them.
 
-BINUTILS_VER = 2.33.1
 GCC_VER = 14.2.0
+BINUTILS_VER = 2.44
 # MUSL_VER = git-master
 # GMP_VER =
 # MPC_VER =
