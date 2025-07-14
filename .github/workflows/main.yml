@@ -69,7 +69,7 @@ jobs:
           make -s -j`nproc` TARGET="x86_64-linux-musl"
           make -s install   TARGET="x86_64-linux-musl"
           cd /opt && tar -cJf musl-dyne-x86_64.tar.xz musl-dyne
-          rm -rf /opt/musl-dyne && make clean
+          rm -rf /opt/musl-dyne && cd - && make clean
       - name: Build arm_hf
         env:
           XZ_OPT: -9e -T0
