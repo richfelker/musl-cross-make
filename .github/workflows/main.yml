@@ -45,64 +45,42 @@ jobs:
     runs-on: ubuntu-latest
     needs: [semantic-release]
     if: ${{ needs.semantic-release.outputs.new_release_published == 'true' }}
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-linux-musl
+            output: x86_64
+          - target: arm-linux-musleabihf
+            output: arm_hf
+          - target: riscv64-linux-musl
+            output: riscv_64
+          - target: aarch64-linux-musl
+            output: arm_64
+      fail-fast: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      # - name: Upload release docs artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: documentation
-      #     path: |
-      #       build/release-intro.md
       - name: Install build deps
         run: |
           sudo apt install -qy tree cmake make autoconf automake libtool gcc g++ ccache
       - name: Downoad sources from files.dyne.org
         run: |
           cd sources && sh download_from_dyne.sh
-      - name: Build x86_64
+      - name: Build ${{ matrix.target }}
         env:
           XZ_OPT: -9e -T0
         run: |
-          make -s -j`nproc` TARGET="x86_64-linux-musl"
-          make -s install   TARGET="x86_64-linux-musl"
-          cd /opt && tar -cJf musl-dyne-x86_64.tar.xz musl-dyne
-          rm -rf /opt/musl-dyne && cd - && make clean
-      - name: Build arm_hf
-        env:
-          XZ_OPT: -9e -T0
-        run: |
-          make -s -j`nproc` TARGET="arm-linux-musleabihf"
-          make -s install   TARGET="arm-linux-musleabihf"
-          cd /opt && tar -cJf musl-dyne-arm_hf.tar.xz musl-dyne
-          rm -rf /opt/musl-dyne && cd - && make clean
-      - name: Build riscv64
-        env:
-          XZ_OPT: -9e -T0
-        run: |
-          make -s -j`nproc` TARGET="riscv64-linux-musl"
-          make -s install   TARGET="riscv64-linux-musl"
-          cd /opt && tar -cJf musl-dyne-riscv_64.tar.xz musl-dyne
-          rm -rf /opt/musl-dyne && cd - && make clean
-      - name: Build arm64
-        env:
-          XZ_OPT: -9e -T0
-        run: |
-          make -s -j`nproc` TARGET="aarch64-linux-musl"
-          make -s install   TARGET="aarch64-linux-musl"
-          cd /opt && tar -cJf musl-dyne-arm_64.tar.xz musl-dyne
-          rm -rf /opt/musl-dyne && cd - && make clean
-      - name: Upload release artifacts
+          make -s -j`nproc` TARGET="${{ matrix.target }}"
+          make -s install   TARGET="${{ matrix.target }}"
+          cd /opt && tar -cJf musl-dyne-${{ matrix.output }} musl-dyne
+      - name: Upload release artifacts for ${{ matrix.target }}
         uses: actions/upload-artifact@v4
         with:
-          name: releases
+          name: release-${{ matrix.target }}
           path: |
-            /opt/musl-dyne-x86_64.tar.xz
-            /opt/musl-dyne-arm_hf.tar.xz
-            /opt/musl-dyne-riscv_64.tar.xz
-            /opt/musl-dyne-arm_64.tar.xz
+            /opt/musl-dyne-${{ matrix.target }}.tar.xz
 
   draft-binary-release:
     name: 📦 Pack release
@@ -120,7 +98,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            musl-dyne/*
+            musl-dyne/release-*/*
           tag_name: ${{ needs.semantic-release.outputs.new_release_version }}
           #body_path: musl-dyne/documentation/release-intro.md
           #append_body: true
