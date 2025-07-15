@@ -121,7 +121,7 @@ jobs:
         with:
           files: |
             musl-dyne/*
-          tag_name: ${{ needs.semantic-release.outputs.version }}
+          tag_name: ${{ needs.semantic-release.outputs.new_release_version }}
           #body_path: musl-dyne/documentation/release-intro.md
           #append_body: true
           draft: false
@@ -133,7 +133,7 @@ jobs:
     name: 🧻 Remove tag on fail
     needs: [semantic-release, linux-release]
     runs-on: ubuntu-latest
-    if: ${{ (failure() || cancelled()) && needs.semantic-release.outputs.release == 'True' }}
+    if: ${{ (failure() || cancelled()) && needs.semantic-release.outputs.new_release_published == 'True' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -142,7 +142,7 @@ jobs:
       - name: Remove tag
         uses: dev-drprasad/delete-tag-and-release@v1.0
         with:
-          tag_name: ${{ needs.semantic-release.outputs.version }}
+          tag_name: ${{ needs.semantic-release.outputs.new_release_version }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           delete_release: false
           repo: dyne/musl-dyne
