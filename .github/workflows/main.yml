@@ -62,6 +62,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: hendrikmuhs/ccache-action@v1.2
       - name: Install build deps
         run: |
           sudo apt install -qy tree cmake make autoconf automake libtool gcc g++ ccache
