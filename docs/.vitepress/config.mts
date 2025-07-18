@@ -2,7 +2,7 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: "/musl-dyne/",
+  base: "/musl/",
   title: "musl dyne compilers",
   description: "C/C++ toolchains ready to use",
   themeConfig: {
