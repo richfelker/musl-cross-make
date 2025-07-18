@@ -5,23 +5,29 @@ on:
     paths:
       - 'docs/**'
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm # or pnpm / yarn
+          cache: npm
           cache-dependency-path: ./docs/package-lock.json
+      - uses: actions/configure-pages@v4
       - name: Install dependencies
         working-directory: docs
-        run: npm ci # or pnpm install / yarn install / bun install
+        run: npm ci
       - name: VitePress build
         working-directory: docs
         run: |
@@ -33,11 +39,11 @@ jobs:
           path: docs/.vitepress/dist
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    name: Deploy
     if: github.ref == 'refs/heads/master'
     steps:
       - name: Deploy to GitHub Pages
