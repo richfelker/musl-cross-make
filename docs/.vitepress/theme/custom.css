@@ -1,0 +1,7 @@
+:root.dark img {
+    filter: invert(1);
+}
+
+:root:not(.dark) img {
+    filter: invert(0);
+}

@@ -10,3 +10,8 @@
 /linux-*/
 /isl-*/
 /build/
+
+# website in docs/
+.vitepress/dist
+.vitepress/cache
+node_modules
