@@ -41,7 +41,7 @@ jobs:
       #       build/release-intro.md
 
   linux-release:
-    name: 🐧 Binary builds on Ubuntu
+    name: Build
     runs-on: ubuntu-latest
     needs: [semantic-release]
     if: ${{ needs.semantic-release.outputs.new_release_published == 'true' }}
@@ -72,9 +72,11 @@ jobs:
       - name: Build ${{ matrix.target }}
         env:
           XZ_OPT: -9e -T0
+          TARGET: ${{ matrix.target }}
         run: |
-          make -s -j`nproc` TARGET="${{ matrix.target }}"
-          make -s install   TARGET="${{ matrix.target }}"
+          make -s -j`nproc`
+          make -s install
+          echo "Compressing:  musl-dyne-${{ matrix.output }}.tar.xz"
           cd /opt && tar -cJf musl-dyne-${{ matrix.output }}.tar.xz musl-dyne
       - name: Upload release artifacts musl-dyne-${{ matrix.output }}
         uses: actions/upload-artifact@v4
@@ -94,12 +96,33 @@ jobs:
           path: |
             musl-dyne
       - name: show directory structure
-        run: tree -dL 3
+        run: tree -dL 3 musl-dyne
+      - name: compute sha256 hash checksums
+        run: |
+          find musl-dyne -type f -exec sha256sum {} \; | sed 's|.*/||' | tee SHA256SUMS.txt
+      - name: upload releases to files.dyne.org
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.FILES_SSH_HOST }}
+          username: ${{ secrets.FILES_SSH_USER }}
+          key: ${{ secrets.FILES_SSH_KEY }}
+          port: ${{ secrets.FILES_SSH_PORT }}
+          # scp-drone uploads dirs if wildcards are in them, so here
+          # we need to list uploaded files one by one.
+          source: |
+            musl-dyne/release-x86_64/*.tar.xz
+            musl-dyne/release-arm_hf/*.tar.xz
+            musl-dyne/release-arm_64/*.tar.xz
+            musl-dyne/release-riscv_64/*.tar.xz
+            SHA256SUMS.txt
+          target: |
+            /srv/ftp/musl
       - name: relase all binary artifacts
         uses: softprops/action-gh-release@v2
         with:
           files: |
             musl-dyne/release-*/*
+            SHA256SUMS.txt
           tag_name: ${{ needs.semantic-release.outputs.new_release_version }}
           #body_path: musl-dyne/documentation/release-intro.md
           #append_body: true
@@ -107,16 +130,6 @@ jobs:
           prerelease: false
           fail_on_unmatched_files: true
           generate_release_notes: true
-      - name: upload releases to files.dyne.org
-        uses: appleboy/scp-action@v1
-        host: ${{ secrets.FILES_SSH_HOST }}
-        username: ${{ secrets.FILES_SSH_USER }}
-        key: ${{ secrets.FILES_SSH_KEY }}
-        port: ${{ secrets.FILES_SSH_PORT }}
-        source: |
-          musl-dyne/release-*/*
-        target: |
-          /srv/ftp/musl
 
   remove-tag-on-fail:
     name: 🧻 Remove tag on fail
