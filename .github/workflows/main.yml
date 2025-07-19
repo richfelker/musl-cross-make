@@ -107,6 +107,16 @@ jobs:
           prerelease: false
           fail_on_unmatched_files: true
           generate_release_notes: true
+      - name: upload releases to files.dyne.org
+        uses: appleboy/scp-action@v1
+        host: ${{ secrets.FILES_SSH_HOST }}
+        username: ${{ secrets.FILES_SSH_USER }}
+        key: ${{ secrets.FILES_SSH_KEY }}
+        port: ${{ secrets.FILES_SSH_PORT }}
+        source: |
+          musl-dyne/release-*/*
+        target: |
+          /srv/ftp/musl
 
   remove-tag-on-fail:
     name: 🧻 Remove tag on fail
