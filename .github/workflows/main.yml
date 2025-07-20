@@ -110,13 +110,14 @@ jobs:
           # scp-drone uploads dirs if wildcards are in them, so here
           # we need to list uploaded files one by one.
           source: |
-            musl-dyne/release-x86_64/*.tar.xz
-            musl-dyne/release-arm_hf/*.tar.xz
-            musl-dyne/release-arm_64/*.tar.xz
-            musl-dyne/release-riscv_64/*.tar.xz
+            musl-dyne/release-x86_64/musl-dyne-x86_64.tar.xz,
+            musl-dyne/release-arm_hf/musl-dyne-arm_hf.tar.xz,
+            musl-dyne/release-arm_64/musl-dyne-arm_64.tar.xz,
+            musl-dyne/release-riscv_64/musl-dyne-riscv_64.tar.xz,
             SHA256SUMS.txt
           target: |
             /srv/ftp/musl
+          skip_components: 1
       - name: relase all binary artifacts
         uses: softprops/action-gh-release@v2
         with:
