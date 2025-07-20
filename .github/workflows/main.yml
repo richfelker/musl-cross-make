@@ -99,7 +99,7 @@ jobs:
         run: tree -dL 3 musl-dyne
       - name: compute sha256 hash checksums
         run: |
-          find musl-dyne -type f -exec sha256sum {} \; | sed 's|.*/||' | tee SHA256SUMS.txt
+          find musl-dyne -type f -exec sha256sum {} \; | awk '{ split($2, a, "/"); print $1, a[length(a)] }' | tee SHA256SUMS.txt
       - name: upload releases to files.dyne.org
         uses: appleboy/scp-action@v1
         with:
@@ -117,7 +117,7 @@ jobs:
             SHA256SUMS.txt
           target: |
             /srv/ftp/musl
-          skip_components: 1
+          strip_components: 1
       - name: relase all binary artifacts
         uses: softprops/action-gh-release@v2
         with:
