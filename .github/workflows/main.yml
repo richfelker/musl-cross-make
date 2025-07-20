@@ -117,7 +117,8 @@ jobs:
             SHA256SUMS.txt
           target: |
             /srv/ftp/musl
-          strip_components: 1
+          strip_components: 2
+          overwrite: true
       - name: relase all binary artifacts
         uses: softprops/action-gh-release@v2
         with:
