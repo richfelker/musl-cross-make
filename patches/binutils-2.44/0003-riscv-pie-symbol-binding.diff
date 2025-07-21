@@ -1,0 +1,45 @@
+Patch-Source: https://sourceware.org/git/?p=binutils-gdb.git;a=patch;h=39c7793ba8bef5aab358511b22764081959cb2ff
+From 39c7793ba8bef5aab358511b22764081959cb2ff Mon Sep 17 00:00:00 2001
+From: Linsen Zhou <i@lin.moe>
+Date: Tue, 8 Jul 2025 06:34:18 +0800
+Subject: [PATCH] RISC-V: Bind defined symbol locally in PIE
+
+Reference commit 1dcb9720d62cd053a72c31881b7724ce9f74332c
+
+bfd/
+	* elfnn-riscv.c (RISCV_COPY_INPUT_RELOC): Bind defined symbol
+	locally in PIE.
+
+ld/
+	* testsuite/ld-riscv-elf/pie-bind-locally-a.s: New test source.
+	* testsuite/ld-riscv-elf/pie-bind-locally-b.s: Likewise.
+	* testsuite/ld-riscv-elf/pie-bind-locally-rv32.d: New testcase.
+	* testsuite/ld-riscv-elf/pie-bind-locally-rv64.d: Likewise.
+
+Signed-off-by: Linsen Zhou <i@lin.moe>
+---
+ bfd/elfnn-riscv.c                                 |  2 +-
+ ld/testsuite/ld-riscv-elf/ld-riscv-elf.exp        |  3 +++
+ ld/testsuite/ld-riscv-elf/pie-bind-locally-a.s    |  5 +++++
+ ld/testsuite/ld-riscv-elf/pie-bind-locally-b.s    |  8 ++++++++
+ ld/testsuite/ld-riscv-elf/pie-bind-locally-rv32.d | 10 ++++++++++
+ ld/testsuite/ld-riscv-elf/pie-bind-locally-rv64.d | 10 ++++++++++
+ 6 files changed, 37 insertions(+), 1 deletion(-)
+ create mode 100644 ld/testsuite/ld-riscv-elf/pie-bind-locally-a.s
+ create mode 100644 ld/testsuite/ld-riscv-elf/pie-bind-locally-b.s
+ create mode 100644 ld/testsuite/ld-riscv-elf/pie-bind-locally-rv32.d
+ create mode 100644 ld/testsuite/ld-riscv-elf/pie-bind-locally-rv64.d
+
+diff --git a/bfd/elfnn-riscv.c b/bfd/elfnn-riscv.c
+index 790f0397cf5..2fd01299249 100644
+--- a/bfd/elfnn-riscv.c
++++ b/bfd/elfnn-riscv.c
+@@ -99,7 +99,7 @@
+   ((H) != NULL \
+    && (H)->dynindx != -1 \
+    && (!bfd_link_pic (INFO) \
+-       || !SYMBOLIC_BIND ((INFO), (H)) \
++       || !(bfd_link_pie ((INFO)) || SYMBOLIC_BIND ((INFO), (H))) \
+        || !(H)->def_regular))
+ 
+ /* True if this is actually a static link, or it is a -Bsymbolic link
