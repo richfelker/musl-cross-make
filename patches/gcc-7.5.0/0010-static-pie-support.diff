@@ -53,7 +53,7 @@ index 91eb0534722..74a390e6005 100644
  #ifdef HAVE_LD_PIE
  #ifndef LD_PIE_SPEC
 -#define LD_PIE_SPEC "-pie"
-+#define LD_PIE_SPEC "-pie %{static:--no-dynamic-linker -Bsymbolic}"
++#define LD_PIE_SPEC "-pie %{static:--no-dynamic-linker -Bsymbolic -static}"
  #endif
  #else
  #define LD_PIE_SPEC ""

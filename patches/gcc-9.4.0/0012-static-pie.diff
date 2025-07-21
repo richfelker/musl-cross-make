@@ -74,7 +74,7 @@ index d185c01b257..5d3f81c5fc5 100644
  #ifdef HAVE_LD_PIE
  #ifndef LD_PIE_SPEC
 -#define LD_PIE_SPEC "-pie"
-+#define LD_PIE_SPEC "-pie %{static-pie:-static} %{static|static-pie:--no-dynamic-linker -z text -Bsymbolic}"
++#define LD_PIE_SPEC "-pie %{static|static-pie:--no-dynamic-linker -z text -Bsymbolic -static}"
  #endif
  #else
  #define LD_PIE_SPEC ""
