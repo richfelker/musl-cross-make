@@ -99,7 +99,8 @@ jobs:
         run: tree -dL 3 musl-dyne
       - name: compute sha256 hash checksums
         run: |
-          find musl-dyne -type f -exec sha256sum {} \; | awk '{ split($2, a, "/"); print $1, a[length(a)] }' | tee SHA256SUMS.txt
+          mkdir -p musl-dyne/checksums
+          find musl-dyne -type f -exec sha256sum {} \; | awk '{ split($2, a, "/"); print $1, a[length(a)] }' | tee musl-dyne/checksums/SHA256SUMS.txt
       - name: upload releases to files.dyne.org
         uses: appleboy/scp-action@v1
         with:
@@ -114,7 +115,7 @@ jobs:
             musl-dyne/release-arm_hf/musl-dyne-arm_hf.tar.xz,
             musl-dyne/release-arm_64/musl-dyne-arm_64.tar.xz,
             musl-dyne/release-riscv_64/musl-dyne-riscv_64.tar.xz,
-            SHA256SUMS.txt
+            musl-dyne/checksums/SHA256SUMS.txt
           target: |
             /srv/ftp/musl
           strip_components: 2
@@ -124,7 +125,7 @@ jobs:
         with:
           files: |
             musl-dyne/release-*/*
-            SHA256SUMS.txt
+            musl-dyne/checksums/SHA256SUMS.txt
           tag_name: ${{ needs.semantic-release.outputs.new_release_version }}
           #body_path: musl-dyne/documentation/release-intro.md
           #append_body: true
