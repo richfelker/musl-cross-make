@@ -7,7 +7,7 @@ hero:
   text: "For static builds."
   tagline: Direct downloads ~50 MB each<br/>Extract into /opt/musl-dyne
   image:
-    src: https://dyne.org/images/logos/black-transparent-Icon.svg
+    src: logos/musl-logo-infinity-optimized.svg
     alt: Hands-on, Dyne.org style
   actions:
     - theme: brand
