@@ -5,9 +5,9 @@ CONFIG_SUB_REV = 3d5db9ebe860
 BINUTILS_VER = 2.44
 GCC_VER = 9.4.0
 MUSL_VER = 1.2.5
-GMP_VER = 6.1.2
-MPC_VER = 1.1.0
-MPFR_VER = 4.0.2
+GMP_VER = 6.3.0
+MPC_VER = 1.3.1
+MPFR_VER = 4.2.2
 LINUX_VER = headers-4.19.88-2
 
 GNU_SITE = https://ftpmirror.gnu.org/gnu
