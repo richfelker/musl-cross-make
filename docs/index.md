@@ -27,7 +27,7 @@ features:
   - title: 👟 Zero dependencies
     details: Produce static ELF binaries that run on any Linux distribution
 
-  - title: 🚀 GCC 14.2 / Binutils 2.44
+  - title: 🚀 GCC 15.1 / Binutils 2.44
     details: Built with recent GNU tools and musl-libc releases
 
   - title: 🤏 Optimized for size
