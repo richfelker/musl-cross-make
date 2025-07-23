@@ -1,15 +1,17 @@
 # GNU / musl compilers by Dyne.org
 
-## For quick start go to [dyne.org/musl](https://dyne.org/musl)
+## Introduction
 
-This repository ships pre-built cross-compilation toolchains that
-combine the GNU compiler collection (GCC with Binutils, GMP, MPC and
-MPFR) with the musl C library.
+This is a pre-built cross-compilation toolchain that combine the GNU
+compiler collection (GCC with Binutils, GMP, MPC and MPFR) with the
+musl C library. Pronounced "muscl", our C/C++ compiler packages are
+optimized to be small in size and produce static binaries,
+redistributed by the Dyne.org foundation.
 
-The goal is to provide any developer on a x86 64-bit Linux host
-(including WSL2) with binaries for different instruction sets without
-installing additional system packages or fighting with
-distribution-specific patches.
+Our goal is to provide x86 64-bit Linux hosts (including WSL2) with
+ready to use cross-compilers that build static binaries for different
+architectures without installing additional system packages or
+fighting with distribution-specific patches.
 
 ## Usage
 
@@ -20,7 +22,31 @@ One should therefore include `/opt/musl-dyne/bin` in $PATH:
 export PATH=/opt/musl-dyne/bin:$PATH
 ```
 
-Look inside the bin directory for the list of executable compiler tools and setup `CC` and `CXX` flags accordingly for each build system used by your projects.
+Look inside the bin directory for the list of executable compiler
+tools and setup `CC`, `CXX` and `LD` flags accordingly for each build
+system used by your projects.
+
+## Source components
+
+All sources are mirrored on [files.dyne.org](https://files.dyne.org/musl?dir=musl/sources)
+
+The latest build is made with:
+
+- binutils-2.44.tar.gz
+- gcc-15.1.0.tar.xz
+- gmp-6.1.2.tar.bz2
+- linux-5.8.5.tar.xz
+- mpc-1.1.0.tar.gz
+- mpfr-4.0.2.tar.bz2
+- musl-1.2.5.tar.gz
+
+Build flags used: `--disable-nls --disable-libmudflap
+--disable-libsanitizer`.  We omit debugging functions, but we enable
+decimal-float, fixed-point, quadmath and lto, as well libitm to
+satisfy advanced C++ requirements.
+
+Builds are fully automated over CI and use semantic versioning that is
+specific to dyne/musl and unrelated to gcc or musl release versions.
 
 ## Supported target architectures
 
@@ -78,8 +104,17 @@ licensing from the upstream projects. The authors of musl-cross-make
 or the Dyne.org foundation do not make any additional copyright claims
 to these artifacts.
 
-### Contribution
+### Update
 
 Unless you explicitly state otherwise, any contribution submitted for
 inclusion shall be licensed as above without any additional terms or
 conditions.
+
+When updating to make a new release:
+
+1. Check upstream updates https://github.com/richfelker/musl-cross-make and rebase if necessary
+2. Update components in config.mak (defaults are in Makefile)
+3. Run make to download sources/ from mirrors
+4. Upload sources to files.dyne.org in musl/sources
+5. Update `sources/download_from_dyne.sh` script
+6. Prefix commit with semantic versioning (`fix:` or `feat:`)
