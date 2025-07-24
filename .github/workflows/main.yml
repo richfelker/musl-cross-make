@@ -16,6 +16,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  alpine-build:
+    name: 🗻 Alpine build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup latest Alpine Linux
+        uses: jirutka/setup-alpine@v1
+      - name: Install build deps in Alpine chroot
+        run: |
+          cat /etc/alpine-release
+          apk add  bash make gcc build-base curl patch gawk ccache
+        shell: alpine.sh --root {0}
+      - name: Download sources inside Alpine chroot
+        run: |
+          ls -la
+          cd sources && sh download_from_dyne.sh
+        shell: alpine.sh {0}
+      - name: Build musl-dyne inside Alpine chroot
+        run: |
+          make -j`nproc`
+        shell: alpine.sh {0}
+      - name: Install on the host system (Ubuntu)
+        run: |
+          cat /etc/os-release
+          sudo make install
+          echo "Compressing:  gcc-dyne-alpine-x86_64.tar.xz"
+          cd /opt && tar -cJf gcc-dyne-alpine-x86_64.tar.xz musl-dyne
+        shell: bash
+
   semantic-release:
     name: 🤖 Semantic release
     runs-on: ubuntu-latest
