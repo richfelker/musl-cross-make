@@ -1,0 +1,51 @@
+diff --git a/gcc/config.host b/gcc/config.host
+index 816a0f0..030e829 100644
+--- a/gcc/config.host
++++ b/gcc/config.host
+@@ -93,8 +93,8 @@ esac
+ case ${host} in
+   *-darwin*)
+     # Generic darwin host support.
+-    out_host_hook_obj=host-darwin.o
+-    host_xmake_file="${host_xmake_file} x-darwin"
++    # out_host_hook_obj=host-darwin.o
++    # host_xmake_file="${host_xmake_file} x-darwin"
+     ;;
+ esac
+ 
+diff --git a/include/safe-ctype.h b/include/safe-ctype.h
+index b6d585c..1f4c47f 100644
+--- a/include/safe-ctype.h
++++ b/include/safe-ctype.h
+@@ -120,31 +120,5 @@ extern const unsigned char  _sch_tolower[256];
+    So we include ctype.h here and then immediately redefine its macros.  */
+ 
+ #include <ctype.h>
+-#undef isalpha
+-#define isalpha(c) do_not_use_isalpha_with_safe_ctype
+-#undef isalnum
+-#define isalnum(c) do_not_use_isalnum_with_safe_ctype
+-#undef iscntrl
+-#define iscntrl(c) do_not_use_iscntrl_with_safe_ctype
+-#undef isdigit
+-#define isdigit(c) do_not_use_isdigit_with_safe_ctype
+-#undef isgraph
+-#define isgraph(c) do_not_use_isgraph_with_safe_ctype
+-#undef islower
+-#define islower(c) do_not_use_islower_with_safe_ctype
+-#undef isprint
+-#define isprint(c) do_not_use_isprint_with_safe_ctype
+-#undef ispunct
+-#define ispunct(c) do_not_use_ispunct_with_safe_ctype
+-#undef isspace
+-#define isspace(c) do_not_use_isspace_with_safe_ctype
+-#undef isupper
+-#define isupper(c) do_not_use_isupper_with_safe_ctype
+-#undef isxdigit
+-#define isxdigit(c) do_not_use_isxdigit_with_safe_ctype
+-#undef toupper
+-#define toupper(c) do_not_use_toupper_with_safe_ctype
+-#undef tolower
+-#define tolower(c) do_not_use_tolower_with_safe_ctype
+ 
+ #endif /* SAFE_CTYPE_H */
