@@ -132,13 +132,12 @@ musl-git-%:
 	mv $@.tmp/$(patsubst %.orig,%,$@) $@
 	rm -rf $@.tmp
 
-%: %.orig | $(SOURCES)/config.sub
+%: %.orig
 	case "$@" in */*) exit 1 ;; esac
 	rm -rf $@.tmp
 	mkdir $@.tmp
 	( cd $@.tmp && $(COWPATCH) -I ../$< )
 	test ! -d patches/$@ || cat patches/$@/* | ( cd $@.tmp && $(COWPATCH) -p1 )
-	if test -f $</configfsf.sub ; then cs=configfsf.sub ; elif test -f $</config.sub ; then cs=config.sub ; else exit 0 ; fi ; rm -f $@.tmp/$$cs && cp -f $(SOURCES)/config.sub $@.tmp/$$cs && chmod +x $@.tmp/$$cs
 	rm -rf $@
 	mv $@.tmp $@
 
