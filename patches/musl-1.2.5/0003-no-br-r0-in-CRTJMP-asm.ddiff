@@ -1,0 +1,30 @@
+From 5be920e9103fb7c7e492af7cd8bf56a71ae0b2c6 Mon Sep 17 00:00:00 2001
+From: Stefan Liebler <stli@linux.ibm.com>
+Date: Thu, 10 Oct 2024 15:02:44 +0200
+Subject: s390x: don't allow br r0 in CRTJMP asm
+
+The instruction encoding that would be "br %r0" is not actually a
+branch to r0, but instead a nop/memory-barrier. gcc 14 has been found
+to choose r0 for the "r"(pc) constraint, breaking CRTJMP.
+
+This patch adjusts the inline assembly constraints and marks "pc" as
+address ("a"), which disallows usage of r0.
+---
+ arch/s390x/reloc.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+(limited to 'arch/s390x/reloc.h')
+
+diff --git a/arch/s390x/reloc.h b/arch/s390x/reloc.h
+index 6e5c1fb8..38de9d9b 100644
+--- a/arch/s390x/reloc.h
++++ b/arch/s390x/reloc.h
+@@ -10,4 +10,4 @@
+ #define REL_TPOFF       R_390_TLS_TPOFF
+ 
+ #define CRTJMP(pc,sp) __asm__ __volatile__( \
+-	"lgr %%r15,%1; br %0" : : "r"(pc), "r"(sp) : "memory" )
++	"lgr %%r15,%1; br %0" : : "a"(pc), "r"(sp) : "memory" )
+-- 
+cgit v1.2.1
+
