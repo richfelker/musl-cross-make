@@ -1,0 +1,19 @@
+--- gcc-4.2.1.org/configure
++++ gcc-4.2.1/configure
+@@ -436,6 +436,16 @@
+   -*) { echo "configure: error: $ac_option: invalid option; use --help to show usage" 1>&2; exit 1; }
+     ;;
+ 
++  *=*)
++    ac_envvar=`expr "x$ac_option" : 'x\([^=]*\)='`
++    # Reject names that are not valid shell variable names.
++    case $ac_envvar in #(
++      '' | [0-9]* | *[!_$as_cr_alnum]* )
++      as_fn_error "invalid variable name: \`$ac_envvar'" ;;
++    esac
++    eval $ac_envvar=\$ac_optarg
++    export $ac_envvar ;;
++
+   *)
+     if test -n "`echo $ac_option| sed 's/[-a-z0-9.]//g'`"; then
+       echo "configure: warning: $ac_option: invalid host type" 1>&2
