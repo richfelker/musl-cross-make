@@ -1,0 +1,72 @@
+From b31c41313b956fa4bbe0c05792a1483c43eb5fc3 Mon Sep 17 00:00:00 2001
+From: Said Musaev <cpu808694@gmail.com>
+Date: Thu, 1 Oct 2020 14:35:11 +0200
+Subject: [PATCH 04/14] libvtv-test-fix
+
+---
+ libvtv/testsuite/Makefile.am    | 6 ++++++
+ libvtv/testsuite/Makefile.in    | 5 +++++
+ libvtv/testsuite/lib/libvtv.exp | 3 +++
+ 3 files changed, 14 insertions(+)
+
+diff --git a/libvtv/testsuite/Makefile.am b/libvtv/testsuite/Makefile.am
+index 41cfbc46e4b..16f82bdf691 100644
+--- a/libvtv/testsuite/Makefile.am
++++ b/libvtv/testsuite/Makefile.am
+@@ -11,3 +11,9 @@ EXPECT = $(shell if test -f $(top_builddir)/../expect/expect; then \
+ _RUNTEST = $(shell if test -f $(top_srcdir)/../dejagnu/runtest; then \
+ 	     echo $(top_srcdir)/../dejagnu/runtest; else echo runtest; fi)
+ RUNTEST = $(_RUNTEST) $(AM_RUNTESTFLAGS)
++
++EXTRA_DEJAGNU_SITE_CONFIG = extra.exp
++
++extra.exp:
++	echo 'set BUILD_CC "$(CC)"' > $@.tmp
++	mv $@.tmp $@
+diff --git a/libvtv/testsuite/Makefile.in b/libvtv/testsuite/Makefile.in
+index cb804c442d6..6984c568260 100644
+--- a/libvtv/testsuite/Makefile.in
++++ b/libvtv/testsuite/Makefile.in
+@@ -281,6 +281,7 @@ _RUNTEST = $(shell if test -f $(top_srcdir)/../dejagnu/runtest; then \
+ 	     echo $(top_srcdir)/../dejagnu/runtest; else echo runtest; fi)
+ 
+ RUNTEST = $(_RUNTEST) $(AM_RUNTESTFLAGS)
++EXTRA_DEJAGNU_SITE_CONFIG = extra.exp
+ all: all-am
+ 
+ .SUFFIXES:
+@@ -488,6 +489,10 @@ uninstall-am:
+ .PRECIOUS: Makefile
+ 
+ 
++extra.exp:
++	echo 'set BUILD_CC "$(CC)"' > $@.tmp
++	mv $@.tmp $@
++
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
+diff --git a/libvtv/testsuite/lib/libvtv.exp b/libvtv/testsuite/lib/libvtv.exp
+index 4b71c9ce7bc..ef06e4a3199 100644
+--- a/libvtv/testsuite/lib/libvtv.exp
++++ b/libvtv/testsuite/lib/libvtv.exp
+@@ -76,6 +76,7 @@ proc libvtv_init { args } {
+     global ALWAYS_CFLAGS
+     global CFLAGS
+     global TOOL_EXECUTABLE TOOL_OPTIONS
++    global BUILD_CC
+     global GCC_UNDER_TEST
+     global TESTING_IN_BUILD_TREE
+     global target_triplet
+@@ -91,6 +92,8 @@ proc libvtv_init { args } {
+     if ![info exists GCC_UNDER_TEST] then {
+ 	if [info exists TOOL_EXECUTABLE] {
+ 	    set GCC_UNDER_TEST $TOOL_EXECUTABLE
++	} elseif [info exists BUILD_CC] {
++	    set GCC_UNDER_TEST $BUILD_CC
+ 	} else {
+ 	    set GCC_UNDER_TEST "[find_gcc]"
+ 	}
+-- 
+2.28.0
+
