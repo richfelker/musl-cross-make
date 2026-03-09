@@ -27,6 +27,10 @@ ifneq ($(findstring powerpc64,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-abi=elfv2
 endif
 
+ifneq ($(findstring nan2008,$(TARGET)),)
+GCC_CONFIG_FOR_TARGET += --with-nan=2008
+endif
+
 ifneq ($(findstring mips64,$(TARGET))$(findstring mipsisa64,$(TARGET)),)
 ifneq ($(findstring n32,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-abi=n32
@@ -40,11 +44,35 @@ GCC_CONFIG_FOR_TARGET += --with-long-double-128
 endif
 
 ifneq ($(filter %sf,$(TARGET)),)
+ifeq ($(findstring loongarch,$(TARGET)),)
+ifeq ($(findstring riscv,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-float=soft
+endif
+endif
 endif
 
 ifneq ($(filter %hf,$(TARGET)),)
 GCC_CONFIG_FOR_TARGET += --with-float=hard
+endif
+
+ifneq ($(filter armeb%be8,$(TARGET)),)
+GCC_CONFIG_FOR_TARGET += --with-arch=armv7-a
+endif
+
+ifneq ($(filter riscv32%f32,$(TARGET)),)
+GCC_CONFIG_FOR_TARGET += --with-arch=rv32imafc_zicsr_zifencei --with-abi=ilp32f
+endif
+
+ifneq ($(filter riscv32%sf,$(TARGET)),)
+GCC_CONFIG_FOR_TARGET += --with-arch=rv32imac_zicsr_zifencei --with-abi=ilp32
+endif
+
+ifneq ($(filter riscv64%f32,$(TARGET)),)
+GCC_CONFIG_FOR_TARGET += --with-arch=rv64imafc_zicsr_zifencei --with-abi=lp64f
+endif
+
+ifneq ($(filter riscv64%sf,$(TARGET)),)
+GCC_CONFIG_FOR_TARGET += --with-arch=rv64imac_zicsr_zifencei --with-abi=lp64
 endif
 
 ifneq ($(LIBTOOL),)
