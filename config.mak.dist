@@ -7,6 +7,9 @@
 # There is no default TARGET; you must select one here or on the make
 # command line. Some examples:
 
+ARCH  ?= x86_64
+TARGET = $(ARCH)-linux-musl
+
 # TARGET = i486-linux-musl
 # TARGET = x86_64-linux-musl
 # TARGET = arm-linux-musleabi
@@ -32,14 +35,14 @@
 # Setting a blank version for linux will suppress installation of kernel
 # headers, which are not needed unless compiling programs that use them.
 
-# BINUTILS_VER = 2.25.1
-# GCC_VER = 5.2.0
-# MUSL_VER = git-master
-# GMP_VER =
-# MPC_VER =
-# MPFR_VER =
-# ISL_VER =
-# LINUX_VER =
+BINUTILS_VER = 2.44
+GCC_VER      = 14.3.0
+MUSL_VER     = 1.2.5
+GMP_VER      = 6.3.0
+MPC_VER      = 1.3.1
+MPFR_VER     = 4.2.2
+ISL_VER      = 0.27
+LINUX_VER    = 5.15.202
 
 # By default source archives are downloaded with wget. curl is also an option.
 
@@ -49,8 +52,8 @@
 # Check sha-1 hashes of downloaded source archives. On gnu systems this is
 # usually done with sha1sum.
 
-# SHA1_CMD = sha1sum -c
 # SHA1_CMD = sha1 -c
+# SHA1_CMD = sha1sum -c
 # SHA1_CMD = shasum -a 1 -c
 
 # Something like the following can be used to produce a static-linked
@@ -59,11 +62,21 @@
 # system you build on can natively (or via binfmt_misc and qemu) run
 # binaries produced by the existing toolchain (in this example, i486).
 
-# COMMON_CONFIG += CC="i486-linux-musl-gcc -static --static" CXX="i486-linux-musl-g++ -static --static"
+# COMMON_CONFIG += CC="$(TARGET)-gcc -static --static" CXX="$(TARGET)-g++ -static --static"
 
-# Recommended options for smaller build for deploying binaries:
-
-# COMMON_CONFIG += CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"
+# Reported values relates to an i5-8365 fast-SSD and c.a. 18m compiling time
+# # Recommended options for smal/fast build for deploying toolchain (w/ -pipe):
+COMMON_CONFIG += CFLAGS="-g0 -O1 -pipe" CXXFLAGS="-g0 -O1 -pipe" LDFLAGS="-s"
+# # Compressed size is 13% less than -O2 and, surprisingly, buildall +4% faster
+# # COMMON_CONFIG += CFLAGS="-g0 -Os" CXXFLAGS="-g0 -Os" LDFLAGS="-s"
+# # Compiles a toolchain for being faster in doing its works, but bigger size
+# # COMMON_CONFIG += CFLAGS="-g0 -O2" CXXFLAGS="-g0 -O2" LDFLAGS="-s"
+# # Pipe can increase the compilation speed of +6%, but it is sensitive:
+# # COMMON_CONFIG += CFLAGS="-g0 -O2 -pipe" CXXFLAGS="-g0 -O2 -pipe" LDFLAGS="-s"
+# Notes:
+# # Definetely avoid -O3 because a single mistake in a toolchain avalanches
+# # Recommended -O1 -pipe is +7% larger than -Os and -7% smaller than -O2
+# # Recommended -O1 -pipe is 10% faster than -Os and +14% faster than -O2
 
 # Options you can add for faster/simpler build at the expense of features:
 
