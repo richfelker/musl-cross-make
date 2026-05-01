@@ -1,0 +1,12 @@
+--- gcc-11.4.0/gcc/config/sh/sh.cc.orig	2024-04-04 05:52:42.125373614 +0900
++++ gcc-11.4.0/gcc/config/sh/sh.cc	2024-04-04 22:54:01.875106654 +0900
+@@ -9147,7 +9147,7 @@
+ 	{
+ 	  /* Weak functions may be NULL which doesn't work with
+ 	     GOTOFFFUNCDESC because the runtime offset is not known.  */
+-	  if (SYMBOL_REF_WEAK (orig))
++	  if (SYMBOL_REF_WEAK (orig) || (TREE_PUBLIC(SYMBOL_REF_DECL(orig)) && DECL_VISIBILITY (SYMBOL_REF_DECL(orig)) != VISIBILITY_HIDDEN))
+ 	    emit_insn (gen_symGOTFUNCDESC2reg (reg, orig));
+ 	  else
+ 	    emit_insn (gen_symGOTOFFFUNCDESC2reg (reg, orig));
+
