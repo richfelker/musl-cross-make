@@ -1,0 +1,33 @@
+--- binutils-2.33.1/bfd/elf32-sh.c.orig	2024-04-04 23:11:28.739136261 +0900
++++ binutils-2.33.1/bfd/elf32-sh.c	2024-04-08 23:14:24.496915074 +0900
+@@ -61,7 +61,7 @@
+    not.  If the symbol is protected, we want the local address, but
+    its function descriptor must be assigned by the dynamic linker.  */
+ #define SYMBOL_FUNCDESC_LOCAL(INFO, H) \
+-  (SYMBOL_REFERENCES_LOCAL (INFO, H) \
++  (!(H) || (H)->dynindx < 0 || (H)->forced_local \
+    || ! elf_hash_table (INFO)->dynamic_sections_created)
+ 
+ #define SH_PARTIAL32 TRUE
+@@ -4405,20 +4405,6 @@
+ 	      /* Undefined weak symbol which will not be dynamically
+ 		 resolved later; leave it at zero.  */
+ 	      goto funcdesc_leave_zero;
+-	    else if (SYMBOL_CALLS_LOCAL (info, h)
+-		     && ! SYMBOL_FUNCDESC_LOCAL (info, h))
+-	      {
+-		/* If the symbol needs a non-local function descriptor
+-		   but binds locally (i.e., its visibility is
+-		   protected), emit a dynamic relocation decayed to
+-		   section+offset.  This is an optimization; the dynamic
+-		   linker would resolve our function descriptor request
+-		   to our copy of the function anyway.  */
+-		dynindx = elf_section_data (h->root.u.def.section
+-					    ->output_section)->dynindx;
+-		relocation += h->root.u.def.section->output_offset
+-		  + h->root.u.def.value;
+-	      }
+ 	    else if (! SYMBOL_FUNCDESC_LOCAL (info, h))
+ 	      {
+ 		/* If the symbol is dynamic and there will be dynamic
+
