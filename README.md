@@ -48,15 +48,23 @@ The following is a non-exhaustive list of `$(TARGET)` tuples that are
 believed to work:
 
 - `aarch64[_be]-linux-musl`
-- `arm[eb]-linux-musleabi[hf]`
+- `arm-linux-musleabi[hf]`
+- `armeb-linux-musleabi[hf][be8]`
 - `i*86-linux-musl`
+- `loongarch64-linux-musl[sf]`
+- `m68k-linux-musl`
 - `microblaze[el]-linux-musl`
-- `mips-linux-musl`
-- `mips[el]-linux-musl[sf]`
-- `mips64[el]-linux-musl[n32][sf]`
+- `mips[isa32][el]-linux-musl[sf]`
+- `mipsisa32r2[el]-linux-musl[nan2008][sf]`
+- `mipsisa32r6[el]-linux-musl[sf]`
+- `mips[isa]64[el]-linux-musl[n32][sf]`
+- `mipsisa64r2[el]-linux-musl[n32][nan2008][sf]`
+- `mipsisa64r6[el]-linux-musl[n32][sf]`
+- `or1k-linux-musl`
 - `powerpc-linux-musl[sf]`
 - `powerpc64[le]-linux-musl`
-- `riscv64-linux-musl`
+- `riscv32-linux-musl[f32|sf]`
+- `riscv64-linux-musl[f32|sf]`
 - `s390x-linux-musl`
 - `sh*[eb]-linux-musl[fdpic][sf]`
 - `x86_64-linux-musl[x32]`
