@@ -1,0 +1,11 @@
+--- a/libgcc/unwind-pe.h	2024-03-14 05:59:53.754073149 +0900
++++ b/libgcc/unwind-pe.h	2024-03-14 06:00:41.226074492 +0900
+@@ -262,7 +262,7 @@
+ 
+       if (result != 0)
+ 	{
+-#if __FDPIC__
++#if __FDPIC__ && __arm__
+ 	  /* FDPIC relative addresses imply taking the GOT address
+ 	     into account.  */
+ 	  if ((encoding & DW_EH_PE_pcrel) && (encoding & DW_EH_PE_indirect))

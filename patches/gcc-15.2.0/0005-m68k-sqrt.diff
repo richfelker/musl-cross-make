@@ -1,0 +1,20 @@
+diff --git a/gcc/config/m68k/m68k.md b/gcc/config/m68k/m68k.md
+index 59a456cd496..dbfddea41bd 100644
+--- a/gcc/config/m68k/m68k.md
++++ b/gcc/config/m68k/m68k.md
+@@ -4174,13 +4174,13 @@
+ (define_expand "sqrt<mode>2"
+   [(set (match_operand:FP 0 "nonimmediate_operand" "")
+ 	(sqrt:FP (match_operand:FP 1 "general_operand" "")))]
+-  "TARGET_HARD_FLOAT"
++  "(TARGET_68881 && TARGET_68040) || TARGET_COLDFIRE_FPU"
+   "")
+ 
+ (define_insn "sqrt<mode>2_68881"
+   [(set (match_operand:FP 0 "nonimmediate_operand" "=f")
+ 	(sqrt:FP (match_operand:FP 1 "general_operand" "f<FP:dreg>m")))]
+-  "TARGET_68881"
++  "TARGET_68881 && TARGET_68040"
+ {
+   if (FP_REG_P (operands[1]))
+     return "f<FP:round>sqrt%.x %1,%0";
