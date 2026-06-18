@@ -1,0 +1,14 @@
+diff --git a/gcc/gcc.cc b/gcc/gcc.cc
+index 7837553958b..3c81c5798d8 100644
+--- a/gcc/gcc.cc
++++ b/gcc/gcc.cc
+@@ -980,7 +980,8 @@ proper position among the other output files.  */
+ #ifndef LINK_SSP_SPEC
+ #ifdef TARGET_LIBC_PROVIDES_SSP
+ #define LINK_SSP_SPEC "%{fstack-protector|fstack-protector-all" \
+-		       "|fstack-protector-strong|fstack-protector-explicit:}"
++		       "|fstack-protector-strong|fstack-protector-explicit" \
++		       ":-lssp_nonshared}"
+ #else
+ #define LINK_SSP_SPEC "%{fstack-protector|fstack-protector-all" \
+ 		       "|fstack-protector-strong|fstack-protector-explicit" \

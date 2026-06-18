@@ -1,0 +1,8 @@
+--- a/libstdc++-v3/ChangeLog	2024-03-13 18:04:21.050801063 -0400
++++ b/libstdc++-v3/ChangeLog	2024-03-13 18:04:25.665836804 -0400
+@@ -4068,4 +4068,4 @@
+ 
+ Copying and distribution of this file, with or without modification,
+ are permitted in any medium without royalty provided the copyright
+-notice and this notice are preserved.
++notice and this notice are preserved.
