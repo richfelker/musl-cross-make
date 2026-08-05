@@ -49,6 +49,7 @@ believed to work:
 
 - `aarch64[_be]-linux-musl`
 - `arm[eb]-linux-musleabi[hf]`
+- `armv5-linux-musleabi`
 - `i*86-linux-musl`
 - `microblaze[el]-linux-musl`
 - `mips-linux-musl`
@@ -61,7 +62,10 @@ believed to work:
 - `sh*[eb]-linux-musl[fdpic][sf]`
 - `x86_64-linux-musl[x32]`
 
+In order to choose the desired ISA level of ARM target, please provide the `--with-arch` argument in the `GCC_CONFIG` environment variable. 
 
+- For ARMv6 set `TARGET=armv6-linux-musleabihf` and `GCC_CONFIG="--with-arch=armv6"`
+- For ARMv7 set `TARGET=armv7-linux-musleabihf` and `GCC_CONFIG="--with-arch=armv7-a"`
 
 How it works
 ------------
