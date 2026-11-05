@@ -1,0 +1,14 @@
+diff --git a/libgcobol/libgcobol.cc b/libgcobol/libgcobol.cc
+index 1234567..abcdefg 100644
+--- a/libgcobol/libgcobol.cc
++++ b/libgcobol/libgcobol.cc
+@@ -65,7 +65,9 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+
++#ifdef HAVE_EXECINFO_H
+ #include <execinfo.h>
++#endif
+
+ #include "exceptl.h"
+
